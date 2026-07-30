@@ -1,0 +1,111 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.65rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+  --primary: oklch(0.62 0.17 250);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.967 0.001 286.375);
+  --accent-foreground: oklch(0.21 0.006 285.885);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: oklch(0.62 0.17 250);
+}
+
+.dark {
+  --background: oklch(0.171 0.008 285.8);
+  --foreground: oklch(0.96 0.002 286.32);
+  --card: oklch(0.212 0.009 285.885);
+  --card-foreground: oklch(0.96 0.002 286.32);
+  --popover: oklch(0.212 0.009 285.885);
+  --popover-foreground: oklch(0.96 0.002 286.32);
+  --primary: oklch(0.72 0.15 245);
+  --primary-foreground: oklch(0.17 0.01 285);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.96 0.002 286.32);
+  --muted: oklch(0.274 0.006 286.033);
+  --muted-foreground: oklch(0.68 0.012 286);
+  --accent: oklch(0.3 0.008 286.033);
+  --accent-foreground: oklch(0.96 0.002 286.32);
+  --destructive: oklch(0.62 0.2 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.3 0.008 286.033);
+  --input: oklch(0.32 0.008 286.033);
+  --ring: oklch(0.72 0.15 245);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-synthesis-weight: none;
+    -webkit-font-smoothing: antialiased;
+  }
+  html {
+    color-scheme: light dark;
+  }
+}
+
+@keyframes pbp-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+[data-state='open'][data-radix-popper-content-wrapper] > *,
+[data-slot='popover-content'][data-state='open'] {
+  animation: pbp-in 120ms ease-out;
+}
+
+/* Barras de scroll discretas */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
