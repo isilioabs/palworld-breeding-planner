@@ -17,7 +17,24 @@ export interface Pal {
   wild: [number, number] | null
   female: number
   nocturnal: boolean
+  /** Las 2 aptitudes de trabajo mas altas (no nulas), de mayor a menor. */
+  work: { type: WorkType; value: number }[]
 }
+
+/** Tipos de trabajo del juego, tal cual los usa WorkSuitability. */
+export type WorkType =
+  | 'Kindling'
+  | 'Watering'
+  | 'Planting'
+  | 'GenerateElectricity'
+  | 'Handiwork'
+  | 'Gathering'
+  | 'Lumbering'
+  | 'Mining'
+  | 'MedicineProduction'
+  | 'Cooling'
+  | 'Transporting'
+  | 'Farming'
 
 export interface Passive {
   id: string

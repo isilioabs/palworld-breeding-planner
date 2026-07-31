@@ -1,14 +1,13 @@
 import { useState } from 'react'
 import { Plus, Trash2, X } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { PassiveBadge } from '@/components/passive-badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { PalCombobox } from '@/components/pal-combobox'
 import { PassivePicker } from '@/components/passive-picker'
 import { PalIcon } from '@/components/pal-icon'
-import { loadDatabase, palName, passiveName, passiveSummary } from '@/domain/database'
+import { loadDatabase, palName } from '@/domain/database'
 import { usePlannerStore } from '@/state/planner-store'
-import { cn } from '@/lib/utils'
 
 const MAX_PASSIVES_PER_PAL = 4
 
@@ -90,12 +89,10 @@ export function CollectionPanel() {
                       <ul className="mt-2 flex flex-wrap gap-1">
                         {entry.passives.map((id) => (
                           <li key={id}>
-                            <Badge
-                              variant={desiredSet.has(id) ? 'good' : 'muted'}
-                              className={cn('pr-1', desiredSet.has(id) && 'font-semibold')}
-                              title={`${passiveName(db.passiveById.get(id))}\n${passiveSummary(db.passiveById.get(id))}`}
+                            <PassiveBadge
+                              passive={db.passiveById.get(id)}
+                              className={desiredSet.has(id) ? 'pr-1 ring-1 ring-emerald-400/45' : 'pr-1'}
                             >
-                              {passiveName(db.passiveById.get(id))}
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
@@ -111,7 +108,7 @@ export function CollectionPanel() {
                               >
                                 <X className="size-3" />
                               </Button>
-                            </Badge>
+                            </PassiveBadge>
                           </li>
                         ))}
                       </ul>

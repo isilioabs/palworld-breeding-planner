@@ -27,9 +27,9 @@ export function ModePanel() {
             {ORDER.map((mode) => {
               const Icon = ICONS[mode]
               return (
-                <TabsTrigger key={mode} value={mode} className="text-xs">
+                <TabsTrigger key={mode} value={mode} className="text-xs" title={MODES[mode].label}>
                   <Icon />
-                  <span className="hidden sm:inline">{MODES[mode].label}</span>
+                  <span className="truncate">{MODES[mode].label}</span>
                 </TabsTrigger>
               )
             })}

@@ -1,38 +1,34 @@
 import { AlertTriangle, Database, Egg, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { PassiveBadge } from '@/components/passive-badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { MODES } from '@/domain/breeding/cost'
 import type { PlannerMode } from '@/domain/types'
-import { Separator } from '@/components/ui/separator'
-import { TargetPanel } from '@/features/setup/target-panel'
-import { ModePanel } from '@/features/setup/mode-panel'
-import { CollectionPanel } from '@/features/collection/collection-panel'
-import { ProjectsPanel } from '@/features/projects/projects-panel'
+import { Sidebar } from '@/features/layout/sidebar'
 import { PlanSummary } from '@/features/plan/plan-summary'
 import { BreedingTree } from '@/features/plan/breeding-tree'
 import { DirectRecipes } from '@/features/plan/direct-recipes'
 import { usePlanner } from '@/hooks/use-planner'
 import { PlannerProvider, usePlannerStore } from '@/state/planner-store'
-import { loadDatabase, passiveName } from '@/domain/database'
+import { loadDatabase } from '@/domain/database'
 
 function Header() {
   const { mechanics } = loadDatabase()
   return (
-    <header className="border-b border-border bg-card/50">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
-        <Egg className="size-5 text-primary" />
-        <h1 className="text-base font-semibold tracking-tight">Palworld Breeding Planner</h1>
-        <Badge variant="muted" className="gap-1">
-          <Database className="size-3" />
-          {mechanics.counts.pals} Pals · {mechanics.counts.uniqueCombos + mechanics.counts.genderCombos} combos
-          unicos
-        </Badge>
-        <span className="ml-auto text-[11px] text-muted-foreground">
-          Datos {mechanics.sourceVersion} · {mechanics.counts.verifiedPairs.toLocaleString('es-ES')} parejas
-          verificadas · 100 % offline
-        </span>
+    <header className="flex h-14 shrink-0 items-center gap-x-4 gap-y-1 border-b border-border bg-card/50 px-4">
+      <div className="flex items-center gap-2.5">
+        <Egg className="size-6 text-primary" />
+        <h1 className="text-lg font-bold tracking-tight">Palworld Breeding Planner</h1>
       </div>
+      <Badge variant="muted" className="hidden gap-1 sm:inline-flex">
+        <Database className="size-3" />
+        {mechanics.counts.pals} Pals · {mechanics.counts.uniqueCombos + mechanics.counts.genderCombos} combos unicos
+      </Badge>
+      <span className="ml-auto hidden text-[11px] text-muted-foreground lg:inline">
+        Datos {mechanics.sourceVersion} · {mechanics.counts.verifiedPairs.toLocaleString('es-ES')} parejas
+        verificadas · 100 % offline
+      </span>
     </header>
   )
 }
@@ -52,16 +48,18 @@ function PlanArea() {
 
   if (!state.targetPalId) {
     return (
-      <Card>
-        <CardContent className="p-10 text-center text-sm text-muted-foreground">
-          Elige un Pal objetivo para calcular la ruta de crianza.
-        </CardContent>
-      </Card>
+      <div className="mx-auto w-full max-w-[110rem]">
+        <Card>
+          <CardContent className="p-10 text-center text-sm text-muted-foreground">
+            Elige un Pal objetivo para calcular la ruta de crianza.
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto w-full max-w-[110rem] space-y-4">
       {computing && (
         <Card>
           <CardContent className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
@@ -81,7 +79,7 @@ function PlanArea() {
                 <ul className="flex flex-wrap gap-1.5">
                   {result.missingPassives.map((id) => (
                     <li key={id}>
-                      <Badge variant="warn">{passiveName(loadDatabase().passiveById.get(id))}</Badge>
+                      <PassiveBadge passive={loadDatabase().passiveById.get(id)} />
                     </li>
                   ))}
                 </ul>
@@ -104,27 +102,31 @@ function PlanArea() {
   )
 }
 
+/**
+ * App-shell de escritorio: cabecera fija arriba, y debajo una fila que ocupa
+ * el resto de la pantalla con dos columnas de scroll independiente. Asi el
+ * sidebar puede redimensionarse/colapsarse sin que el arbol pierda su
+ * posicion de scroll, y el arbol siempre recibe todo el espacio que el
+ * sidebar deja libre (`flex-1 min-w-0`).
+ */
 function Layout() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex h-screen flex-col bg-background">
       <Header />
-      <main className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-5 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
-        <div className="min-w-0 space-y-4">
-          <TargetPanel />
-          <CollectionPanel />
-          <ModePanel />
-          <ProjectsPanel />
-        </div>
-        <div className="min-w-0">
-          <PlanArea />
-        </div>
-      </main>
-      <Separator />
-      <footer className="mx-auto max-w-7xl px-4 py-6 text-[11px] leading-relaxed text-muted-foreground">
-        Las probabilidades son estimaciones basadas en los pesos de herencia del juego. Se asume que descartas
-        las crias con pasivas basura y que los Pals capturados en estado salvaje salen sin pasivas utiles.
-        Palworld es una marca de Pocketpair, Inc.; este proyecto no esta afiliado con ellos.
-      </footer>
+      <div className="flex min-h-0 flex-1">
+        <Sidebar />
+        <main className="min-w-0 flex-1 overflow-y-auto">
+          <div className="px-5 py-5 sm:px-6 lg:px-8">
+            <PlanArea />
+          </div>
+          <footer className="mx-auto max-w-[110rem] px-5 pb-8 pt-2 text-[11px] leading-relaxed text-muted-foreground sm:px-6 lg:px-8">
+            Las probabilidades son estimaciones basadas en los pesos de herencia del juego. Se asume que
+            descartas las crias con pasivas basura y que los Pals capturados en estado salvaje salen sin
+            pasivas utiles. Palworld es una marca de Pocketpair, Inc.; este proyecto no esta afiliado con
+            ellos.
+          </footer>
+        </main>
+      </div>
     </div>
   )
 }

@@ -10,7 +10,7 @@ import palsJson from '@/data/pals.json'
 import breedingJson from '@/data/breeding.json'
 import passivesJson from '@/data/passives.json'
 import mechanicsJson from '@/data/mechanics.json'
-import type { BreedingData, Mechanics, Pal, Passive } from './types'
+import type { BreedingData, Mechanics, Pal, Passive, WorkType } from './types'
 
 export interface PalDatabase {
   pals: Pal[]
@@ -73,4 +73,23 @@ export function passiveSummary(passive: Passive | undefined): string {
 /** Numero de Paldex legible, con sufijo B para las variantes. */
 export function dexLabel(pal: Pal): string {
   return `#${String(pal.dex).padStart(3, '0')}${pal.variant ? 'B' : ''}`
+}
+
+const WORK_LABELS: Record<WorkType, string> = {
+  Kindling: 'Encender fuego',
+  Watering: 'Regar',
+  Planting: 'Plantar',
+  GenerateElectricity: 'Generar electricidad',
+  Handiwork: 'Manualidades',
+  Gathering: 'Recolectar',
+  Lumbering: 'Talar',
+  Mining: 'Minar',
+  MedicineProduction: 'Producir medicinas',
+  Cooling: 'Refrigerar',
+  Transporting: 'Transportar',
+  Farming: 'Cultivar',
+}
+
+export function workTypeLabel(type: WorkType): string {
+  return WORK_LABELS[type] ?? type
 }

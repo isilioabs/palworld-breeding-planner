@@ -1,11 +1,11 @@
 import { X } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { PassiveBadge } from '@/components/passive-badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { PalCombobox } from '@/components/pal-combobox'
 import { PassivePicker } from '@/components/passive-picker'
-import { loadDatabase, passiveName, passiveSummary } from '@/domain/database'
+import { loadDatabase, passiveName } from '@/domain/database'
 import { MAX_DESIRED_PASSIVES, usePlannerStore } from '@/state/planner-store'
 
 export function TargetPanel() {
@@ -49,12 +49,7 @@ export function TargetPanel() {
                 const passive = db.passiveById.get(id)
                 return (
                   <li key={id}>
-                    <Badge
-                      variant={passive && passive.rank > 0 ? 'default' : 'bad'}
-                      className="pr-1"
-                      title={`${passiveName(passive)}\n${passiveSummary(passive)}`}
-                    >
-                      {passiveName(passive)}
+                    <PassiveBadge passive={passive} className="pr-1">
                       <Button
                         variant="ghost"
                         size="icon-sm"
@@ -64,7 +59,7 @@ export function TargetPanel() {
                       >
                         <X className="size-3" />
                       </Button>
-                    </Badge>
+                    </PassiveBadge>
                   </li>
                 )
               })}

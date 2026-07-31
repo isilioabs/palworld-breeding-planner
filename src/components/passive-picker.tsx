@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Check, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PassiveBadge } from '@/components/passive-badge'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { loadDatabase, passiveEffects, passiveName, passiveSummary } from '@/domain/database'
@@ -71,20 +72,8 @@ export function PassivePicker({ selected, onToggle, max = 4, label = 'Anadir pas
                       title={`${passiveName(passive)}\n${effects.join('\n')}`}
                       className="items-start py-1.5"
                     >
-                      <span
-                        className={cn(
-                          'mt-0.5 w-6 shrink-0 text-center font-mono text-[11px]',
-                          passive.rank > 2
-                            ? 'text-emerald-400'
-                            : passive.rank > 0
-                              ? 'text-sky-400'
-                              : 'text-rose-400',
-                        )}
-                      >
-                        {passive.rank > 0 ? `+${passive.rank}` : passive.rank}
-                      </span>
+                      <PassiveBadge passive={passive} className="mt-0.5 shrink-0" />
                       <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="truncate">{passiveName(passive)}</span>
                         {/* Resumen del efecto: en movil no hay hover, asi que va siempre visible. */}
                         <span className="truncate text-[11px] text-muted-foreground">
                           {effects.join(' · ')}
@@ -103,7 +92,7 @@ export function PassivePicker({ selected, onToggle, max = 4, label = 'Anadir pas
             {active ? (
               <>
                 <p className="flex items-center gap-1.5 text-xs font-semibold">
-                  {passiveName(active)}
+                  <PassiveBadge passive={active} />
                   <span
                     className={cn(
                       'font-mono text-[10px] font-normal',
