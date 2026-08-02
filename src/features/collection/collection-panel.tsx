@@ -6,7 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { PalCombobox } from '@/components/pal-combobox'
 import { PassivePicker } from '@/components/passive-picker'
 import { PalIcon } from '@/components/pal-icon'
+import { RichTooltip } from '@/components/rich-tooltip'
 import { loadDatabase, palName } from '@/domain/database'
+import { useT } from '@/i18n/language-store'
 import { usePlannerStore } from '@/state/planner-store'
 
 const MAX_PASSIVES_PER_PAL = 4
@@ -15,39 +17,40 @@ export function CollectionPanel() {
   const db = loadDatabase()
   const { state, dispatch } = usePlannerStore()
   const [pendingPal, setPendingPal] = useState<string | null>(null)
+  const t = useT()
 
   const desiredSet = new Set(state.desiredPassives)
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>2. Tu coleccion</CardTitle>
-        <CardDescription>
-          Anade los Pals que ya tienes y marca sus pasivas. El planificador los usara como punto de partida.
-        </CardDescription>
+        <CardTitle>{t('collectionPanel.title')}</CardTitle>
+        <CardDescription>{t('collectionPanel.description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex gap-2">
-          <PalCombobox value={pendingPal} onChange={setPendingPal} placeholder="Anadir un Pal a tu caja..." />
-          <Button
-            size="icon"
-            disabled={!pendingPal}
-            aria-label="Anadir a la coleccion"
-            onClick={() => {
-              if (!pendingPal) return
-              dispatch({ type: 'addOwned', palId: pendingPal })
-              setPendingPal(null)
-            }}
-          >
-            <Plus />
-          </Button>
+          <PalCombobox value={pendingPal} onChange={setPendingPal} placeholder={t('collectionPanel.addPlaceholder')} />
+          <RichTooltip title={t('collectionPanel.addTitle')} description={t('collectionPanel.addDescription')}>
+            <Button
+              size="icon"
+              disabled={!pendingPal}
+              aria-label={t('collectionPanel.addTitle')}
+              onClick={() => {
+                if (!pendingPal) return
+                dispatch({ type: 'addOwned', palId: pendingPal })
+                setPendingPal(null)
+              }}
+            >
+              <Plus aria-hidden="true" />
+            </Button>
+          </RichTooltip>
         </div>
 
         {state.owned.length === 0 ? (
           <p className="rounded-md border border-dashed border-border px-3 py-6 text-center text-xs text-muted-foreground">
-            Tu coleccion esta vacia.
+            {t('collectionPanel.emptyLine1')}
             <br />
-            Sin ella solo se podran planificar rutas partiendo de capturas.
+            {t('collectionPanel.emptyLine2')}
           </p>
         ) : (
           <>
@@ -62,7 +65,7 @@ export function CollectionPanel() {
                       <PassivePicker
                         selected={entry.passives}
                         max={MAX_PASSIVES_PER_PAL}
-                        label="Pasiva"
+                        label={t('collectionPanel.passiveLabel')}
                         onToggle={(passiveId) =>
                           dispatch({
                             type: 'updateOwned',
@@ -75,14 +78,16 @@ export function CollectionPanel() {
                           })
                         }
                       />
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Quitar ${palName(pal)}`}
-                        onClick={() => dispatch({ type: 'removeOwned', uid: entry.uid })}
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
+                      <RichTooltip title={t('collectionPanel.removePal', { name: palName(pal) })} description={t('collectionPanel.removePalDescription')}>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={t('collectionPanel.removePal', { name: palName(pal) })}
+                          onClick={() => dispatch({ type: 'removeOwned', uid: entry.uid })}
+                        >
+                          <Trash2 className="size-3.5" aria-hidden="true" />
+                        </Button>
+                      </RichTooltip>
                     </div>
 
                     {entry.passives.length > 0 && (
@@ -97,7 +102,7 @@ export function CollectionPanel() {
                                 variant="ghost"
                                 size="icon-sm"
                                 className="size-4 rounded-sm hover:bg-transparent hover:opacity-70"
-                                aria-label="Quitar pasiva"
+                                aria-label={t('collectionPanel.removePassiveAria')}
                                 onClick={() =>
                                   dispatch({
                                     type: 'updateOwned',
@@ -118,9 +123,9 @@ export function CollectionPanel() {
               })}
             </ul>
             <div className="flex items-center justify-between pt-1">
-              <span className="text-xs text-muted-foreground">{state.owned.length} Pals en tu caja</span>
+              <span className="text-xs text-muted-foreground">{t('collectionPanel.count', { count: state.owned.length })}</span>
               <Button variant="ghost" size="sm" onClick={() => dispatch({ type: 'clearOwned' })}>
-                Vaciar
+                {t('collectionPanel.clear')}
               </Button>
             </div>
           </>

@@ -12,6 +12,9 @@
  * y por eso tienen su propio nivel en vez de compartirlo con "legendario".
  */
 
+import { getLang } from '@/i18n/lang'
+import { DICTS } from '@/i18n/translations'
+
 export type RarityTier = 1 | 2 | 3 | 4 | 5 | 6
 
 export interface RarityInfo {
@@ -19,16 +22,16 @@ export interface RarityInfo {
   label: string
 }
 
-const TIERS: { max: number; tier: RarityTier; label: string }[] = [
-  { max: 2, tier: 1, label: 'Comun' },
-  { max: 4, tier: 2, label: 'Poco comun' },
-  { max: 6, tier: 3, label: 'Raro' },
-  { max: 8, tier: 4, label: 'Epico' },
-  { max: 10, tier: 5, label: 'Legendario' },
-  { max: Infinity, tier: 6, label: 'Mitico' },
+const TIERS: { max: number; tier: RarityTier; key: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic' }[] = [
+  { max: 2, tier: 1, key: 'common' },
+  { max: 4, tier: 2, key: 'uncommon' },
+  { max: 6, tier: 3, key: 'rare' },
+  { max: 8, tier: 4, key: 'epic' },
+  { max: 10, tier: 5, key: 'legendary' },
+  { max: Infinity, tier: 6, key: 'mythic' },
 ]
 
 export function rarityInfo(rarity: number): RarityInfo {
   const found = TIERS.find((t) => rarity <= t.max) ?? TIERS[TIERS.length - 1]
-  return { tier: found.tier, label: found.label }
+  return { tier: found.tier, label: DICTS[getLang()][`rarity.${found.key}`] }
 }

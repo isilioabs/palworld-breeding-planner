@@ -2,6 +2,29 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Autohospedadas para que la carta de Pal use la tipografia real del juego
+ * (Anton + Oxanium, verificadas por el diseñador extrayendo los .ttf de
+ * Pal/Content/Pal/Font/ con FModel) sin romper el "100% offline". Son fuentes
+ * variables (un solo archivo cubre el rango de pesos de Oxanium). No hay URL
+ * de paquete estable en Google Fonts para automatizar la descarga -ver
+ * README de la carta si hay que regenerarlas.
+ */
+@font-face {
+  font-family: 'Anton';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/anton-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Oxanium';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('/fonts/oxanium-latin.woff2') format('woff2');
+}
+
 :root {
   --radius: 0.65rem;
   --background: oklch(1 0 0);
@@ -115,14 +138,121 @@
   to { opacity: 1; transform: scaleY(1); }
 }
 
+@keyframes pbp-dot-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
 .metric-card,
-.tree-node-card {
+.tree-node-card,
+.loading-card {
   animation: pbp-card-enter 260ms ease-out both;
 }
 
 .tree-connector {
   animation: pbp-connector 280ms ease-out both;
   transform-origin: top;
+}
+
+.loading-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+  background: var(--color-primary);
+  animation: pbp-dot-bounce 1100ms ease-in-out infinite;
+}
+
+/*
+ * Carta coleccionable del Pal v1.5 (arbol de crianza). Ver
+ * design_handoff_pal_card/README.md del cliente: geometria y colores viven en
+ * pal-card.tsx (son parte del diseno), esto es lo que un `style` inline no
+ * puede expresar: las @property (para que las mezclas de --accent se computen
+ * una sola vez y se hereden, ver nota de mas abajo), los keyframes, y sobre
+ * todo el mecanismo de pausa de animaciones.
+ */
+@property --g60 { syntax: '<color>'; inherits: true; initial-value: transparent }
+@property --g70 { syntax: '<color>'; inherits: true; initial-value: transparent }
+@property --g75 { syntax: '<color>'; inherits: true; initial-value: transparent }
+@property --g80 { syntax: '<color>'; inherits: true; initial-value: transparent }
+@property --g95 { syntax: '<color>'; inherits: true; initial-value: transparent }
+@property --pnlA { syntax: '<color>'; inherits: true; initial-value: #23272f }
+@property --pnlB { syntax: '<color>'; inherits: true; initial-value: #13151a }
+@property --pnlRing { syntax: '<color>'; inherits: true; initial-value: #4a505c }
+@property --lbl { syntax: '<color>'; inherits: true; initial-value: #e6eaf1 }
+@property --lbl2 { syntax: '<color>'; inherits: true; initial-value: #e6eaf1 }
+@property --rule { syntax: '<color>'; inherits: true; initial-value: #cfd5df }
+@property --plateA { syntax: '<color>'; inherits: true; initial-value: #2f333c }
+@property --plateB { syntax: '<color>'; inherits: true; initial-value: #0f1115 }
+@property --hiA { syntax: '<color>'; inherits: true; initial-value: #363b45 }
+@property --hiB { syntax: '<color>'; inherits: true; initial-value: #121419 }
+@property --pillA { syntax: '<color>'; inherits: true; initial-value: #2f333c }
+@property --pillB { syntax: '<color>'; inherits: true; initial-value: #14161a }
+@property --barA { syntax: '<color>'; inherits: true; initial-value: #10131a }
+@property --barB { syntax: '<color>'; inherits: true; initial-value: #f2f4f8 }
+@property --barC { syntax: '<color>'; inherits: true; initial-value: #f2f4f8 }
+@property --tgt { syntax: '<color>'; inherits: true; initial-value: #eef2f8 }
+@property --dia { syntax: '<color>'; inherits: true; initial-value: #e8ecf4 }
+
+@keyframes pcShimmer { 0% { transform: translate(-170%,-34%) skewX(-18deg); opacity: 0 } 10% { opacity: 1 } 90% { opacity: 1 } 100% { transform: translate(380%,34%) skewX(-18deg); opacity: 0 } }
+@keyframes pcRainbow { from { background-position: 0% 50% } to { background-position: 200% 50% } }
+@keyframes pcPassiveGlow { 0%,100% { opacity: .34 } 50% { opacity: .8 } }
+@keyframes pcEpic { 0%,100% { opacity: .3 } 50% { opacity: .66 } }
+@keyframes pcTarget { 0%,100% { opacity: .45; transform: scale(1) } 50% { opacity: .9; transform: scale(1.012) } }
+@keyframes pcDrift { from { background-position: 0 0,0 0,0 0 } to { background-position: 120px -160px,-90px -130px,60px -110px } }
+@keyframes pcRays { from { transform: translate(-50%,-50%) rotate(0) } to { transform: translate(-50%,-50%) rotate(360deg) } }
+@keyframes pcHalo { 0%,100% { transform: translate(-50%,-50%) scale(1); opacity: .5 } 50% { transform: translate(-50%,-50%) scale(1.05); opacity: .78 } }
+@keyframes pcBokeh { 0% { transform: translateY(16px); opacity: 0 } 22% { opacity: .55 } 72% { opacity: .5 } 100% { transform: translateY(-46px); opacity: 0 } }
+
+/*
+ * Presupuesto de animacion -- LO MAS IMPORTANTE de este sistema. Una carta
+ * legendaria con 4 pasivas miticas corre ~15 animaciones infinitas; con 20
+ * cartas visibles en el arbol serian 300 bucles sobre un canvas que ademas se
+ * panea y se hace zoom. Por eso TODA capa animada lleva la clase `pc-anim`,
+ * que arranca en pausa, y solo corre en la carta con hover o en la del
+ * objetivo (`data-live="1"`).
+ *
+ * El !important no es opcional: cada nodo animado lleva `animation` (la
+ * abreviada) en su `style` inline, que resetea animation-play-state a
+ * running, y una declaracion inline gana a cualquier regla de hoja. Sin
+ * !important la pausa no hace nada.
+ */
+.pc-anim { animation-play-state: paused !important; }
+.pc-card:hover .pc-anim,
+.pc-card[data-live="1"] .pc-anim { animation-play-state: running !important; }
+
+.pc-card { cursor: default; }
+.pc-card:hover,
+.pc-card:focus-visible {
+  transform: translateY(-12px) scale(1.008);
+  filter: brightness(1.05);
+  box-shadow:
+    0 3px 4px rgba(0, 0, 0, 0.55),
+    0 20px 30px -14px rgba(0, 0, 0, 0.8),
+    0 54px 92px -24px rgba(0, 0, 0, 0.92),
+    0 0 64px -12px color-mix(in oklch, var(--accent) 75%, transparent);
+}
+.pc-card[data-live='1'] {
+  filter: brightness(1.05);
+}
+button.pc-card-trigger { cursor: pointer; }
+
+.pc-portrait { transition: transform 0.18s cubic-bezier(0.22, 0.7, 0.3, 1); }
+.pc-card:hover .pc-portrait { transform: translate(-50%, -50%) scale(1.02); }
+
+.pc-work-row { transition: background 0.18s ease; }
+.pc-card:hover .pc-work-row { background: rgba(255, 255, 255, 0.035); }
+
+.pc-passive-chip { transition: transform 0.18s cubic-bezier(0.22, 0.7, 0.3, 1), filter 0.18s ease; }
+.pc-card:hover .pc-passive-chip { transform: translateY(-2px); filter: brightness(1.15) saturate(1.18); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pc-anim { animation: none !important; }
+  .pc-card:hover,
+  .pc-card:focus-visible,
+  .pc-card:hover .pc-portrait,
+  .pc-card:hover .pc-passive-chip {
+    transform: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

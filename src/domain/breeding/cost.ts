@@ -10,6 +10,8 @@
  * todos los terminos son >= 0 y cada paso suma un `stepCost` estrictamente
  * positivo.
  */
+import { getLang } from '@/i18n/lang'
+import { DICTS } from '@/i18n/translations'
 import type { Pal, PlannerMode } from '../types'
 
 export type CaptureTier = 'none' | 'easy' | 'any'
@@ -76,10 +78,8 @@ export const DEPTH_PRIORITY_SCALE = 1e6
 
 export const MODE_ORDER: PlannerMode[] = ['collection', 'breeding', 'hybrid']
 
-export const MODES: Record<PlannerMode, { label: string; hint: string; weights: CostWeights }> = {
+export const MODES: Record<PlannerMode, { weights: CostWeights }> = {
   collection: {
-    label: 'Solo mi coleccion',
-    hint: 'No permite capturar nada nuevo: la ruta parte unicamente de los Pals que ya tienes.',
     weights: {
       step: 6,
       eggs: 1,
@@ -92,8 +92,6 @@ export const MODES: Record<PlannerMode, { label: string; hint: string; weights: 
     },
   },
   breeding: {
-    label: 'Full breeding',
-    hint: `Solo captura Pals accesibles (rareza menor que ${HARD_CATCH_RARITY} y nivel salvaje menor que ${HARD_CATCH_LEVEL}). Los bosses y los de final de partida hay que criarlos, aunque el arbol salga mas largo.`,
     weights: {
       step: 3,
       eggs: 2.5,
@@ -106,8 +104,6 @@ export const MODES: Record<PlannerMode, { label: string; hint: string; weights: 
     },
   },
   hybrid: {
-    label: 'Breeding + captura',
-    hint: 'Da por hecho que puedes capturar lo que sea, bosses incluidos, y con eso acorta las generaciones todo lo posible.',
     weights: {
       step: 40,
       eggs: 0.6,
@@ -119,6 +115,16 @@ export const MODES: Record<PlannerMode, { label: string; hint: string; weights: 
       depthFirst: true,
     },
   },
+}
+
+/** Texto de cada modo, en el idioma activo. Separado de MODES para no mezclar texto de UI con los pesos del algoritmo (esos no se tocan nunca). */
+export function modeLabel(mode: PlannerMode): string {
+  return DICTS[getLang()][`mode.${mode}.label` as 'mode.collection.label']
+}
+
+export function modeHint(mode: PlannerMode): string {
+  const template = DICTS[getLang()][`mode.${mode}.hint` as 'mode.collection.hint']
+  return template.replace('{rarity}', String(HARD_CATCH_RARITY)).replace('{level}', String(HARD_CATCH_LEVEL))
 }
 
 /**

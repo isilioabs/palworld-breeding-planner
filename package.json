@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "data:build": "node scripts/build-data.mjs",
     "data:verify": "node scripts/verify-data.mjs",
-    "data:icons": "node scripts/fetch-icons.mjs"
+    "data:icons": "node scripts/fetch-icons.mjs",
+    "data:card-assets": "node scripts/fetch-card-assets.mjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.1.4",

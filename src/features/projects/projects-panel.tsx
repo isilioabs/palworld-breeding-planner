@@ -3,6 +3,7 @@ import { Download, FolderOpen, Save, Trash2, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { RichTooltip } from '@/components/rich-tooltip'
 import { loadDatabase, palName } from '@/domain/database'
 import {
   deleteProject,
@@ -12,6 +13,7 @@ import {
   saveProject,
   type BreedingProject,
 } from '@/domain/projects'
+import { useLang, useT } from '@/i18n/language-store'
 import { usePlannerStore } from '@/state/planner-store'
 
 export function ProjectsPanel() {
@@ -21,11 +23,13 @@ export function ProjectsPanel() {
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const t = useT()
+  const [lang] = useLang()
 
   const refresh = () => setProjects(listProjects())
 
   const handleSave = () => {
-    const fallback = state.targetPalId ? palName(db.palById.get(state.targetPalId)) : 'Proyecto'
+    const fallback = state.targetPalId ? palName(db.palById.get(state.targetPalId)) : t('projectsPanel.nameFallback')
     saveProject(name || fallback, {
       targetPalId: state.targetPalId,
       desiredPassives: state.desiredPassives,
@@ -61,24 +65,28 @@ export function ProjectsPanel() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Proyectos guardados</CardTitle>
-        <CardDescription>Se guardan en este navegador. Exporta a JSON para compartir o respaldar.</CardDescription>
+        <CardTitle>{t('projectsPanel.title')}</CardTitle>
+        <CardDescription>{t('projectsPanel.description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex gap-2">
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Nombre del proyecto..."
+            placeholder={t('projectsPanel.namePlaceholder')}
             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
           />
-          <Button onClick={handleSave} className="gap-1.5">
-            <Save className="size-4" />
-            Guardar
-          </Button>
-          <Button variant="outline" size="icon" aria-label="Importar" onClick={() => fileRef.current?.click()}>
-            <Upload />
-          </Button>
+          <RichTooltip title={t('projectsPanel.saveTitle')} description={t('projectsPanel.saveDescription')}>
+            <Button onClick={handleSave} className="gap-1.5">
+              <Save className="size-4" aria-hidden="true" />
+              {t('projectsPanel.save')}
+            </Button>
+          </RichTooltip>
+          <RichTooltip title={t('projectsPanel.importTitle')} description={t('projectsPanel.importDescription')}>
+            <Button variant="outline" size="icon" aria-label={t('projectsPanel.import')} onClick={() => fileRef.current?.click()}>
+              <Upload aria-hidden="true" />
+            </Button>
+          </RichTooltip>
           <input
             ref={fileRef}
             type="file"
@@ -95,7 +103,7 @@ export function ProjectsPanel() {
         {error && <p className="text-xs text-destructive">{error}</p>}
 
         {projects.length === 0 ? (
-          <p className="text-xs text-muted-foreground">Todavia no has guardado ningun proyecto.</p>
+          <p className="text-xs text-muted-foreground">{t('projectsPanel.empty')}</p>
         ) : (
           <ul className="space-y-1.5">
             {projects.map((project) => (
@@ -106,33 +114,42 @@ export function ProjectsPanel() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{project.name}</p>
                   <p className="truncate text-[11px] text-muted-foreground">
-                    {project.targetPalId ? palName(db.palById.get(project.targetPalId)) : 'sin objetivo'} ·{' '}
-                    {project.desiredPassives.length} pasivas · {project.owned.length} Pals ·{' '}
-                    {new Date(project.updatedAt).toLocaleDateString('es-ES')}
+                    {project.targetPalId ? palName(db.palById.get(project.targetPalId)) : t('projectsPanel.noTarget')} ·{' '}
+                    {t('projectsPanel.summary', {
+                      passives: project.desiredPassives.length,
+                      pals: project.owned.length,
+                      date: new Date(project.updatedAt).toLocaleDateString(lang === 'en' ? 'en-US' : 'es-ES'),
+                    })}
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Cargar"
-                  onClick={() => dispatch({ type: 'loadDraft', draft: project })}
-                >
-                  <FolderOpen className="size-3.5" />
-                </Button>
-                <Button variant="ghost" size="icon-sm" aria-label="Exportar" onClick={() => handleExport(project)}>
-                  <Download className="size-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Borrar"
-                  onClick={() => {
-                    deleteProject(project.id)
-                    refresh()
-                  }}
-                >
-                  <Trash2 className="size-3.5" />
-                </Button>
+                <RichTooltip title={t('projectsPanel.loadTitle')} description={t('projectsPanel.loadDescription')}>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={t('projectsPanel.load')}
+                    onClick={() => dispatch({ type: 'loadDraft', draft: project })}
+                  >
+                    <FolderOpen className="size-3.5" aria-hidden="true" />
+                  </Button>
+                </RichTooltip>
+                <RichTooltip title={t('projectsPanel.exportTitle')} description={t('projectsPanel.exportDescription')}>
+                  <Button variant="ghost" size="icon-sm" aria-label={t('projectsPanel.export')} onClick={() => handleExport(project)}>
+                    <Download className="size-3.5" aria-hidden="true" />
+                  </Button>
+                </RichTooltip>
+                <RichTooltip title={t('projectsPanel.deleteTitle')} description={t('projectsPanel.deleteDescription')}>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={t('projectsPanel.delete')}
+                    onClick={() => {
+                      deleteProject(project.id)
+                      refresh()
+                    }}
+                  >
+                    <Trash2 className="size-3.5" aria-hidden="true" />
+                  </Button>
+                </RichTooltip>
               </li>
             ))}
           </ul>

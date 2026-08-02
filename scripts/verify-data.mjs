@@ -93,6 +93,19 @@ async function main() {
     process.exit(1)
   }
   console.log('\nOK: la base de datos compacta coincide al 100% con la tabla del juego.')
+
+  // --- Elementos (cosmetico, fuente Palpedia): solo formato + cobertura ----
+  const CANONICAL_ELEMENTS = new Set(['neutral', 'fire', 'water', 'grass', 'electric', 'ice', 'ground', 'dark', 'dragon'])
+  const withElements = pals.filter((p) => (p.elements ?? []).length > 0)
+  const badValues = pals.flatMap((p) => (p.elements ?? []).filter((e) => !CANONICAL_ELEMENTS.has(e)))
+  console.log(`\nElementos:         ${withElements.length}/${pals.length} Pals (fuente: Palpedia, no PalCalc)`)
+  if (badValues.length) {
+    console.error(`x valores de elemento fuera del set canonico: ${[...new Set(badValues)].join(', ')}`)
+    process.exit(1)
+  }
+  if (withElements.length < pals.length * 0.9) {
+    console.warn('x cobertura de elementos por debajo del 90%: revisa si Palpedia cambio de estructura')
+  }
 }
 
 main().catch((err) => {

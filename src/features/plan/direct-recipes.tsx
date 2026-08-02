@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { captureDifficulty, getResolver } from '@/domain/breeding'
 import { PalIcon } from '@/components/pal-icon'
 import { loadDatabase, palName } from '@/domain/database'
+import { useT } from '@/i18n/language-store'
 
 const PAGE = 24
 
@@ -11,6 +12,7 @@ const PAGE = 24
 export function DirectRecipes({ targetPalId }: { targetPalId: string }) {
   const db = loadDatabase()
   const [limit, setLimit] = useState(PAGE)
+  const t = useT()
 
   const pairs = useMemo(() => {
     // Se ordena por la misma dificultad de captura que usa el planificador, para
@@ -33,16 +35,14 @@ export function DirectRecipes({ targetPalId }: { targetPalId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Combinaciones directas para {palName(target)}</CardTitle>
+        <CardTitle>{t('directRecipes.title', { name: palName(target) })}</CardTitle>
         <CardDescription>
-          {pairs.length === 0
-            ? 'Ninguna pareja produce este Pal: solo se consigue capturandolo.'
-            : `${pairs.length} parejas dan este Pal, ordenadas de mas comun a mas rara.`}
+          {pairs.length === 0 ? t('directRecipes.none') : t('directRecipes.count', { count: pairs.length })}
         </CardDescription>
       </CardHeader>
       {pairs.length > 0 && (
         <CardContent className="space-y-2">
-          <ul className="grid gap-1 sm:grid-cols-2">
+          <ul className="grid gap-1 sm:grid-cols-2 xl:grid-cols-3">
             {pairs.slice(0, limit).map(({ a, b }) => (
               <li
                 key={`${a}|${b}`}
@@ -58,7 +58,7 @@ export function DirectRecipes({ targetPalId }: { targetPalId: string }) {
           </ul>
           {limit < pairs.length && (
             <Button variant="outline" size="sm" className="w-full" onClick={() => setLimit((l) => l + PAGE * 2)}>
-              Ver mas ({pairs.length - limit} restantes)
+              {t('directRecipes.more', { count: pairs.length - limit })}
             </Button>
           )}
         </CardContent>

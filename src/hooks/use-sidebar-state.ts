@@ -72,9 +72,13 @@ export interface SidebarState {
   isDragging: boolean
   /** Si se puede arrastrar para redimensionar (no tiene sentido en pantallas estrechas). */
   canResize: boolean
+  minWidth: number
+  maxWidth: number
   toggle: () => void
   expand: () => void
   startResize: (clientX: number) => void
+  /** Ajuste por teclado (flechas izquierda/derecha) sobre el borde redimensionable. */
+  resizeBy: (delta: number) => void
 }
 
 export function useSidebarState(): SidebarState {
@@ -116,6 +120,10 @@ export function useSidebarState(): SidebarState {
     [prefs.width],
   )
 
+  const resizeBy = useCallback((delta: number) => {
+    setPrefs((p) => ({ ...p, width: clamp(p.width + delta) }))
+  }, [])
+
   const effectiveCollapsed = prefs.collapsed || isNarrow
 
   return {
@@ -124,9 +132,12 @@ export function useSidebarState(): SidebarState {
     effectiveWidth: effectiveCollapsed ? COLLAPSED_WIDTH : prefs.width,
     isDragging,
     canResize: !isNarrow,
+    minWidth: MIN_WIDTH,
+    maxWidth: MAX_WIDTH,
     toggle,
     expand,
     startResize,
+    resizeBy,
   }
 }
 

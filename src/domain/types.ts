@@ -19,7 +19,15 @@ export interface Pal {
   nocturnal: boolean
   /** Las 2 aptitudes de trabajo mas altas (no nulas), de mayor a menor. */
   work: { type: WorkType; value: number }[]
+  /**
+   * Elemento(s) del Pal (1 o 2). Fuente: palpedia.com, no PalCalc (ver
+   * scripts/build-data.mjs). Puramente cosmetico. Vacio si no se pudo enlazar
+   * con esa fuente (p.ej. los monstruos del crossover de Terraria).
+   */
+  elements: ElementType[]
 }
+
+export type ElementType = 'neutral' | 'fire' | 'water' | 'grass' | 'electric' | 'ice' | 'ground' | 'dark' | 'dragon'
 
 /** Tipos de trabajo del juego, tal cual los usa WorkSuitability. */
 export type WorkType =

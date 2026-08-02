@@ -10,6 +10,8 @@ import palsJson from '@/data/pals.json'
 import breedingJson from '@/data/breeding.json'
 import passivesJson from '@/data/passives.json'
 import mechanicsJson from '@/data/mechanics.json'
+import { getLang } from '@/i18n/lang'
+import { DICTS } from '@/i18n/translations'
 import type { BreedingData, Mechanics, Pal, Passive, WorkType } from './types'
 
 export interface PalDatabase {
@@ -45,21 +47,24 @@ export function loadDatabase(): PalDatabase {
   return cached
 }
 
-/** Nombre a mostrar (es con fallback a en). */
+/** Nombre a mostrar en el idioma activo (con fallback a ingles si falta la traduccion). */
 export function palName(pal: Pal | undefined): string {
   if (!pal) return '???'
+  if (getLang() === 'en') return pal.name
   return pal.nameEs || pal.name
 }
 
 export function passiveName(passive: Passive | undefined): string {
   if (!passive) return '???'
+  if (getLang() === 'en') return passive.name
   return passive.nameEs || passive.name
 }
 
 /** Efecto de la pasiva, como lista de lineas (algunas tienen varios efectos). */
 export function passiveEffects(passive: Passive | undefined): string[] {
   if (!passive) return []
-  return (passive.descEs || passive.desc || '')
+  const desc = getLang() === 'en' ? passive.desc : passive.descEs || passive.desc || ''
+  return (desc || '')
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
@@ -75,21 +80,6 @@ export function dexLabel(pal: Pal): string {
   return `#${String(pal.dex).padStart(3, '0')}${pal.variant ? 'B' : ''}`
 }
 
-const WORK_LABELS: Record<WorkType, string> = {
-  Kindling: 'Encender fuego',
-  Watering: 'Regar',
-  Planting: 'Plantar',
-  GenerateElectricity: 'Generar electricidad',
-  Handiwork: 'Manualidades',
-  Gathering: 'Recolectar',
-  Lumbering: 'Talar',
-  Mining: 'Minar',
-  MedicineProduction: 'Producir medicinas',
-  Cooling: 'Refrigerar',
-  Transporting: 'Transportar',
-  Farming: 'Cultivar',
-}
-
 export function workTypeLabel(type: WorkType): string {
-  return WORK_LABELS[type] ?? type
+  return DICTS[getLang()][`work.${type}` as keyof (typeof DICTS)['es']] ?? type
 }
