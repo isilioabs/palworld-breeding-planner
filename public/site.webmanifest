@@ -1,0 +1,10 @@
+{
+  "name": "PalBreed — Palworld Breeding Companion",
+  "short_name": "PalBreed",
+  "description": "Offline planning for Palworld breeding, builds, and collection progress.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#071016",
+  "theme_color": "#071016",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

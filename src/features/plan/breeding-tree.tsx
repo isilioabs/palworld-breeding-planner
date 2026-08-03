@@ -1,25 +1,38 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Crown, Egg, Maximize2, Package, Swords, Target, ZoomIn, ZoomOut } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { PalCard, type PalCardPassive, type PalCardWork } from '@/components/pal-card'
+import { PalIcon } from '@/components/pal-icon'
 import { RichTooltip } from '@/components/rich-tooltip'
 import { loadDatabase, palName, passiveName, workTypeLabel } from '@/domain/database'
-import { rarityInfo } from '@/domain/rarity'
+import { ELEMENT_INFO } from '@/domain/element'
 import { useT } from '@/i18n/language-store'
+import { usePokedex } from '@/features/pokedex/pokedex-panel'
 import type { PlanNode, WorkType } from '@/domain/types'
 import { cn } from '@/lib/utils'
 import { collectKeys, countBreedNodes } from './plan-utils'
 
-// La carta del Pal es una caja fija de 780x1000 (ver design_handoff_pal_card):
-// incluso un arbol "corto" de 2 niveles ya pide ~2000px de alto natural, asi
-// que hacen falta escalones bastante mas pequenos que en la version anterior
-// (cuando la carta media 224px) para poder encogerla lo que de verdad haga falta.
-const ZOOM_STEPS = [0.12, 0.16, 0.2, 0.25, 0.3, 0.4, 0.55, 0.7, 0.85, 1, 1.15, 1.3]
+const ZOOM_STEPS = [0.2, 0.28, 0.4, 0.55, 0.7, 0.85, 1, 1.15, 1.3]
 const MIN_ZOOM = ZOOM_STEPS[0]
 const MAX_ZOOM = ZOOM_STEPS[ZOOM_STEPS.length - 1]
 const DEFAULT_ZOOM = 1
+const COMPACT_CARD_ZOOM = 0.3
+
+const WORK_ICON_FILE: Record<WorkType, string> = {
+  Kindling: 'Kindling',
+  Watering: 'Watering',
+  Planting: 'Planting',
+  GenerateElectricity: 'ElectricityGeneration',
+  Handiwork: 'Handiwork',
+  Gathering: 'Gathering',
+  Lumbering: 'Lumbering',
+  Mining: 'Mining',
+  MedicineProduction: 'MedicineProduction',
+  Cooling: 'Cooling',
+  Transporting: 'Transporting',
+  Farming: 'Farming',
+}
 
 /**
  * "Ajustar todo el arbol" YA NO redondea al escalon mas cercano: entre 0.16 y
@@ -32,20 +45,8 @@ const DEFAULT_ZOOM = 1
 const nextZoomStepUp = (zoom: number) => ZOOM_STEPS.find((step) => step > zoom + 0.001) ?? MAX_ZOOM
 const nextZoomStepDown = (zoom: number) => [...ZOOM_STEPS].reverse().find((step) => step < zoom - 0.001) ?? MIN_ZOOM
 
-/**
- * La carta (design_handoff_pal_card) es una caja fija de 780x1000 en px
- * absolutos por dentro -no admite un prop de escala-, asi que para encogerla
- * un 20% sin tocar ni uno de esos valores calibrados se envuelve en un
- * `transform: scale()` con origen en la esquina y un contenedor exterior del
- * tamano YA encogido. Asi el layout del arbol (conectores, offsetWidth para
- * fitTree...) mide el tamano real en pantalla, no el de la carta sin escalar.
- */
-const CARD_WIDTH = 780
-const CARD_HEIGHT = 1000
-const CARD_SCALE = 0.8
-
-/** Alto de la cabecera fija de la app (h-14), unico numero que hay que conocer para calcular cuanto le queda al canvas. */
-const APP_HEADER_HEIGHT = 56
+/** Alto minimo de la cabecera de la app (min-h-16). */
+const APP_HEADER_HEIGHT = 64
 const CANVAS_MIN_HEIGHT = 420
 const CANVAS_BOTTOM_GAP = 24
 
@@ -61,9 +62,17 @@ const FIT_SIDE_GAP = 48
 const FIT_TOP_GAP = 24
 const FIT_BOTTOM_GAP = 64
 
-export function BreedingTree({ root }: { root: PlanNode }) {
+/** Limita el escalonado visual: los arboles profundos siguen revelandose en
+ * menos de 400 ms y no retienen capas de composicion despues de aparecer. */
+function maxPlanDepth(node: PlanNode): number {
+  return Math.max(node.depth, ...(node.parents?.map(maxPlanDepth) ?? []))
+}
+
+export function BreedingTree({ root, roots }: { root?: PlanNode; roots?: PlanNode[] }) {
   const t = useT()
-  const allKeys = useMemo(() => collectKeys(root), [root])
+  const projectRoots = useMemo(() => roots?.length ? roots : root ? [root] : [], [root, roots])
+  const allKeys = useMemo(() => projectRoots.flatMap((projectRoot) => collectKeys(projectRoot)), [projectRoots])
+  const revealDepth = useMemo(() => Math.max(0, ...projectRoots.map(maxPlanDepth)), [projectRoots])
   // Se guarda lo PLEGADO: por defecto el arbol entero esta abierto.
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
   const [zoom, setZoom] = useState(DEFAULT_ZOOM)
@@ -79,18 +88,35 @@ export function BreedingTree({ root }: { root: PlanNode }) {
   // estado totalmente separados: arrastrar jamas llama a esta funcion).
   const [zooming, setZooming] = useState(false)
   const zoomEndTimerRef = useRef<number | null>(null)
+  const panFrameRef = useRef<number | null>(null)
+  const wheelFrameRef = useRef<number | null>(null)
+  const wheelDeltaRef = useRef(0)
+  const panRef = useRef(pan)
+  const zoomRef = useRef(zoom)
   const cardRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const treeRef = useRef<HTMLDivElement>(null)
 
+  useEffect(() => {
+    panRef.current = pan
+  }, [pan])
+  useEffect(() => {
+    zoomRef.current = zoom
+  }, [zoom])
+
+  const writeTreeTransform = (nextPan = panRef.current, nextZoom = zoomRef.current) => {
+    const tree = treeRef.current
+    if (tree) tree.style.transform = `translate3d(${nextPan.x}px, ${nextPan.y}px, 0) scale(${nextZoom})`
+  }
+
   const beginZoomAnimation = () => {
     setZooming(true)
     if (zoomEndTimerRef.current != null) window.clearTimeout(zoomEndTimerRef.current)
-    // Red de seguridad si `onTransitionEnd` no llega a disparar (p.ej. el
-    // zoom no cambia realmente porque ya estaba en el limite): un poco mas
-    // que los 450ms de la transicion para no cortarla a medias.
-    zoomEndTimerRef.current = window.setTimeout(() => setZooming(false), 550)
+    // La animacion es corta a proposito: una transicion larga mientras se
+    // escalan muchos nodos se percibe como lag aunque el compositor mantenga
+    // los FPS. El boton sigue teniendo respuesta visual, sin arrastrar la UI.
+    zoomEndTimerRef.current = window.setTimeout(() => setZooming(false), 190)
   }
 
   /**
@@ -116,11 +142,19 @@ export function BreedingTree({ root }: { root: PlanNode }) {
 
   const zoomIn = () => {
     beginZoomAnimation()
-    setZoom((z) => nextZoomStepUp(z))
+    setZoom((z) => {
+      const next = nextZoomStepUp(z)
+      zoomRef.current = next
+      return next
+    })
   }
   const zoomOut = () => {
     beginZoomAnimation()
-    setZoom((z) => nextZoomStepDown(z))
+    setZoom((z) => {
+      const next = nextZoomStepDown(z)
+      zoomRef.current = next
+      return next
+    })
   }
 
   /**
@@ -143,7 +177,9 @@ export function BreedingTree({ root }: { root: PlanNode }) {
 
   const centerTree = () => {
     beginZoomAnimation()
-    setPan(centeredPanForScale(zoom))
+    const nextPan = centeredPanForScale(zoom)
+    panRef.current = nextPan
+    setPan(nextPan)
   }
 
   /**
@@ -188,8 +224,11 @@ export function BreedingTree({ root }: { root: PlanNode }) {
       ),
     )
     beginZoomAnimation()
+    zoomRef.current = fittingZoom
     setZoom(fittingZoom)
-    setPan(topAnchoredPanForScale(fittingZoom))
+    const nextPan = topAnchoredPanForScale(fittingZoom)
+    panRef.current = nextPan
+    setPan(nextPan)
   }
 
   // Un plan nuevo vuelve a empezar expandido y encuadrado por completo: con
@@ -206,7 +245,7 @@ export function BreedingTree({ root }: { root: PlanNode }) {
     const timer = window.setTimeout(() => fitTree(), 30)
     return () => window.clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [root])
+  }, [root, roots])
 
   // El zoom con Ctrl+rueda debe quedarse DENTRO del arbol. React registra sus
   // listeners de wheel como pasivos por defecto, asi que un event.preventDefault()
@@ -218,8 +257,21 @@ export function BreedingTree({ root }: { root: PlanNode }) {
     const handleWheel = (event: WheelEvent) => {
       if (!event.ctrlKey) return
       event.preventDefault()
-      beginZoomAnimation()
-      setZoom((z) => (event.deltaY > 0 ? nextZoomStepDown(z) : nextZoomStepUp(z)))
+      wheelDeltaRef.current += event.deltaY
+      if (wheelFrameRef.current != null) return
+      wheelFrameRef.current = window.requestAnimationFrame(() => {
+        const direction = wheelDeltaRef.current
+        wheelDeltaRef.current = 0
+        wheelFrameRef.current = null
+        // La rueda/trackpad actualiza un maximo de una vez por frame y sin
+        // transicion CSS. Esto evita encadenar transiciones de 450 ms cuando
+        // el usuario hace varios pasos seguidos.
+        setZoom((z) => {
+          const next = direction > 0 ? nextZoomStepDown(z) : nextZoomStepUp(z)
+          zoomRef.current = next
+          return next
+        })
+      })
     }
     viewport.addEventListener('wheel', handleWheel, { passive: false })
     return () => viewport.removeEventListener('wheel', handleWheel)
@@ -228,6 +280,8 @@ export function BreedingTree({ root }: { root: PlanNode }) {
   useEffect(() => {
     return () => {
       if (zoomEndTimerRef.current != null) window.clearTimeout(zoomEndTimerRef.current)
+      if (panFrameRef.current != null) window.cancelAnimationFrame(panFrameRef.current)
+      if (wheelFrameRef.current != null) window.cancelAnimationFrame(wheelFrameRef.current)
     }
   }, [])
 
@@ -241,10 +295,12 @@ export function BreedingTree({ root }: { root: PlanNode }) {
     if (!viewport) return
     const viewportRect = viewport.getBoundingClientRect()
     const nodeRect = element.getBoundingClientRect()
-    setPan((current) => ({
-      x: current.x + viewportRect.left + viewportRect.width / 2 - (nodeRect.left + nodeRect.width / 2),
-      y: current.y + viewportRect.top + viewportRect.height / 2 - (nodeRect.top + nodeRect.height / 2),
-    }))
+    const nextPan = {
+      x: panRef.current.x + viewportRect.left + viewportRect.width / 2 - (nodeRect.left + nodeRect.width / 2),
+      y: panRef.current.y + viewportRect.top + viewportRect.height / 2 - (nodeRect.top + nodeRect.height / 2),
+    }
+    panRef.current = nextPan
+    setPan(nextPan)
   }, [])
 
   const toggle = useCallback(
@@ -261,7 +317,7 @@ export function BreedingTree({ root }: { root: PlanNode }) {
   return (
     <Card ref={cardRef} className="overflow-hidden border-border/80 shadow-md">
       <CardHeader ref={headerRef} className="gap-0 py-2.5">
-        <CardTitle className="text-base font-bold">{t('tree.title')}</CardTitle>
+        <CardTitle className="text-base font-bold">{projectRoots.length > 1 ? t('tree.projectTitle') : t('tree.title')}</CardTitle>
       </CardHeader>
       <CardContent
         ref={viewportRef}
@@ -272,23 +328,39 @@ export function BreedingTree({ root }: { root: PlanNode }) {
           if (event.button !== 0 || (event.target as HTMLElement).closest('button')) return
           event.preventDefault()
           event.currentTarget.setPointerCapture(event.pointerId)
-          setDragStart({ x: event.clientX, y: event.clientY, panX: pan.x, panY: pan.y })
+          setDragStart({ x: event.clientX, y: event.clientY, panX: panRef.current.x, panY: panRef.current.y })
         }}
         onPointerMove={(event) => {
           if (!dragStart) return
-          setPan({ x: dragStart.panX + event.clientX - dragStart.x, y: dragStart.panY + event.clientY - dragStart.y })
+          panRef.current = { x: dragStart.panX + event.clientX - dragStart.x, y: dragStart.panY + event.clientY - dragStart.y }
+          if (panFrameRef.current != null) return
+          panFrameRef.current = window.requestAnimationFrame(() => {
+            panFrameRef.current = null
+            writeTreeTransform()
+          })
         }}
-        onPointerUp={() => setDragStart(null)}
-        onPointerCancel={() => setDragStart(null)}
+        onPointerUp={() => {
+          if (panFrameRef.current != null) window.cancelAnimationFrame(panFrameRef.current)
+          panFrameRef.current = null
+          writeTreeTransform()
+          setPan(panRef.current)
+          setDragStart(null)
+        }}
+        onPointerCancel={() => {
+          if (panFrameRef.current != null) window.cancelAnimationFrame(panFrameRef.current)
+          panFrameRef.current = null
+          setPan(panRef.current)
+          setDragStart(null)
+        }}
         className={cn(
-          'relative cursor-grab overflow-hidden bg-[radial-gradient(var(--color-border)_1px,transparent_1px)] bg-[length:22px_22px] bg-[position:-11px_-11px] p-8 sm:p-10',
+          'tree-canvas relative cursor-grab overflow-hidden p-8 sm:p-10',
           dragStart && 'cursor-grabbing select-none',
         )}
         style={{ height: canvasHeight ? `${canvasHeight}px` : undefined, minHeight: `${CANVAS_MIN_HEIGHT}px`, touchAction: 'none' }}
       >
         {/* Barra de controles flotante: no ocupa layout, vive sobre el canvas (estilo Figma/React Flow). */}
         <div className="pointer-events-none absolute right-3 top-3 z-20 flex flex-wrap items-center justify-end gap-1">
-          <div className="pointer-events-auto flex items-center gap-1 rounded-lg border border-border bg-card/95 p-1 shadow-md backdrop-blur-sm">
+          <div className="tree-toolbar pointer-events-auto flex items-center gap-1 rounded-lg border border-border bg-card/95 p-1 shadow-md backdrop-blur-sm">
             <RichTooltip
               title={t('tree.zoomOutTitle')}
               description={t('tree.zoomOutDescription')}
@@ -310,7 +382,7 @@ export function BreedingTree({ root }: { root: PlanNode }) {
                 <ZoomIn className="size-3.5" aria-hidden="true" />
               </Button>
             </RichTooltip>
-            <span className="mx-0.5 h-5 w-px bg-border" aria-hidden="true" />
+            <span className="tree-toolbar__divider mx-0.5 h-5 w-px bg-border" aria-hidden="true" />
             <RichTooltip title={t('tree.fitTitle')} description={t('tree.fitDescription')}>
               <Button variant="ghost" size="icon-sm" onClick={fitTree} aria-label={t('tree.fitTitle')}>
                 <Maximize2 className="size-3.5" aria-hidden="true" />
@@ -321,7 +393,7 @@ export function BreedingTree({ root }: { root: PlanNode }) {
                 <Target className="size-3.5" aria-hidden="true" />
               </Button>
             </RichTooltip>
-            <span className="mx-0.5 h-5 w-px bg-border" aria-hidden="true" />
+            <span className="tree-toolbar__divider mx-0.5 h-5 w-px bg-border" aria-hidden="true" />
             <RichTooltip title={t('tree.expandAllTitle')} description={t('tree.expandAllDescription')}>
               <Button variant="ghost" size="sm" onClick={() => setCollapsed(new Set())}>
                 {t('tree.expandAll')}
@@ -353,13 +425,8 @@ export function BreedingTree({ root }: { root: PlanNode }) {
         <div
           ref={treeRef}
           className={cn(
-            'inline-flex pb-12 pt-4',
-            // Misma curva "premium" que el resto de la app (ver hover de
-            // pal-card.tsx / index.css), mas larga que el resto de transiciones
-            // de la UI (450ms) porque "Ajustar todo el arbol" suele ser un
-            // salto de zoom grande -de 100% a 15%, por ejemplo-, y a 200ms
-            // eso se ve como un corte en vez de un alejamiento fluido.
-            !dragStart && 'transition-transform duration-[450ms] ease-[cubic-bezier(0.22,0.7,0.3,1)]',
+            'relative z-10 inline-flex pb-12 pt-4',
+            zooming && !dragStart && 'transition-transform duration-150 ease-out',
           )}
           // pointerEvents:'none' mientras se arrastra: sin esto, el cursor
           // barre por encima de decenas de cartas en cada gesto de arrastre,
@@ -382,24 +449,30 @@ export function BreedingTree({ root }: { root: PlanNode }) {
             if (event.target === treeRef.current && event.propertyName === 'transform') setZooming(false)
           }}
           style={{
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`,
             transformOrigin: '0 0',
             pointerEvents: dragStart ? 'none' : undefined,
-            willChange: zooming ? 'transform' : undefined,
+            willChange: zooming || dragStart ? 'transform' : undefined,
           }}
         >
-          <TreeNode
-            node={root}
-            collapsed={collapsed}
-            onToggle={toggle}
-            onCenter={centerNode}
-            // El detalle completo se mantiene visible hasta el 20% de zoom;
-            // solo por debajo de ese piso se cambia al modo compacto.
-            compact={zoom < 0.2}
-            isRoot
-          />
+          <div className="tree-reveal">
+            <div className={cn(projectRoots.length > 1 && 'tree-project-roots')}>
+              {projectRoots.map((projectRoot) => (
+                <TreeNode
+                  key={projectRoot.key}
+                  node={projectRoot}
+                  collapsed={collapsed}
+                  onToggle={toggle}
+                  onCenter={centerNode}
+                  isRoot
+                  compact={zoom <= COMPACT_CARD_ZOOM}
+                  revealDepth={revealDepth}
+                />
+              ))}
+            </div>
+          </div>
         </div>
-        <p className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-border bg-card/90 px-3 py-1 text-[10px] text-muted-foreground shadow-sm">
+        <p className="pointer-events-none absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full border border-border bg-card/90 px-3 py-1 text-[10px] text-muted-foreground shadow-sm">
           {t('tree.canvasHint')}
         </p>
       </CardContent>
@@ -433,23 +506,30 @@ interface TreeNodeProps {
   collapsed: Set<string>
   onToggle: (key: string) => void
   onCenter: (element: HTMLElement) => void
-  compact: boolean
   isRoot?: boolean
+  compact: boolean
+  revealDepth: number
 }
 
-const TreeNode = memo(function TreeNode({ node, collapsed, onToggle, onCenter, compact, isRoot = false }: TreeNodeProps) {
+const TreeNode = memo(function TreeNode({ node, collapsed, onToggle, onCenter, isRoot = false, compact, revealDepth }: TreeNodeProps) {
   const isBreed = node.kind === 'breed'
   const isOpen = !collapsed.has(node.key)
   const parents = node.parents
+  // Los Pals de origen se presentan primero; el objetivo cierra la secuencia.
+  const revealDelay = Math.min(3, Math.max(0, revealDepth - node.depth)) * 48
 
   return (
-    <div className="flex flex-col items-center">
-      <NodeCard node={node} isRoot={isRoot} isOpen={isOpen} compact={compact} nodeKey={node.key} onToggle={onToggle} onCenter={onCenter} />
+    <div
+      className="tree-node flex flex-col items-center"
+      data-depth={Math.min(node.depth, 3)}
+      style={{ '--tree-node-delay': `${revealDelay}ms`, '--tree-line-delay': `${revealDelay + 72}ms`, '--tree-target-delay': `${revealDelay + 28}ms` } as CSSProperties}
+    >
+      <NodeCard node={node} isRoot={isRoot} isOpen={isOpen} nodeKey={node.key} onToggle={onToggle} onCenter={onCenter} compact={compact} />
 
       {isBreed && parents && isOpen && (
         <>
           {/* tronco que baja del hijo hasta la union de las dos ramas */}
-          <div className="tree-connector h-9 w-px bg-border" />
+          <div className="tree-connector" aria-hidden="true" />
           {/*
             Cada rama ocupa su ancho natural (forzarlas iguales duplicaria el
             ancho en cada nivel). La barra horizontal va del centro de un padre
@@ -458,23 +538,18 @@ const TreeNode = memo(function TreeNode({ node, collapsed, onToggle, onCenter, c
           */}
           <div className="relative flex items-start">
             {/* El "+" marca donde se juntan los dos padres para dar el Pal de arriba. */}
-            <span className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full border border-border bg-card px-1.5 py-px text-[11px] font-bold leading-none text-muted-foreground shadow-sm">
+            <span className="tree-junction absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full border border-border bg-card px-1.5 py-px text-[11px] font-bold leading-none text-muted-foreground shadow-sm">
               +
             </span>
             {parents.map((parent, index) => (
               <div
                 key={parent.key}
                 className={cn(
-                  'relative flex flex-col items-center px-4 pt-9',
-                  // rama vertical que sube desde este padre hasta la barra horizontal
-                  'before:absolute before:left-1/2 before:top-0 before:h-9 before:w-px before:bg-border before:content-[\'\']',
-                  // media barra horizontal; las dos mitades se encuentran en el centro
-                  index === 0
-                    ? 'after:absolute after:left-1/2 after:right-0 after:top-0 after:h-px after:bg-border after:content-[\'\']'
-                    : 'after:absolute after:left-0 after:right-1/2 after:top-0 after:h-px after:bg-border after:content-[\'\']',
+                  'tree-branch relative flex flex-col items-center px-5 pt-10',
+                  index === 0 ? 'tree-branch--left' : 'tree-branch--right',
                 )}
               >
-                <TreeNode node={parent} collapsed={collapsed} onToggle={onToggle} onCenter={onCenter} compact={compact} />
+                <TreeNode node={parent} collapsed={collapsed} onToggle={onToggle} onCenter={onCenter} compact={compact} revealDepth={revealDepth} />
               </div>
             ))}
           </div>
@@ -484,86 +559,62 @@ const TreeNode = memo(function TreeNode({ node, collapsed, onToggle, onCenter, c
   )
 })
 
-/** Mapea el WorkType interno de la app al nombre de archivo real en public/work (difieren solo en electricidad). */
-const WORK_ICON_FILE: Record<WorkType, string> = {
-  Kindling: 'Kindling',
-  Watering: 'Watering',
-  Planting: 'Planting',
-  GenerateElectricity: 'ElectricityGeneration',
-  Handiwork: 'Handiwork',
-  Gathering: 'Gathering',
-  Lumbering: 'Lumbering',
-  Mining: 'Mining',
-  MedicineProduction: 'MedicineProduction',
-  Cooling: 'Cooling',
-  Transporting: 'Transporting',
-  Farming: 'Farming',
-}
-const workIconUrl = (type: WorkType) => `${import.meta.env.BASE_URL}work/${WORK_ICON_FILE[type]}.png`
-
 interface NodeCardProps {
   node: PlanNode
   isRoot: boolean
   isOpen: boolean
-  compact: boolean
   nodeKey: string
   onToggle: (key: string) => void
   onCenter: (element: HTMLElement) => void
+  compact: boolean
 }
 
-const NodeCard = memo(function NodeCard({ node, isRoot, isOpen, compact, nodeKey, onToggle, onCenter }: NodeCardProps) {
+const NodeCard = memo(function NodeCard({ node, isRoot, isOpen, nodeKey, onToggle, onCenter, compact }: NodeCardProps) {
   const t = useT()
   const db = loadDatabase()
   const pal = db.palById.get(node.palId)
   const isBreed = node.kind === 'breed'
   const hidden = isBreed && !isOpen ? countBreedNodes(node) : 0
-
-  const work: PalCardWork[] = (pal?.work ?? []).map((w) => ({
-    icon: workIconUrl(w.type),
-    label: workTypeLabel(w.type),
-    level: w.value,
+  const passives = node.passives.map((id) => {
+    const passive = db.passiveById.get(id)
+    return { label: passiveName(passive), rank: passive?.rank ?? 0 }
+  })
+  const work = (pal?.work ?? []).slice(0, 3).map(({ type, value }) => ({
+    label: workTypeLabel(type),
+    level: value,
+    icon: `${import.meta.env.BASE_URL}work/${WORK_ICON_FILE[type]}.png`,
   }))
-
-  // El rango es el dato REAL del juego (ver domain/database -> pal-card.tsx
-  // RANKS): nada que clasificar aqui, solo pasar el numero tal cual.
-  const passives: PalCardPassive[] = node.passives
-    .map((id) => db.passiveById.get(id))
-    .filter((p): p is NonNullable<typeof p> => !!p)
-    .map((p) => ({ label: passiveName(p), rank: p.rank }))
-
-  // "Objetivo" y "en tu caja" ya tienen su propio badge dedicado (selected/owned);
-  // el subtitulo solo aporta algo nuevo para las capturas (nivel salvaje).
-  const subtitle = node.kind === 'capture' && pal?.wild ? t('tree.captureLevel', { min: pal.wild[0], max: pal.wild[1] }) : ''
+  const element = pal?.elements[0] ?? 'neutral'
+  const captureLabel = node.kind === 'capture' && pal?.wild ? t('tree.captureLevel', { min: pal.wild[0], max: pal.wild[1] }) : undefined
 
   return (
     <div
       className="tree-node-card flex flex-col items-center gap-2"
+      data-depth={Math.min(node.depth, 3)}
+      data-kind={node.kind}
       onDoubleClick={(event) => onCenter(event.currentTarget)}
     >
-      <div style={{ width: CARD_WIDTH * CARD_SCALE, height: CARD_HEIGHT * CARD_SCALE }}>
-        <div style={{ width: CARD_WIDTH, height: CARD_HEIGHT, transform: `scale(${CARD_SCALE})`, transformOrigin: 'top left' }}>
-          <PalCard
-            className={isBreed ? 'pc-card-trigger' : undefined}
-            as={isBreed ? 'button' : 'div'}
-            onClick={isBreed ? () => onToggle(nodeKey) : undefined}
-            ariaExpanded={isBreed ? isOpen : undefined}
-            ariaLabel={isBreed ? t(isOpen ? 'tree.collapseNodeAria' : 'tree.expandNodeAria', { name: palName(pal) }) : undefined}
-            palName={palName(pal)}
-            subtitle={subtitle}
-            element={pal?.elements[0] ?? 'neutral'}
-            rarity={pal ? rarityInfo(pal.rarity).tier : 1}
-            code={pal ? `P-${String(pal.dex).padStart(3, '0')}${pal.variant ? 'B' : ''}` : 'P-???'}
-            palId={node.palId}
-            isCross={isBreed}
-            work={work}
-            passives={passives}
-            probability={node.successChance !== undefined ? Math.round(node.successChance * 100) : 100}
-            compact={compact}
-            selected={isRoot}
-            owned={node.kind === 'owned'}
-          />
-        </div>
-      </div>
+      <TreePalCard
+        palId={node.palId}
+        name={palName(pal)}
+        passives={passives}
+        work={work}
+        element={element}
+        compact={compact}
+        captureLabel={captureLabel}
+        isRoot={isRoot}
+        owned={node.kind === 'owned'}
+        isBreed={isBreed}
+        isOpen={isOpen}
+        onToggle={() => onToggle(nodeKey)}
+        ariaLabel={isBreed ? t(isOpen ? 'tree.collapseNodeAria' : 'tree.expandNodeAria', { name: palName(pal) }) : undefined}
+      />
+
+      {node.shared && !isRoot && (
+        <Badge variant="secondary" className="tree-node-card__shared text-[10px]">
+          {t('tree.shared')}
+        </Badge>
+      )}
 
       {node.genderRequirement && (
         <Badge variant="warn" className="text-[10px]">
@@ -581,6 +632,132 @@ const NodeCard = memo(function NodeCard({ node, isRoot, isOpen, compact, nodeKey
           {t(hidden === 1 ? 'tree.hiddenCross' : 'tree.hiddenCrosses', { count: hidden })}
         </button>
       )}
+    </div>
+  )
+})
+
+interface TreePalCardProps {
+  palId: string
+  name: string
+  passives: { label: string; rank: number }[]
+  work: { label: string; level: number; icon: string }[]
+  element: keyof typeof ELEMENT_INFO
+  compact: boolean
+  captureLabel?: string
+  isRoot: boolean
+  owned: boolean
+  isBreed: boolean
+  isOpen: boolean
+  onToggle: () => void
+  ariaLabel?: string
+}
+
+/**
+ * Carta TCG compacta para el arbol. Conserva arte, marco y jerarquia de una
+ * carta coleccionable, pero evita foil, texturas repetidas, filtros y paneles
+ * secundarios: cada nodo se mantiene como una superficie estatica y barata
+ * de componer mientras el usuario panea o hace zoom.
+ */
+const TreePalCard = memo(function TreePalCard({
+  palId,
+  name,
+  passives,
+  work,
+  element,
+  compact,
+  captureLabel,
+  isRoot,
+  owned,
+  isBreed,
+  isOpen,
+  onToggle,
+  ariaLabel,
+}: TreePalCardProps) {
+  const t = useT()
+  const { openPal } = usePokedex()
+  const elementInfo = ELEMENT_INFO[element]
+  const passiveSlots = [...passives.slice(0, 4), ...Array.from({ length: Math.max(0, 4 - passives.length) }, () => null)]
+  const stateLabel = isRoot
+    ? t('tree.legendTarget')
+    : owned
+      ? t('tree.legendOwned')
+      : isBreed
+        ? t('tree.legendBred')
+        : t('tree.legendCapture')
+
+  const content = (
+    <>
+      {!compact && (
+        <div className="tree-pal-card__topline">
+          <span className="tree-pal-card__rarity">PAL</span>
+        </div>
+      )}
+
+      <div className="tree-pal-card__art">
+        {!compact && <span className="tree-pal-card__element">{elementInfo.label}</span>}
+        <PalIcon palId={palId} size={compact ? 96 : 118} bare className="tree-pal-card__portrait" />
+        {!compact && <span className="tree-pal-card__state">{stateLabel}</span>}
+      </div>
+      <div className="tree-pal-card__title-row">
+        <span className="tree-pal-card__name">{name}</span>
+        {!compact && captureLabel && <span className="tree-pal-card__meta">{captureLabel}</span>}
+      </div>
+      {!compact && (
+        <>
+          {work.length > 0 && (
+            <section className="tree-pal-card__work" aria-label={t('palCard.work')}>
+              <header>
+                <span className="tree-pal-card__work-label">{t('palCard.work')}</span>
+                <small>{t('palCard.workSub')}</small>
+              </header>
+              <ul>
+                {work.map((item) => (
+                  <li key={item.label} style={{ '--tree-work-level': `${item.level * 10}%` } as CSSProperties} aria-label={t('palCard.workLevel', { label: item.label, level: item.level })}>
+                    <img className="tree-pal-card__work-icon" src={item.icon} alt="" width="14" height="14" loading="lazy" decoding="async" />
+                    <span className="tree-pal-card__work-name">{item.label}</span>
+                    <span className="tree-pal-card__work-meter" aria-hidden="true" />
+                    <b>{item.level}</b>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </>
+      )}
+      <section className="tree-pal-card__passive-section" aria-label={t('palCard.passives')}>
+        {!compact && (
+          <header>
+            <span>{t('palCard.passives')}</span>
+            <small>{t('palCard.passivesSub')}</small>
+          </header>
+        )}
+        <ul className="tree-pal-card__passives" data-count={Math.min(passives.length, 4)}>
+          {passiveSlots.map((passive, index) => (
+            passive ? (
+              <li key={passive.label} data-rank={Math.max(-3, Math.min(4, passive.rank))} title={passive.label}>
+                <span className="tree-pal-card__passive-arrows" aria-hidden="true">
+                  {Array.from({ length: Math.max(1, Math.min(3, Math.abs(passive.rank))) }, (_, arrowIndex) => <i key={arrowIndex} />)}
+                </span>
+                <span className="tree-pal-card__passive-name">{passive.label}</span>
+              </li>
+            ) : (
+              <li key={`empty-${index}`} className="tree-pal-card__passive-empty" title={t('palCard.emptySlotTip')}>
+                {t('palCard.emptySlot')}
+              </li>
+            )
+          ))}
+        </ul>
+      </section>
+    </>
+  )
+
+  const className = cn('tree-pal-card', compact && 'tree-pal-card--compact', isRoot && 'tree-pal-card--target', owned && 'tree-pal-card--owned', !isBreed && !owned && !isRoot && 'tree-pal-card--capture')
+  const style = { '--tree-element': elementInfo.color } as CSSProperties
+  return (
+    <div className="tree-pal-card-shell">
+      <div className={className} style={style}>{content}</div>
+      <button type="button" className="tree-pal-card__open" onClick={() => openPal(palId)} aria-label={t('pokedex.open', { name })} />
+      {isBreed && <button type="button" className="tree-pal-card__fold" onClick={onToggle} aria-expanded={isOpen} aria-label={ariaLabel}>{isOpen ? '−' : '+'}</button>}
     </div>
   )
 })

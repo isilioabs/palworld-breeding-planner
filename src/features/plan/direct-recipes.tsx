@@ -46,7 +46,7 @@ export function DirectRecipes({ targetPalId }: { targetPalId: string }) {
             {pairs.slice(0, limit).map(({ a, b }) => (
               <li
                 key={`${a}|${b}`}
-                className="flex items-center gap-1.5 rounded-md border border-border bg-background/40 px-2 py-1.5 text-xs"
+                className="recipe-row flex items-center gap-1.5 rounded-md border border-border bg-background/40 px-2 py-1.5 text-xs"
               >
                 <PalIcon palId={a} size={24} />
                 <span className="min-w-0 flex-1 truncate">{palName(db.palById.get(a))}</span>

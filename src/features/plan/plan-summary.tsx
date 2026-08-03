@@ -3,6 +3,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { formatNumber, formatPercent } from '@/lib/utils'
 import { useT } from '@/i18n/language-store'
 import type { PlanResult } from '@/domain/types'
+import { SharePlan } from '@/features/plan/share-plan'
+import { loadDatabase, palName } from '@/domain/database'
 
 const ITEMS = [
   { key: 'generations', icon: Layers, labelKey: 'planSummary.generations.label', helpKey: 'planSummary.generations.help', tone: 'text-violet-500 bg-violet-500/10 border-violet-500/20' },
@@ -29,9 +31,10 @@ export function PlanSummary({ result }: { result: PlanResult }) {
   return (
     <section
       aria-label={t('planSummary.ariaLabel')}
-      className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
+      className="space-y-2"
     >
-      {ITEMS.map(({ key, icon: Icon, labelKey, tone, helpKey }, index) => (
+      <div className="flex justify-end"><SharePlan title={palName(loadDatabase().palById.get(result.root?.palId ?? ''))} metrics={ITEMS.slice(0, 4).map(({ key, labelKey }) => ({ label: t(labelKey), value: values[key] }))} /></div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">{ITEMS.map(({ key, icon: Icon, labelKey, tone, helpKey }, index) => (
         <Card
           key={key}
           className="metric-card group overflow-hidden border-border/80 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
@@ -50,7 +53,7 @@ export function PlanSummary({ result }: { result: PlanResult }) {
             </p>
           </CardContent>
         </Card>
-      ))}
+      ))}</div>
     </section>
   )
 }

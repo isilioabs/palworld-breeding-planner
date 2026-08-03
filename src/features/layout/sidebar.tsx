@@ -4,16 +4,24 @@
  * colapsarse a un riel de iconos, redimensionarse arrastrando el borde, y
  * recuerda su estado entre sesiones (ver use-sidebar-state.ts).
  */
-import { Backpack, FolderOpen, PanelLeftClose, PanelLeftOpen, SlidersHorizontal, Target } from 'lucide-react'
+import { lazy, Suspense, useState, type ReactNode } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
+import { Backpack, ChevronDown, FolderOpen, PanelLeftClose, PanelLeftOpen, SlidersHorizontal, Sparkles, Target, X, type LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { RichTooltip } from '@/components/rich-tooltip'
 import { TargetPanel } from '@/features/setup/target-panel'
 import { ModePanel } from '@/features/setup/mode-panel'
-import { CollectionPanel } from '@/features/collection/collection-panel'
-import { ProjectsPanel } from '@/features/projects/projects-panel'
+import { BuildAdvisor } from '@/features/setup/build-advisor'
 import { COLLAPSED_WIDTH, useSidebarState, type SidebarState } from '@/hooks/use-sidebar-state'
 import { useT } from '@/i18n/language-store'
 import { cn } from '@/lib/utils'
+import { usePlannerStore } from '@/state/planner-store'
+
+// Estas superficies solo se abren bajo demanda: separarlas evita cargar su
+// grid de Paldex y gestión de proyectos en el primer render del planner.
+const CollectionPanel = lazy(() => import('@/features/collection/collection-panel').then((module) => ({ default: module.CollectionPanel })))
+const ProjectsPanel = lazy(() => import('@/features/projects/projects-panel').then((module) => ({ default: module.ProjectsPanel })))
 
 // `key` es estable en cualquier idioma (se usa como data-attribute para poder
 // disparar el riel colapsado desde fuera, ver App.tsx#focusTargetPicker); las
@@ -28,6 +36,13 @@ const RAIL_ITEMS = [
 export function Sidebar() {
   const sidebar = useSidebarState()
   const t = useT()
+
+  // El antiguo riel se mantenia colapsado por debajo de 820 px. `expand()`
+  // solo cambia la preferencia de escritorio, asi que en movil no habia forma
+  // de abrir los paneles: un callejon sin salida tanto con tacto como teclado.
+  // En ese breakpoint la navegacion inferior abre un Dialog real de Radix,
+  // que gestiona foco, Escape y aria-modal sin dejar contenido activo atras.
+  if (!sidebar.canResize) return <MobileSidebar />
 
   return (
     <aside
@@ -46,6 +61,56 @@ export function Sidebar() {
 
       {!sidebar.collapsed && sidebar.canResize && <ResizeHandle sidebar={sidebar} />}
     </aside>
+  )
+}
+
+function MobileSidebar() {
+  const [open, setOpen] = useState(false)
+  const t = useT()
+
+  return (
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 grid h-[calc(4.5rem+env(safe-area-inset-bottom))] grid-cols-4 border-t border-border/90 bg-card/95 px-1 pb-[env(safe-area-inset-bottom)] pt-1 shadow-[0_-12px_32px_rgba(0,0,0,0.28)] backdrop-blur-xl"
+        aria-label={t('sidebar.ariaLabel')}
+      >
+        {RAIL_ITEMS.map(({ key, icon: Icon, labelKey }) => {
+          const label = t(labelKey)
+          return (
+            <Dialog.Trigger key={key} asChild>
+              <button
+                type="button"
+                className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={t('sidebar.expandAndOpen', { label })}
+              >
+                <Icon className="size-[18px]" aria-hidden="true" />
+                <span className="max-w-full truncate">{label}</span>
+              </button>
+            </Dialog.Trigger>
+          )
+        })}
+      </nav>
+
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/65 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 flex max-h-[min(82dvh,46rem)] flex-col rounded-t-2xl border border-border bg-card shadow-2xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <div>
+              <Dialog.Title className="text-sm font-bold">{t('sidebar.ariaLabel')}</Dialog.Title>
+              <Dialog.Description className="text-xs text-muted-foreground">{t('sidebar.expandDescription')}</Dialog.Description>
+            </div>
+            <Dialog.Close asChild>
+              <Button variant="ghost" size="icon-sm" aria-label={t('sidebar.collapse')}>
+                <X className="size-4" aria-hidden="true" />
+              </Button>
+            </Dialog.Close>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-4">
+            <MobilePanelContent />
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }
 
@@ -127,12 +192,100 @@ function ExpandedContent({ onCollapse }: { onCollapse: () => void }) {
           </Button>
         </RichTooltip>
       </div>
-      <div className="min-w-0 flex-1 space-y-4 overflow-y-auto px-4 pb-4 pt-1">
-        <TargetPanel />
-        <CollectionPanel />
-        <ModePanel />
-        <ProjectsPanel />
+      <div className="min-w-0 flex-1 space-y-3 overflow-y-auto px-4 pb-4 pt-1">
+        <PlannerPanels />
       </div>
     </div>
+  )
+}
+
+function MobilePanelContent() {
+  return (
+    <div className="space-y-3">
+      <PlannerPanels />
+    </div>
+  )
+}
+
+function PlannerPanels() {
+  const { state } = usePlannerStore()
+  const t = useT()
+
+  return (
+    <>
+      <TargetPanel />
+
+      {state.targetPalId && (
+        <PlannerSection
+          icon={Sparkles}
+          title={t('sidebar.section.buildAdvisor')}
+          description={t('sidebar.section.buildAdvisorDescription')}
+        >
+          <BuildAdvisor showHeading={false} />
+        </PlannerSection>
+      )}
+
+      <PlannerSection
+        icon={Backpack}
+        title={t('sidebar.section.collection')}
+        description={t('sidebar.section.collectionDescription')}
+      >
+        <Suspense fallback={<PanelLoading />}><CollectionPanel embedded /></Suspense>
+      </PlannerSection>
+
+      <PlannerSection
+        icon={SlidersHorizontal}
+        title={t('sidebar.section.optimization')}
+        description={t('sidebar.section.optimizationDescription')}
+      >
+        <ModePanel embedded />
+      </PlannerSection>
+
+      <PlannerSection
+        icon={FolderOpen}
+        title={t('sidebar.section.projects')}
+        description={t('sidebar.section.projectsDescription')}
+      >
+        <Suspense fallback={<PanelLoading />}><ProjectsPanel embedded /></Suspense>
+      </PlannerSection>
+    </>
+  )
+}
+
+function PanelLoading() {
+  return <div className="h-24 animate-pulse rounded-lg border border-border/70 bg-background/35" aria-label="Loading panel" />
+}
+
+function PlannerSection({
+  icon: Icon,
+  title,
+  description,
+  children,
+}: {
+  icon: LucideIcon
+  title: string
+  description: string
+  children: ReactNode
+}) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <section className={cn('planner-section', open && 'is-open')}>
+        <CollapsibleTrigger asChild>
+          <button type="button" className="planner-section__trigger">
+            <span className="planner-section__icon"><Icon aria-hidden="true" /></span>
+            <span className="min-w-0 flex-1 text-left">
+              <strong>{title}</strong>
+              <small>{description}</small>
+            </span>
+            <ChevronDown className="planner-section__chevron" aria-hidden="true" />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="planner-section__content">
+          <div className="planner-section__body">{children}</div>
+        </CollapsibleContent>
+      </section>
+    </Collapsible>
   )
 }

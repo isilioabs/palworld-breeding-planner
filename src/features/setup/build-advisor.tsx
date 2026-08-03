@@ -7,6 +7,7 @@ import { loadDatabase } from '@/domain/database'
 import { useT } from '@/i18n/language-store'
 import type { TranslationKey } from '@/i18n/translations'
 import { usePlannerStore } from '@/state/planner-store'
+import { track } from '@/lib/analytics'
 import { cn } from '@/lib/utils'
 
 /**
@@ -22,7 +23,7 @@ import { cn } from '@/lib/utils'
  * estadisticas reales del juego -actualizarlo tras un parche no toca este
  * componente ni ningun otro, solo el JSON.
  */
-export function BuildAdvisor() {
+export function BuildAdvisor({ showHeading = true }: { showHeading?: boolean }) {
   const { state, dispatch } = usePlannerStore()
   const t = useT()
   const builds = getBuildsFor(state.targetPalId)
@@ -33,10 +34,12 @@ export function BuildAdvisor() {
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-1.5">
-        <Star className="size-3.5 text-amber-400" aria-hidden="true" fill="currentColor" />
-        <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('buildAdvisor.title')}</h3>
-      </div>
+      {showHeading && (
+        <div className="flex items-center gap-1.5">
+          <Star className="size-3.5 text-amber-400" aria-hidden="true" fill="currentColor" />
+          <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t('buildAdvisor.title')}</h3>
+        </div>
+      )}
       {/*
         Una columna, no dos: en el ancho real del sidebar (280-480px) un
         grid de 2 columnas deja ~130px por carta, y una pasiva larga como
@@ -86,7 +89,7 @@ export function BuildAdvisor() {
                   size="sm"
                   variant={applied ? 'secondary' : 'outline'}
                   className="w-full gap-1.5"
-                  onClick={() => dispatch({ type: 'setDesired', passives: build.passives })}
+                  onClick={() => { dispatch({ type: 'setDesired', passives: build.passives }); track('build_applied', { role: build.role }) }}
                 >
                   {applied ? t('buildAdvisor.applied') : t('buildAdvisor.apply')}
                 </Button>

@@ -1,14 +1,14 @@
-import { X } from 'lucide-react'
+import { ChevronUp, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { PassiveBadge } from '@/components/passive-badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { PalCombobox } from '@/components/pal-combobox'
+import { PalPicker } from '@/components/pal-picker'
 import { PassivePicker } from '@/components/passive-picker'
-import { BuildAdvisor } from './build-advisor'
-import { loadDatabase, passiveName } from '@/domain/database'
+import { PalIcon } from '@/components/pal-icon'
+import { loadDatabase, palName, passiveName } from '@/domain/database'
 import { useT } from '@/i18n/language-store'
-import { MAX_DESIRED_PASSIVES, usePlannerStore } from '@/state/planner-store'
+import { MAX_DESIRED_PASSIVES, MAX_PROJECT_TARGETS, usePlannerStore } from '@/state/planner-store'
+import { track } from '@/lib/analytics'
 
 export function TargetPanel() {
   const db = loadDatabase()
@@ -21,17 +21,42 @@ export function TargetPanel() {
         <CardTitle>{t('targetPanel.title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="target">{t('targetPanel.targetLabel')}</Label>
-          <PalCombobox
-            triggerId="target-pal-trigger"
-            value={state.targetPalId}
-            onChange={(palId) => dispatch({ type: 'setTarget', palId })}
-            placeholder={t('targetPanel.targetPlaceholder')}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="target">{t('targetPanel.projectTargetsLabel', { count: state.targetPalIds.length, max: MAX_PROJECT_TARGETS })}</Label>
+          </div>
+          <PalPicker
+            onSelect={(palId) => { dispatch({ type: 'addTarget', palId }); track('target_selected', { target: palId }) }}
+            label={state.targetPalIds.length > 0 ? t('targetPanel.addTargetPlaceholder') : t('targetPanel.targetPlaceholder')}
+            className="target-project-picker"
+            disabledIds={state.targetPalIds}
           />
+          {state.targetPalIds.length > 0 && (
+            <ul className="target-project-list">
+              {state.targetPalIds.map((palId, index) => {
+                const pal = db.palById.get(palId)
+                return (
+                  <li key={palId}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="target-project-chip"
+                      aria-label={t('targetPanel.removeTarget', { name: palName(pal) })}
+                      onClick={() => dispatch({ type: 'removeTarget', palId })}
+                    >
+                      <PalIcon palId={palId} size={20} />
+                      <span className="truncate">{palName(pal)}</span>
+                      {index === 0 && <small>1</small>}
+                      <X className="size-3.5" aria-hidden="true" />
+                    </Button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+          <p className="text-[11px] leading-snug text-muted-foreground">{t('targetPanel.targetHelp')}</p>
         </div>
-
-        <BuildAdvisor />
 
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -48,22 +73,15 @@ export function TargetPanel() {
               {t('targetPanel.noPassives')}
             </p>
           ) : (
-            <ul className="flex flex-wrap gap-1.5">
+            <ul className="target-passive-slots">
               {state.desiredPassives.map((id) => {
                 const passive = db.passiveById.get(id)
                 return (
                   <li key={id}>
-                    <PassiveBadge passive={passive} className="pr-1">
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        className="size-4 rounded-sm hover:bg-transparent hover:opacity-70"
-                        aria-label={t('targetPanel.removePassive', { name: passiveName(passive) })}
-                        onClick={() => dispatch({ type: 'toggleDesired', passiveId: id })}
-                      >
-                        <X className="size-3" />
-                      </Button>
-                    </PassiveBadge>
+                    <Button variant="outline" size="sm" className="target-passive-slot" data-rank={passive?.rank ?? 0} aria-label={t('targetPanel.removePassive', { name: passiveName(passive) })} onClick={() => dispatch({ type: 'toggleDesired', passiveId: id })}>
+                      <span className="target-passive-slot__arrows" aria-hidden="true">{Array.from({ length: Math.max(1, Math.min(3, Math.abs(passive?.rank ?? 0))) }, (_, index) => <ChevronUp key={index} />)}</span>
+                      <span>{passiveName(passive)}</span><X className="size-3.5" aria-hidden="true" />
+                    </Button>
                   </li>
                 )
               })}

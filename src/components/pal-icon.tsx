@@ -10,13 +10,15 @@ interface PalIconProps {
   palId: string | null | undefined
   size?: number
   className?: string
+  /** El arbol TCG aporta su propio marco; evita convertir el sprite en avatar. */
+  bare?: boolean
 }
 
 /**
  * Sprite del Pal, con respaldo a un monograma si falta el archivo (asi la app
  * nunca muestra un icono roto aunque no se hayan descargado los iconos).
  */
-export function PalIcon({ palId, size = 40, className }: PalIconProps) {
+export function PalIcon({ palId, size = 40, className, bare = false }: PalIconProps) {
   const [broken, setBroken] = useState(false)
   const pal = palId ? loadDatabase().palById.get(palId) : undefined
   const showImage = palId && AVAILABLE.has(palId) && !broken
@@ -24,7 +26,8 @@ export function PalIcon({ palId, size = 40, className }: PalIconProps) {
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted/60 ring-1 ring-border/60',
+        'inline-flex shrink-0 items-center justify-center',
+        !bare && 'overflow-hidden rounded-full bg-muted/60 ring-1 ring-border/60',
         className,
       )}
       style={{ width: size, height: size }}

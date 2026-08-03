@@ -10,6 +10,7 @@ export const MAX_DESIRED_PASSIVES = 4
 
 export interface PlannerState {
   targetPalId: string | null
+  targetPalIds: string[]
   desiredPassives: string[]
   owned: OwnedPal[]
   mode: PlannerMode
@@ -17,6 +18,7 @@ export interface PlannerState {
 
 const EMPTY: PlannerState = {
   targetPalId: null,
+  targetPalIds: [],
   desiredPassives: [],
   owned: [],
   mode: 'breeding',
@@ -24,10 +26,13 @@ const EMPTY: PlannerState = {
 
 export type PlannerAction =
   | { type: 'setTarget'; palId: string | null }
+  | { type: 'addTarget'; palId: string }
+  | { type: 'removeTarget'; palId: string }
   | { type: 'toggleDesired'; passiveId: string }
   | { type: 'setDesired'; passives: string[] }
   | { type: 'setMode'; mode: PlannerMode }
   | { type: 'addOwned'; palId: string }
+  | { type: 'importOwned'; entries: OwnedPal[] }
   | { type: 'updateOwned'; uid: string; patch: Partial<Omit<OwnedPal, 'uid'>> }
   | { type: 'removeOwned'; uid: string }
   | { type: 'clearOwned' }
@@ -35,11 +40,37 @@ export type PlannerAction =
   | { type: 'reset' }
 
 const newUid = () => `o_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`
+export const MAX_PROJECT_TARGETS = 4
+
+function normalizeTargets(targetPalIds: string[] | undefined, targetPalId: string | null): string[] {
+  return [...new Set([...(targetPalIds ?? []), ...(targetPalId ? [targetPalId] : [])])].slice(0, MAX_PROJECT_TARGETS)
+}
+
+/** Cada captura tiene su propia ficha: dos Anubis con pasivas o género
+ * diferentes son reproductores distintos y no deben perderse al importar. */
+function normalizeCollection(owned: OwnedPal[]): OwnedPal[] {
+  const usedUids = new Set<string>()
+  return owned.map((entry, index) => {
+    let uid = entry.uid || newUid()
+    while (usedUids.has(uid)) uid = `${uid}_${index.toString(36)}`
+    usedUids.add(uid)
+    return { ...entry, uid, passives: [...new Set(entry.passives)].slice(0, 4), addedAt: entry.addedAt ?? Date.now() + index }
+  })
+}
 
 function reducer(state: PlannerState, action: PlannerAction): PlannerState {
   switch (action.type) {
     case 'setTarget':
-      return { ...state, targetPalId: action.palId }
+      return { ...state, targetPalId: action.palId, targetPalIds: action.palId ? [action.palId] : [] }
+    case 'addTarget': {
+      if (state.targetPalIds.includes(action.palId) || state.targetPalIds.length >= MAX_PROJECT_TARGETS) return state
+      const targetPalIds = [...state.targetPalIds, action.palId]
+      return { ...state, targetPalId: targetPalIds[0] ?? null, targetPalIds }
+    }
+    case 'removeTarget': {
+      const targetPalIds = state.targetPalIds.filter((palId) => palId !== action.palId)
+      return { ...state, targetPalId: targetPalIds[0] ?? null, targetPalIds }
+    }
     case 'toggleDesired': {
       const has = state.desiredPassives.includes(action.passiveId)
       if (has) {
@@ -53,7 +84,9 @@ function reducer(state: PlannerState, action: PlannerAction): PlannerState {
     case 'setMode':
       return { ...state, mode: action.mode }
     case 'addOwned':
-      return { ...state, owned: [...state.owned, { uid: newUid(), palId: action.palId, passives: [] }] }
+      return { ...state, owned: [...state.owned, { uid: newUid(), palId: action.palId, passives: [], favorite: false, notes: '', addedAt: Date.now() }] }
+    case 'importOwned':
+      return { ...state, owned: normalizeCollection([...state.owned, ...action.entries]) }
     case 'updateOwned':
       return {
         ...state,
@@ -64,11 +97,15 @@ function reducer(state: PlannerState, action: PlannerAction): PlannerState {
     case 'clearOwned':
       return { ...state, owned: [] }
     case 'loadDraft':
-      return {
-        targetPalId: action.draft.targetPalId,
+      {
+        const targetPalIds = normalizeTargets(action.draft.targetPalIds, action.draft.targetPalId)
+        return {
+        targetPalId: targetPalIds[0] ?? null,
+        targetPalIds,
         desiredPassives: action.draft.desiredPassives.slice(0, MAX_DESIRED_PASSIVES),
-        owned: action.draft.owned,
+        owned: normalizeCollection(action.draft.owned),
         mode: action.draft.mode,
+        }
       }
     case 'reset':
       return EMPTY
@@ -87,7 +124,15 @@ const StoreContext = createContext<StoreValue | null>(null)
 export function PlannerProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, EMPTY, (initial) => {
     const saved = loadCurrent()
-    return saved ? { ...initial, ...saved } : initial
+    if (!saved) return initial
+    const targetPalIds = normalizeTargets(saved.targetPalIds, saved.targetPalId)
+    return {
+      ...initial,
+      ...saved,
+      targetPalIds,
+      targetPalId: targetPalIds[0] ?? null,
+      owned: normalizeCollection(saved.owned ?? []),
+    }
   })
 
   useEffect(() => {

@@ -85,12 +85,28 @@ export interface Mechanics {
   }
 }
 
-/** Un Pal concreto de la coleccion del jugador. */
+/**
+ * Un registro permanente de la Paldex personal. El planificador solo lee
+ * `palId`, `passives` y `gender`; el resto pertenece al perfil del jugador y
+ * queda preparado para futuras capas de progresion sin alterar su algoritmo.
+ */
 export interface OwnedPal {
   uid: string
   palId: string
   passives: string[]
   gender?: Gender
+  favorite?: boolean
+  notes?: string
+  addedAt?: number
+  /** Reservado para los IVs de HP, ataque, defensa y velocidad de trabajo. */
+  ivs?: Partial<Record<'hp' | 'attack' | 'defense' | 'workSpeed', number>>
+  /** Nivel de condensacion futuro (0–4). */
+  condensingLevel?: number
+  alpha?: boolean
+  lucky?: boolean
+  nickname?: string
+  /** Etiquetas libres para futuros filtros de coleccion. */
+  traits?: string[]
 }
 
 export type PlannerMode = 'collection' | 'breeding' | 'hybrid'
@@ -104,6 +120,8 @@ export interface PlannerOptions {
 
 export interface PlannerInput {
   targetPalId: string | null
+  /** Objetivos del proyecto; el primero mantiene compatibilidad con targetPalId. */
+  targetPalIds?: string[]
   desiredPassives: string[]
   owned: OwnedPal[]
   mode: PlannerMode
@@ -136,6 +154,8 @@ export interface PlanNode {
   duplicateOf?: string
   /** Profundidad: 0 = el objetivo. */
   depth: number
+  /** El mismo estado aparece en otra rama de un proyecto multiobjetivo. */
+  shared?: boolean
 }
 
 export interface PlanResult {
@@ -156,5 +176,46 @@ export interface PlanResult {
     combinedChance: number
     settledStates: number
     elapsedMs: number
+  }
+}
+
+/**
+ * Una vista comparable de una solucion ya calculada por el planificador.
+ * No introduce una nueva heuristica de crianza: cada entrada es el optimo
+ * devuelto por el mismo motor bajo una de las politicas ya existentes.
+ */
+export interface RouteAlternative {
+  id: PlannerMode
+  mode: PlannerMode
+  result: PlanResult
+  /** Indice compuesto para comparar el esfuerzo total esperado (menor = mejor). */
+  expectedEffort: number
+  /** Pals de rareza legendaria o superior presentes en la ruta. */
+  legendaryUsage: number
+  /** Puntuacion relativa 0..100 dentro del conjunto de alternativas validas. */
+  efficiencyScore: number
+  recommended: boolean
+}
+
+/** Plan consolidado de varios objetivos. Cada raiz sigue siendo una ruta real
+ * del motor; la capa de proyecto deduplica estados compatibles para exponer
+ * los recursos que se pueden reutilizar entre objetivos. */
+export interface ProjectPlan {
+  ok: boolean
+  reason?: string
+  roots?: PlanNode[]
+  stats?: {
+    targets: number
+    steps: number
+    generations: number
+    totalExpectedEggs: number
+    capturesNeeded: number
+    legendaryUsage: number
+    sharedBranches: number
+    sharedParents: number
+    eggsSaved: number
+    capturesSaved: number
+    duplicateBreedsAvoided: number
+    expectedEffort: number
   }
 }
