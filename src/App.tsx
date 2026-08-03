@@ -36,6 +36,28 @@ const DEMO_DRAFT: ProjectDraft = {
   mode: 'hybrid',
 }
 
+function DocumentLanguageSync() {
+  const [lang] = useLang()
+
+  useEffect(() => {
+    const spanish = lang === 'es'
+    document.documentElement.lang = lang
+    document.title = spanish
+      ? 'Palaxis — Planificador de breeding para Palworld'
+      : 'Palaxis — Palworld Breeding Nexus'
+
+    const description = spanish
+      ? 'Palaxis es el companion offline para planificar Pals perfectos, comparar rutas de breeding y gestionar tu colección de Palworld.'
+      : 'Palaxis is the offline companion for planning perfect Pals, comparing breeding routes, and managing your Palworld collection.'
+
+    document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute('content', description)
+    document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.setAttribute('content', description)
+    document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute('content', description)
+  }, [lang])
+
+  return null
+}
+
 function LanguageToggle() {
   const [lang, setLang] = useLang()
   const t = useT()
@@ -245,10 +267,6 @@ function PlanArea() {
  */
 function Layout({ onHome }: { onHome: () => void }) {
   const t = useT()
-  const [lang] = useLang()
-  useEffect(() => {
-    document.documentElement.lang = lang
-  }, [lang])
   return (
     <div className="flex h-screen flex-col bg-background">
       <a
@@ -317,6 +335,7 @@ export default function App() {
     <PlannerProvider>
       <PokedexProvider>
         <TooltipProvider delayDuration={350}>
+          <DocumentLanguageSync />
           <ExperienceGate />
         </TooltipProvider>
       </PokedexProvider>
