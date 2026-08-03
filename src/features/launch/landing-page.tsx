@@ -42,7 +42,7 @@ export function LandingPage({ onLaunch, onLoadDemo }: LandingPageProps) {
     <main className="landing-page">
       <nav className="landing-nav" aria-label={t('landing.navigation')}>
         <button type="button" className="landing-brand" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <span><Sparkles aria-hidden="true" /></span><strong>PALBREED</strong>
+          <span><Sparkles aria-hidden="true" /></span><strong>PALAXIS</strong>
         </button>
         <Button size="sm" onClick={onLaunch}>{t('landing.launch')}<ChevronRight aria-hidden="true" /></Button>
       </nav>
@@ -110,7 +110,7 @@ export function LandingPage({ onLaunch, onLoadDemo }: LandingPageProps) {
         <div>{FAQS.map(({ id, questionKey, answerKey }) => <details key={id}><summary>{t(questionKey)}<ChevronRight aria-hidden="true" /></summary><p>{t(answerKey)}</p></details>)}</div>
       </section>
 
-      <footer className="landing-footer"><span>PALBREED</span><p>{t('landing.footer')}</p></footer>
+      <footer className="landing-footer"><span>PALAXIS</span><p>{t('landing.footer')}</p></footer>
     </main>
   )
 }

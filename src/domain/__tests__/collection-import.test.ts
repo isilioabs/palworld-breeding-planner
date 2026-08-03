@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { candidatesToOwned, parseCollectionImport } from '../collection-import'
 
 describe('collection import', () => {
-  it('recognizes a PalBreed collection and preserves separate captures', () => {
+  it('recognizes a Palaxis collection and preserves separate captures', () => {
     const result = parseCollectionImport(JSON.stringify({
       owned: [
         { palId: 'Anubis', gender: 'male', passives: ['CraftSpeed_up3'] },
@@ -10,7 +10,7 @@ describe('collection import', () => {
       ],
     }))
 
-    expect(result.source).toBe('palbreed')
+    expect(result.source).toBe('palaxis')
     expect(result.candidates).toHaveLength(2)
     expect(result.candidates[0]).toMatchObject({ palId: 'Anubis', gender: 'MALE', passives: ['CraftSpeed_up3'] })
     expect(result.candidates[1]).toMatchObject({ palId: 'Anubis', gender: 'FEMALE' })

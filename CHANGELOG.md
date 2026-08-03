@@ -1,4 +1,4 @@
-# Novedades de PalBreed
+# Novedades de Palaxis
 
 ## RC 1 - Companion App
 
@@ -41,7 +41,7 @@ Palworld. No envia la coleccion, los planes ni los datos de juego a un servidor.
 ### Producto y lanzamiento
 
 - Landing page, onboarding de primera visita y proyecto demo de Anubis.
-- Marca simplificada a **PalBreed**; el logotipo del planner regresa a la
+- Marca simplificada a **Palaxis**; el logotipo del planner regresa a la
   landing page sin perder los datos locales.
 - Metadatos SEO, Open Graph, manifest, favicon, robots y sitemap.
 - Compartir plan, feedback enlazado a GitHub, changelog y eventos de analitica
@@ -53,4 +53,3 @@ Palworld. No envia la coleccion, los planes ni los datos de juego a un servidor.
 - La importacion de `.sav` binarios no se hace en el navegador: requiere un
   conversor local especifico que exporte JSON. Los saves no se suben a ningun
   servicio.
-

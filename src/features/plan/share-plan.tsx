@@ -9,7 +9,7 @@ interface ShareMetric { label: string; value: string }
 export function SharePlan({ title, metrics }: { title: string; metrics: ShareMetric[] }) {
   const t = useT()
   const [copied, setCopied] = useState(false)
-  const text = `${title} · ${metrics.map((metric) => `${metric.label}: ${metric.value}`).join(' · ')} · PalBreed`
+  const text = `${title} · ${metrics.map((metric) => `${metric.label}: ${metric.value}`).join(' · ')} · Palaxis`
 
   const copyLink = async () => {
     await navigator.clipboard?.writeText(window.location.href)
@@ -19,7 +19,7 @@ export function SharePlan({ title, metrics }: { title: string; metrics: ShareMet
   }
   const share = async () => {
     const canShare = typeof (navigator as Navigator & { share?: unknown }).share === 'function'
-    if (canShare) await navigator.share({ title: 'PalBreed', text, url: window.location.href })
+    if (canShare) await navigator.share({ title: 'Palaxis', text, url: window.location.href })
     else await copyLink()
     track('plan_shared', { method: canShare ? 'native' : 'copy_link' })
   }
@@ -41,7 +41,7 @@ export function SharePlan({ title, metrics }: { title: string; metrics: ShareMet
     context.globalAlpha = 1
     context.fillStyle = '#f3c653'
     context.font = '800 23px sans-serif'
-    context.fillText('PALBREED · BREEDING PLAN', 82, 105)
+    context.fillText('PALAXIS · BREEDING PLAN', 82, 105)
     context.fillStyle = '#eef8f8'
     context.font = '800 66px sans-serif'
     context.fillText(title.slice(0, 28), 82, 188)
@@ -59,7 +59,7 @@ export function SharePlan({ title, metrics }: { title: string; metrics: ShareMet
     })
     const anchor = document.createElement('a')
     anchor.href = canvas.toDataURL('image/png')
-    anchor.download = 'palbreed-plan.png'
+    anchor.download = 'palaxis-plan.png'
     anchor.click()
     track('plan_shared', { method: 'png' })
   }

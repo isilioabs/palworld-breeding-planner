@@ -1,7 +1,7 @@
-# Palworld Breeding Planner
+# Palaxis — Palworld Breeding Nexus
 
 > Consulta [CHANGELOG.md](./CHANGELOG.md) para las notas completas de la
-> version actual de **PalBreed**: coleccion, Paldex, proyectos, rutas,
+> version actual de **Palaxis**: coleccion, Paldex, proyectos, rutas,
 > rendimiento, experiencia movil y lanzamiento.
 
 Planificador de crianza para Palworld. Le dices qué Pal quieres, qué pasivas quieres que lleve y qué Pals tienes ya en la caja, y calcula el árbol de cruces óptimo mediante búsqueda en grafos.

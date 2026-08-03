@@ -15,7 +15,7 @@ export type ProductEvent =
  */
 export function track(event: ProductEvent, props: Record<string, string | number | boolean> = {}): void {
   if (typeof window === 'undefined') return
-  window.dispatchEvent(new CustomEvent('palbreed:analytics', { detail: { event, props } }))
+  window.dispatchEvent(new CustomEvent('palaxis:analytics', { detail: { event, props } }))
   const plausible = (window as Window & { plausible?: (name: string, options?: { props: typeof props }) => void }).plausible
   plausible?.(event, { props })
 }

@@ -13,7 +13,7 @@ export interface CollectionImportCandidate {
 export interface CollectionImportResult {
   candidates: CollectionImportCandidate[]
   skipped: number
-  source: 'palbreed' | 'collection' | 'generic'
+  source: 'palaxis' | 'collection' | 'generic'
 }
 
 type UnknownRecord = Record<string, unknown>
@@ -60,7 +60,7 @@ function resolveGender(value: unknown): Gender | undefined {
 }
 
 /**
- * Lee formatos seguros y explícitos: un export de PalBreed, una lista de
+ * Lee formatos seguros y explícitos: un export de Palaxis, una lista de
  * colección o una lista genérica con palId/species, pasivas y género. Los
  * archivos .sav binarios no se interpretan aquí: requieren un exportador local
  * dedicado antes de exponer datos de un mundo al navegador.
@@ -73,10 +73,10 @@ export function parseCollectionImport(text: string): CollectionImportResult {
     throw new Error('El archivo no es JSON válido. Exporta tu colección como .json antes de importarla.')
   }
   const items = firstArray(raw)
-  if (!items) throw new Error('No encontramos una lista de Pals. Usa un export de PalBreed o un JSON con collection/pals.')
+  if (!items) throw new Error('No encontramos una lista de Pals. Usa un export de Palaxis o un JSON con collection/pals.')
 
   const source: CollectionImportResult['source'] = isRecord(raw) && Array.isArray(raw.owned)
-    ? 'palbreed'
+    ? 'palaxis'
     : isRecord(raw) && (Array.isArray(raw.collection) || Array.isArray(raw.pals))
       ? 'collection'
       : 'generic'
