@@ -6,7 +6,7 @@
 
 Planificador de crianza para Palworld. Le dices qué Pal quieres, qué pasivas quieres que lleve y qué Pals tienes ya en la caja, y calcula el árbol de cruces óptimo mediante búsqueda en grafos.
 
-**Funciona 100 % sin conexión**: toda la base de datos va incluida como JSON estático. No hay backend, ni API, ni telemetría.
+**Funciona 100 % sin conexión**: toda la base de datos va incluida como JSON estático. No hay backend ni API; la medición es opcional y solo se carga si el jugador la acepta.
 
 ```bash
 npm install
@@ -201,6 +201,22 @@ npm run data:build   # regenerar la base de datos
 npm run data:verify  # verificar la base de datos
 npm run data:icons   # descargar los sprites que falten (--force para todos)
 ```
+
+## Medición de campañas (opcional)
+
+Para medir una campaña sin enviar datos antes del consentimiento, copia
+`.env.example` a `.env.local` y configura los IDs públicos de Google:
+
+```bash
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+VITE_GOOGLE_ADS_ID=AW-XXXXXXXXXX
+```
+
+La app no carga ninguna etiqueta si ambos valores están vacíos. Al aceptar,
+envía los eventos `planner_launched`, `target_selected`, `build_applied`,
+`tree_generated`, `collection_updated`, `route_compared`, `demo_loaded` y
+`plan_shared`. Vincula GA4 con Google Ads e importa `tree_generated` como la
+conversión primaria de la campaña.
 
 ## Créditos
 

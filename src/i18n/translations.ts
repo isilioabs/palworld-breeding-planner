@@ -19,6 +19,18 @@ export const es = {
   'header.langToggle': 'Cambiar a ingles',
   'header.langToggleToEs': 'Switch to Spanish',
 
+  'tracking.title': 'Medición opcional',
+  'tracking.description': 'Ayúdanos a entender qué funciones usan los jugadores. Solo cargamos Google Analytics y Ads si lo aceptas.',
+  'tracking.accept': 'Aceptar medición',
+  'tracking.reject': 'Rechazar',
+  'tracking.openPreferences': 'Abrir preferencias de privacidad',
+  'tracking.close': 'Cerrar preferencias',
+  'tracking.preferencesTitle': 'Tus preferencias de medición',
+  'tracking.preferencesDescription': 'Puedes cambiar esta decisión cuando quieras. La medición nos ayuda a mejorar Palaxis y evaluar nuestras campañas.',
+  'tracking.status': 'Estado actual',
+  'tracking.statusEnabled': 'Medición activada',
+  'tracking.statusDisabled': 'Medición desactivada',
+
   'switchMode.button': 'Cambiar a "{label}"',
 
   'emptyState.title': 'Planifica tu cadena de crianza perfecta',
@@ -518,6 +530,18 @@ export const en: Record<TranslationKey, string> = {
   'header.footerLine': 'Data {version} · {count} verified pairs · 100% offline',
   'header.langToggle': 'Switch to English',
   'header.langToggleToEs': 'Cambiar a español',
+
+  'tracking.title': 'Optional measurement',
+  'tracking.description': 'Help us understand which features players use. Google Analytics and Ads load only if you accept.',
+  'tracking.accept': 'Accept measurement',
+  'tracking.reject': 'Reject',
+  'tracking.openPreferences': 'Open privacy preferences',
+  'tracking.close': 'Close preferences',
+  'tracking.preferencesTitle': 'Your measurement preferences',
+  'tracking.preferencesDescription': 'You can change this choice at any time. Measurement helps us improve Palaxis and evaluate our campaigns.',
+  'tracking.status': 'Current status',
+  'tracking.statusEnabled': 'Measurement enabled',
+  'tracking.statusDisabled': 'Measurement disabled',
 
   'switchMode.button': 'Switch to "{label}"',
 

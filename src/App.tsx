@@ -18,6 +18,7 @@ import { PokedexProvider } from '@/features/pokedex/pokedex-panel'
 import { LandingPage } from '@/features/launch/landing-page'
 import { Onboarding } from '@/features/launch/onboarding'
 import { ProductMenu } from '@/features/launch/product-menu'
+import { TrackingConsent } from '@/features/launch/tracking-consent'
 import { usePlanner } from '@/hooks/use-planner'
 import { useLang, useT } from '@/i18n/language-store'
 import { PlannerProvider, usePlannerStore } from '@/state/planner-store'
@@ -337,6 +338,7 @@ export default function App() {
         <TooltipProvider delayDuration={350}>
           <DocumentLanguageSync />
           <ExperienceGate />
+          <TrackingConsent />
         </TooltipProvider>
       </PokedexProvider>
     </PlannerProvider>

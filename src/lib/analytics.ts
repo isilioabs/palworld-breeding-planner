@@ -18,4 +18,6 @@ export function track(event: ProductEvent, props: Record<string, string | number
   window.dispatchEvent(new CustomEvent('palaxis:analytics', { detail: { event, props } }))
   const plausible = (window as Window & { plausible?: (name: string, options?: { props: typeof props }) => void }).plausible
   plausible?.(event, { props })
+  trackGoogleEvent(event, props)
 }
+import { trackGoogleEvent } from './google-tag'
