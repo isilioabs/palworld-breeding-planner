@@ -1,7 +1,11 @@
+import type { CSSProperties } from 'react'
 import { BookOpen, Boxes, ChevronRight, Database, GitCompareArrows, Network, ScanSearch, Sparkles, Swords, WifiOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PalaxisMark } from '@/components/palaxis-mark'
 import { PalIcon } from '@/components/pal-icon'
 import { useT } from '@/i18n/language-store'
+import { cn } from '@/lib/utils'
+import { useReveal } from '@/lib/use-reveal'
 
 interface LandingPageProps {
   onLaunch: () => void
@@ -38,17 +42,23 @@ const FAQS = [
 
 export function LandingPage({ onLaunch, onLoadDemo }: LandingPageProps) {
   const t = useT()
+  const [featuresRef, featuresVisible] = useReveal<HTMLElement>()
+  const [reasonsRef, reasonsVisible] = useReveal<HTMLElement>()
+  const [howRef, howVisible] = useReveal<HTMLElement>()
+  const [ctaRef, ctaVisible] = useReveal<HTMLElement>()
+  const [faqRef, faqVisible] = useReveal<HTMLElement>()
   return (
     <main className="landing-page">
       <nav className="landing-nav" aria-label={t('landing.navigation')}>
         <button type="button" className="landing-brand" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <span><Sparkles aria-hidden="true" /></span><strong>PALAXIS</strong>
+          <span><PalaxisMark /></span><strong>PALAXIS</strong>
         </button>
         <Button size="sm" onClick={onLaunch}>{t('landing.launch')}<ChevronRight aria-hidden="true" /></Button>
       </nav>
 
       <section className="landing-hero" aria-labelledby="landing-title">
         <div className="landing-hero__copy">
+          <PalaxisMark className="landing-hero__mark" />
           <span className="landing-kicker"><WifiOff aria-hidden="true" />{t('landing.kicker')}</span>
           <h1 id="landing-title">{t('landing.titleA')} <em>{t('landing.titleB')}</em></h1>
           <p>{t('landing.description')}</p>
@@ -64,48 +74,54 @@ export function LandingPage({ onLaunch, onLoadDemo }: LandingPageProps) {
         </div>
         <div className="landing-demo" aria-label={t('landing.demoLabel')}>
           <div className="landing-demo__ambient" aria-hidden="true" />
-          <div className="landing-demo__eyebrow"><span />{t('landing.exampleProject')}</div>
-          <div className="landing-demo__target">
-            <PalIcon palId="Anubis" size={96} bare />
-            <div><small>{t('landing.targetBadge')}</small><strong>{t('landing.demoTitle')}</strong><p>{t('landing.demoDescription')}</p></div>
+          <div className="landing-demo__rivets" aria-hidden="true" />
+          <div className="landing-demo__eyebrow">
+            <span className="landing-demo__lens" aria-hidden="true"><span /></span>
+            {t('landing.exampleProject')}
           </div>
-          <div className="landing-demo__progress"><span><i /></span><strong>{t('landing.demoProgress')}</strong></div>
-          <div className="landing-demo__steps">
-            {[t('landing.demoStepOne'), t('landing.demoStepTwo'), t('landing.demoStepThree')].map((step, index) => <p key={step}><b>{index + 1}</b>{step}</p>)}
+          <div className="landing-demo__screen">
+            <div className="landing-demo__target">
+              <PalIcon palId="Anubis" size={96} bare />
+              <div><small>{t('landing.targetBadge')}</small><strong>{t('landing.demoTitle')}</strong><p>{t('landing.demoDescription')}</p></div>
+            </div>
+            <div className="landing-demo__progress"><span><i /></span><strong>{t('landing.demoProgress')}</strong></div>
+            <div className="landing-demo__steps">
+              {[t('landing.demoStepOne'), t('landing.demoStepTwo'), t('landing.demoStepThree')].map((step, index) => <p key={step}><b>{index + 1}</b>{step}</p>)}
+            </div>
           </div>
           <Button size="sm" className="w-full" onClick={onLoadDemo}>{t('landing.loadDemo')}</Button>
         </div>
       </section>
 
-      <section className="landing-section" aria-labelledby="features-title">
+      <section ref={featuresRef} className={cn('landing-section reveal', featuresVisible && 'is-in')} aria-labelledby="features-title">
         <div className="landing-section__heading"><span>{t('landing.platform')}</span><h2 id="features-title">{t('landing.featuresTitle')}</h2><p>{t('landing.featuresDescription')}</p></div>
         <ul className="landing-features">
-          {FEATURES.map(({ icon: Icon, key }, index) => <li key={key} className={`landing-feature landing-feature--${index + 1}`}><Icon aria-hidden="true" /><strong>{t(`landing.feature.${key}.title`)}</strong><p>{t(`landing.feature.${key}.description`)}</p></li>)}
+          {FEATURES.map(({ icon: Icon, key }, index) => <li key={key} className={`landing-feature landing-feature--${index + 1}`} style={{ '--i': index } as CSSProperties}><Icon aria-hidden="true" /><strong>{t(`landing.feature.${key}.title`)}</strong><p>{t(`landing.feature.${key}.description`)}</p></li>)}
         </ul>
       </section>
 
-      <section className="landing-section landing-section--reasons" aria-labelledby="reasons-title">
+      <section ref={reasonsRef} className={cn('landing-section landing-section--reasons reveal', reasonsVisible && 'is-in')} aria-labelledby="reasons-title">
         <div className="landing-section__heading"><span>{t('landing.reasonsEyebrow')}</span><h2 id="reasons-title">{t('landing.reasonsTitle')}</h2></div>
         <ul className="landing-reasons">
-          {REASONS.map(({ id, titleKey, descriptionKey }) => <li key={id}><CheckMark /><div><strong>{t(titleKey)}</strong><p>{t(descriptionKey)}</p></div></li>)}
+          {REASONS.map(({ id, titleKey, descriptionKey }, index) => <li key={id} style={{ '--i': index } as CSSProperties}><CheckMark /><div><strong>{t(titleKey)}</strong><p>{t(descriptionKey)}</p></div></li>)}
         </ul>
       </section>
 
-      <section className="landing-section landing-section--how" aria-labelledby="how-title">
+      <section ref={howRef} className={cn('landing-section landing-section--how reveal', howVisible && 'is-in')} aria-labelledby="how-title">
         <div className="landing-section__heading"><span>{t('landing.howEyebrow')}</span><h2 id="how-title">{t('landing.howTitle')}</h2></div>
         <ol className="landing-how">
-          {HOW_STEPS.map(({ number, titleKey, descriptionKey }) => <li key={number}><b>{number}</b><div><strong>{t(titleKey)}</strong><p>{t(descriptionKey)}</p></div></li>)}
+          {HOW_STEPS.map(({ number, titleKey, descriptionKey }, index) => <li key={number} style={{ '--i': index } as CSSProperties}><b>{number}</b><div><strong>{t(titleKey)}</strong><p>{t(descriptionKey)}</p></div></li>)}
         </ol>
       </section>
 
-      <section className="landing-cta" aria-labelledby="landing-cta-title">
+      <section ref={ctaRef} className={cn('landing-cta reveal', ctaVisible && 'is-in')} aria-labelledby="landing-cta-title">
         <span className="landing-kicker"><Sparkles aria-hidden="true" />{t('landing.ctaEyebrow')}</span>
         <h2 id="landing-cta-title">{t('landing.ctaTitle')}</h2>
         <p>{t('landing.ctaDescription')}</p>
         <Button size="lg" onClick={onLaunch}>{t('landing.launch')}<ChevronRight aria-hidden="true" /></Button>
       </section>
 
-      <section className="landing-section landing-faq" aria-labelledby="faq-title">
+      <section ref={faqRef} className={cn('landing-section landing-faq reveal', faqVisible && 'is-in')} aria-labelledby="faq-title">
         <div className="landing-section__heading"><span>{t('landing.faqEyebrow')}</span><h2 id="faq-title">{t('landing.faqTitle')}</h2></div>
         <div>{FAQS.map(({ id, questionKey, answerKey }) => <details key={id}><summary>{t(questionKey)}<ChevronRight aria-hidden="true" /></summary><p>{t(answerKey)}</p></details>)}</div>
       </section>

@@ -17,7 +17,7 @@ import { usePokedex } from '@/features/pokedex/pokedex-panel'
 import { CollectionImportDialog } from './collection-import-dialog'
 
 const MAX_PASSIVES_PER_PAL = 4
-const MISSING_PAGE_SIZE = 24
+const PAGE_SIZE = 24
 const ELEMENTS = Object.keys(ELEMENT_INFO) as ElementType[]
 
 type CollectionView = 'owned' | 'missing'
@@ -41,7 +41,7 @@ function PokedexCard({ pal, entry, desired, onAdd, onManage, onFavorite }: Poked
 
   return (
     <article
-      className={cn('collection-pokedex-card', !owned && 'collection-pokedex-card--missing', highlighted && 'collection-pokedex-card--matched')}
+      className={cn('collection-pokedex-card', !owned && 'collection-pokedex-card--missing', highlighted && 'collection-pokedex-card--matched', entry?.favorite && 'collection-pokedex-card--favorite')}
       style={{ '--collection-element': ELEMENT_INFO[element].color } as CSSProperties}
     >
       <button
@@ -201,7 +201,7 @@ export function CollectionPanel({ embedded = false }: { embedded?: boolean }) {
   const [view, setView] = useState<CollectionView>('owned')
   const [recentFirst, setRecentFirst] = useState(true)
   const [editingUid, setEditingUid] = useState<string | null>(null)
-  const [missingLimit, setMissingLimit] = useState(MISSING_PAGE_SIZE)
+  const [limit, setLimit] = useState(PAGE_SIZE)
   const desired = useMemo(() => new Set(state.desiredPassives), [state.desiredPassives])
   const ownedIds = useMemo(() => new Set(state.owned.map((entry) => entry.palId)), [state.owned])
   const edited = state.owned.find((entry) => entry.uid === editingUid)
@@ -223,9 +223,23 @@ export function CollectionPanel({ embedded = false }: { embedded?: boolean }) {
   }, [db.pals, element, favoritesOnly, ownedIds, passiveFilter, recentFirst, search, state.owned, view])
   // Cada filtro vuelve a la primera pagina. Renderizar las 299 cartas no solo
   // alarga el scroll: tambien decodifica muchos retratos que el jugador aun
-  // no ha pedido ver.
-  useEffect(() => setMissingLimit(MISSING_PAGE_SIZE), [element, search, view])
-  const displayed = view === 'missing' ? visible.slice(0, missingLimit) : visible
+  // no ha pedido ver. Aplica tanto a "missing" como a colecciones grandes en "owned".
+  useEffect(() => setLimit(PAGE_SIZE), [element, favoritesOnly, passiveFilter, recentFirst, search, view])
+  const displayed = visible.slice(0, limit)
+
+  const elementProgress = useMemo(() => {
+    const counts = new Map<ElementType, { owned: number; total: number }>()
+    for (const value of ELEMENTS) counts.set(value, { owned: 0, total: 0 })
+    for (const pal of db.pals) {
+      for (const value of pal.elements) {
+        const entry = counts.get(value)
+        if (!entry) continue
+        entry.total += 1
+        if (ownedIds.has(pal.id)) entry.owned += 1
+      }
+    }
+    return counts
+  }, [db.pals, ownedIds])
 
   const passiveIds = useMemo(() => new Set(state.owned.flatMap((entry) => entry.passives)), [state.owned])
   const favorites = state.owned.filter((entry) => entry.favorite)
@@ -263,7 +277,7 @@ export function CollectionPanel({ embedded = false }: { embedded?: boolean }) {
         </section>
 
         <div className="collection-panel__add-actions">
-          <PalPicker label={t('collectionPanel.addPlaceholder')} onSelect={(palId) => dispatch({ type: 'addOwned', palId })} />
+          <PalPicker label={t('collectionPanel.addPlaceholder')} onSelect={(palId) => dispatch({ type: 'addOwned', palId })} closeOnSelect={false} disabledIds={[...ownedIds]} />
           <CollectionImportDialog />
         </div>
 
@@ -289,7 +303,15 @@ export function CollectionPanel({ embedded = false }: { embedded?: boolean }) {
           </div>
           <div className="flex flex-wrap gap-1.5">
             <Button size="sm" variant={!element ? 'secondary' : 'outline'} onClick={() => setElement(null)}>{t('collectionPanel.allElements')}</Button>
-            {ELEMENTS.map((value) => <Button key={value} size="sm" variant={element === value ? 'secondary' : 'outline'} className="collection-element-filter" onClick={() => setElement(element === value ? null : value)}><img src={ELEMENT_INFO[value].icon} alt="" width="13" height="13" />{ELEMENT_INFO[value].label}</Button>)}
+            {ELEMENTS.map((value) => {
+              const progress = elementProgress.get(value)
+              return (
+                <Button key={value} size="sm" variant={element === value ? 'secondary' : 'outline'} className="collection-element-filter" onClick={() => setElement(element === value ? null : value)}>
+                  <img src={ELEMENT_INFO[value].icon} alt="" width="13" height="13" />{ELEMENT_INFO[value].label}
+                  {progress && <span className="collection-element-filter__count">{progress.owned}/{progress.total}</span>}
+                </Button>
+              )
+            })}
           </div>
           {view === 'owned' && <div className="flex flex-wrap items-center gap-1.5"><PassivePicker selected={passiveFilter ? [passiveFilter] : []} max={1} label={t('collectionPanel.passiveFilter')} onToggle={(id) => setPassiveFilter((current) => current === id ? null : id)} />{passiveFilter && <Button variant="ghost" size="icon-sm" aria-label={t('collectionPanel.clearFilters')} onClick={() => setPassiveFilter(null)}><X className="size-3.5" /></Button>}</div>}
         </div>
@@ -299,8 +321,8 @@ export function CollectionPanel({ embedded = false }: { embedded?: boolean }) {
             <ul className="collection-pokedex-grid">
               {displayed.map(({ pal, entry }) => <li key={entry?.uid ?? pal.id}><PokedexCard pal={pal} entry={entry} desired={desired} onAdd={() => dispatch({ type: 'addOwned', palId: pal.id })} onManage={() => entry && setEditingUid(entry.uid)} onFavorite={() => entry && dispatch({ type: 'updateOwned', uid: entry.uid, patch: { favorite: !entry.favorite } })} /></li>)}
             </ul>
-            {view === 'missing' && displayed.length < visible.length && (
-              <Button variant="outline" size="sm" className="w-full" onClick={() => setMissingLimit((limit) => limit + MISSING_PAGE_SIZE)}>
+            {displayed.length < visible.length && (
+              <Button variant="outline" size="sm" className="w-full" onClick={() => setLimit((current) => current + PAGE_SIZE)}>
                 {t('collectionPanel.loadMoreMissing', { shown: displayed.length, total: visible.length })}
               </Button>
             )}

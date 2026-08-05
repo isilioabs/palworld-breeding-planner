@@ -1382,6 +1382,19 @@ button:not(:disabled):focus-visible,
 .landing-brand svg { width: 1rem; height: 1rem; }
 .landing-brand strong { font-family: 'Anton', Impact, sans-serif; font-size: 1.1rem; font-weight: 400; }
 .landing-hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(19rem, .9fr); align-items: center; gap: clamp(2.5rem, 7vw, 6rem); min-height: min(43rem, calc(100vh - 5rem)); padding-block: 4.5rem 5rem; }
+.landing-hero__copy { position: relative; }
+.landing-hero__mark { position: absolute; z-index: -1; top: -4.5rem; left: -3.5rem; width: 24rem; height: 24rem; color: #f3cb58; opacity: .18; filter: drop-shadow(0 0 46px rgb(243 203 88 / 45%)); pointer-events: none; }
+
+/* Entrada progresiva al hacer scroll: un solo disparo por seccion via
+   IntersectionObserver (useReveal), nunca en bucle. Los hijos se escalonan
+   con transition-delay leyendo --i, sin observers adicionales. */
+.landing-section.reveal, .landing-cta.reveal { opacity: 0; transform: translateY(26px); transition: opacity 650ms var(--motion-soft), transform 650ms var(--motion-soft); }
+.landing-section.reveal.is-in, .landing-cta.reveal.is-in { opacity: 1; transform: translateY(0); }
+.landing-features > li, .landing-reasons > li, .landing-how > li { opacity: 0; transform: translateY(16px); transition: opacity 500ms var(--motion-soft), transform 500ms var(--motion-soft); transition-delay: calc(var(--i, 0) * 80ms); }
+.reveal.is-in .landing-features > li, .reveal.is-in .landing-reasons > li, .reveal.is-in .landing-how > li { opacity: 1; transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  .landing-section.reveal, .landing-cta.reveal, .landing-features > li, .landing-reasons > li, .landing-how > li { opacity: 1; transform: none; transition: none; }
+}
 .landing-kicker { display: inline-flex; align-items: center; gap: .42rem; color: #f3cb58; font-family: 'Oxanium', system-ui, sans-serif; font-size: .64rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .landing-kicker svg { width: .88rem; height: .88rem; }
 .landing-hero h1 { max-width: 12ch; margin-top: 1rem; font-family: 'Anton', Impact, sans-serif; font-size: clamp(3.1rem, 7.1vw, 5.9rem); font-weight: 400; line-height: .95; letter-spacing: -.025em; text-transform: uppercase; }
@@ -1391,22 +1404,40 @@ button:not(:disabled):focus-visible,
 .landing-proof { display: flex; flex-wrap: wrap; gap: .55rem 1rem; margin-top: 1.5rem; color: #88a4ae; font-size: .72rem; }
 .landing-proof li { display: flex; align-items: center; gap: .35rem; }
 .landing-proof svg { width: .8rem; height: .8rem; color: #6cd9cc; }
-.landing-demo { position: relative; isolation: isolate; overflow: hidden; border: 1px solid rgb(104 214 204 / 48%); border-radius: 1.1rem; padding: 1.15rem; background: linear-gradient(145deg, rgb(10 32 39 / 96%), rgb(10 16 22 / 97%)); box-shadow: 0 28px 80px rgb(0 0 0 / 42%), inset 0 1px rgb(255 255 255 / 8%); transform: rotate(1.5deg); }
+/* La tarjeta "Load Demo" del hero comparte el lenguaje del dispositivo
+   Pokedex (bisel, remaches, lente, pantalla con scanlines) para que se lea
+   como la misma familia visual que el selector de Pals y el dossier. */
+.landing-demo {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, #4cc9e8 45%, rgb(104 214 204 / 48%));
+  border-radius: 1.3rem;
+  padding: 1.15rem;
+  background: linear-gradient(145deg, rgb(15 34 40 / 97%), rgb(9 15 21 / 98%));
+  box-shadow: 0 0 0 5px rgb(4 10 14 / 65%) inset, 0 0 0 6px rgb(76 201 232 / 20%), 0 28px 80px rgb(0 0 0 / 42%), inset 0 1px rgb(255 255 255 / 8%);
+  transform: rotate(1.5deg);
+}
 .landing-demo__ambient { position: absolute; z-index: -1; top: -4rem; right: -3rem; width: 13rem; height: 13rem; border-radius: 999px; background: #2e9fa7; opacity: .24; filter: blur(36px); }
-.landing-demo__eyebrow { display: flex; align-items: center; gap: .42rem; color: #88c4c7; font-family: 'Oxanium', system-ui, sans-serif; font-size: .58rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.landing-demo__eyebrow span { width: .45rem; height: .45rem; border-radius: 999px; background: #61e4a3; box-shadow: 0 0 14px #61e4a3; }
-.landing-demo__target { display: flex; align-items: center; gap: .75rem; margin-block: .85rem; padding: .65rem; border: 1px solid rgb(135 226 221 / 25%); border-radius: .72rem; background: rgb(1 9 14 / 45%); }
+.landing-demo__rivets { position: absolute; z-index: 1; inset: 0; pointer-events: none; background-image: radial-gradient(circle, rgb(255 255 255 / 15%) 0%, rgb(255 255 255 / 15%) 30%, transparent 34%), radial-gradient(circle, rgb(0 0 0 / 35%) 0%, rgb(0 0 0 / 35%) 30%, transparent 34%); background-repeat: no-repeat; background-size: 6px 6px; background-position: 10px 10px, 11px 11px; }
+.landing-demo::after { position: absolute; z-index: 6; top: 0; right: 0; left: 0; height: 3px; content: ''; pointer-events: none; background: linear-gradient(90deg, transparent, #7fe7ff, transparent); box-shadow: 0 0 18px 3px rgb(76 201 232 / 55%); opacity: 0; will-change: transform, opacity; animation: device-scan 900ms 500ms var(--motion-soft) both; }
+.landing-demo__eyebrow { position: relative; z-index: 2; display: flex; align-items: center; gap: .48rem; color: #88c4c7; font-family: 'Oxanium', system-ui, sans-serif; font-size: .58rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.landing-demo__lens { position: relative; display: grid; flex: none; width: 1.3rem; height: 1.3rem; place-items: center; border-radius: 50%; background: radial-gradient(circle at 34% 28%, #a4f3ff, #4cc9e8 46%, #0d5a6b 82%); box-shadow: 0 0 0 2px #050b0e, 0 0 0 3px rgb(76 201 232 / 50%), 0 0 10px 1px rgb(76 201 232 / 65%); }
+.landing-demo__lens span { position: absolute; top: 18%; left: 24%; width: 32%; height: 22%; border-radius: 50%; background: rgb(255 255 255 / 75%); filter: blur(.5px); }
+.landing-demo__screen { position: relative; z-index: 2; margin-top: .85rem; padding: .85rem .8rem .1rem; border: 1px solid #08161c; border-radius: .9rem; background: repeating-linear-gradient(180deg, rgb(255 255 255 / 2.5%) 0, rgb(255 255 255 / 2.5%) 1px, transparent 1px, transparent 3px), radial-gradient(ellipse at 50% -10%, rgb(76 201 232 / 12%), transparent 55%), #060e13; box-shadow: inset 0 2px 10px rgb(0 0 0 / 60%), inset 0 0 0 1px rgb(255 255 255 / 4%); }
+.landing-demo__target { display: flex; align-items: center; gap: .75rem; padding: .65rem; border: 1px solid rgb(135 226 221 / 25%); border-radius: .72rem; background: rgb(1 9 14 / 45%); }
 .landing-demo__target img { filter: drop-shadow(0 8px 9px rgb(0 0 0 / 44%)); }
 .landing-demo__target small { display: block; color: #e5bd4c; font-family: 'Oxanium', system-ui, sans-serif; font-size: .55rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .landing-demo__target strong { display: block; margin-top: .15rem; font-family: 'Anton', Impact, sans-serif; font-size: 1.45rem; font-weight: 400; letter-spacing: .02em; text-transform: uppercase; }
 .landing-demo__target p { margin-top: .17rem; color: #90a6ae; font-size: .65rem; }
 .landing-demo__progress { display: flex; align-items: center; gap: .6rem; margin-block: .85rem; }
-.landing-demo__progress span { display: block; height: .35rem; flex: 1; overflow: hidden; border-radius: 999px; background: rgb(255 255 255 / 9%); }
-.landing-demo__progress i { display: block; width: 75%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #62dba5, #f1cb55); }
+.landing-demo__progress span { display: block; height: .35rem; flex: 1; overflow: hidden; border-radius: 999px; background: rgb(255 255 255 / 9%); box-shadow: inset 0 1px 2px rgb(0 0 0 / 45%); }
+.landing-demo__progress i { display: block; width: 75%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #62dba5, #f1cb55); box-shadow: 0 0 8px 1px rgb(98 219 165 / 55%); }
 .landing-demo__progress strong { color: #e3eff2; font-family: 'Oxanium', system-ui, sans-serif; font-size: .7rem; }
-.landing-demo__steps { display: grid; gap: .32rem; margin-bottom: .85rem; }
+.landing-demo__steps { display: grid; gap: .32rem; padding-bottom: .85rem; }
 .landing-demo__steps p { display: flex; align-items: center; gap: .42rem; color: #c4d4d9; font-size: .66rem; }
 .landing-demo__steps b { display: grid; width: 1.1rem; height: 1.1rem; place-items: center; border: 1px solid #419faa; border-radius: 999px; color: #7be2db; font-size: .55rem; }
+@media (prefers-reduced-motion: reduce) { .landing-demo::after { animation: none; content: none; } }
 .landing-section { padding-block: 5.5rem; }
 .landing-section__heading { max-width: 39rem; }
 .landing-section__heading > span { color: #f1c653; font-family: 'Oxanium', system-ui, sans-serif; font-size: .62rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
@@ -1706,6 +1737,7 @@ button.tree-pal-card.tree-pal-card--target:active { transform: scale(1.015); }
 
 .collection-element-filter { padding-right: .45rem; padding-left: .45rem; font-size: .6rem; }
 .collection-element-filter img { object-fit: contain; }
+.collection-element-filter__count { border-radius: .3rem; padding: .05rem .28rem; background: rgb(0 0 0 / 24%); color: inherit; font-family: 'Oxanium', system-ui, sans-serif; font-size: .52rem; font-weight: 800; letter-spacing: .02em; opacity: .82; }
 
 .collection-pokedex-grid {
   display: grid;
@@ -1734,6 +1766,10 @@ button.tree-pal-card.tree-pal-card--target:active { transform: scale(1.015); }
 .collection-pokedex-card:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 20%), 0 8px 18px rgb(0 0 0 / 26%); }
 .collection-pokedex-card--missing { opacity: .78; background: linear-gradient(145deg, #17202a, #11161d 68%) padding-box, linear-gradient(135deg, #89919c, #383e48 50%, #929aa5) border-box; }
 .collection-pokedex-card--matched { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 20%), 0 0 0 2px rgb(74 222 128 / 32%), 0 8px 18px rgb(0 0 0 / 26%); }
+.collection-pokedex-card--favorite { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%), 0 0 22px -8px rgb(251 191 36 / 55%), 0 4px 10px rgb(0 0 0 / 18%); background: linear-gradient(145deg, color-mix(in srgb, var(--collection-element, var(--primary)) 24%, #18212a), #10151c 68%) padding-box, linear-gradient(135deg, #fde68a, #b45309 30%, #fbbf24 55%, #92400e 78%, #fef3c7) border-box; }
+.collection-pokedex-card--favorite.collection-pokedex-card--matched { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 18%), 0 0 0 2px rgb(74 222 128 / 32%), 0 0 22px -8px rgb(251 191 36 / 55%), 0 8px 18px rgb(0 0 0 / 26%); }
+.collection-pokedex-card--favorite:hover { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 20%), 0 0 26px -6px rgb(251 191 36 / 62%), 0 8px 18px rgb(0 0 0 / 26%); }
+.collection-pokedex-card--favorite.collection-pokedex-card--matched:hover { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 20%), 0 0 0 2px rgb(74 222 128 / 32%), 0 0 26px -6px rgb(251 191 36 / 62%), 0 8px 18px rgb(0 0 0 / 26%); }
 
 .collection-pokedex-card__topline { display: flex; align-items: center; justify-content: space-between; gap: .25rem; color: #c9d4df; font-family: 'Oxanium', system-ui, sans-serif; font-size: .55rem; font-weight: 800; letter-spacing: .06em; }
 .collection-pokedex-card__element { overflow: hidden; max-width: 50%; border-radius: .2rem; padding: .14rem .25rem; background: color-mix(in srgb, var(--collection-element, var(--primary)) 30%, #111820); color: white; text-overflow: ellipsis; white-space: nowrap; }
@@ -1804,25 +1840,61 @@ button.tree-pal-card.tree-pal-card--target:active { transform: scale(1.015); }
 /* Selector visual de Pals e importación local. Mantiene el inventario dentro
    del navegador: las capturas solo se usan como referencia visual. */
 .pal-picker__overlay, .collection-import__overlay { position: fixed; z-index: 90; inset: 0; background: rgb(2 7 12 / 78%); backdrop-filter: blur(5px); }
-.pal-picker__dialog { position: fixed; z-index: 91; top: 50%; left: 50%; display: grid; width: min(66rem, calc(100vw - 2rem)); max-height: min(49rem, calc(100dvh - 2rem)); grid-template-rows: auto auto auto minmax(0, 1fr) auto; overflow: hidden; transform: translate(-50%, -50%); border: 1px solid color-mix(in srgb, #4cc9e8 45%, var(--border)); border-radius: 1rem; background: linear-gradient(145deg, #15242d, #091219 70%); box-shadow: 0 28px 80px rgb(0 0 0 / 62%); outline: none; }
+/* El selector de Pals se trata como un dispositivo Pokedex: carcasa metalica,
+   lente frontal, panel de botones y una pantalla hundida con scanlines. Todo
+   estatico salvo el barrido de apertura (device-scan) y el parpadeo del LED
+   de "capturado", para no repetir el coste de las capas animadas de la carta. */
+.pal-picker__dialog {
+  position: fixed;
+  z-index: 91;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: min(66rem, calc(100vw - 2rem));
+  max-height: min(49rem, calc(100dvh - 2rem));
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  transform: translate(-50%, -50%);
+  border: 1px solid color-mix(in srgb, #4cc9e8 45%, var(--border));
+  border-radius: 1.35rem;
+  background:
+    radial-gradient(circle at 8% 4%, rgb(255 255 255 / 7%), transparent 40%),
+    linear-gradient(145deg, #1a2c36, #0a141b 55%, #0d1920 100%);
+  box-shadow: 0 0 0 6px rgb(5 11 15 / 65%) inset, 0 0 0 7px color-mix(in srgb, #4cc9e8 22%, transparent), 0 28px 80px rgb(0 0 0 / 62%);
+  outline: none;
+}
+.pal-picker__rivets { position: absolute; z-index: 1; inset: 0; pointer-events: none; background-image: radial-gradient(circle, rgb(255 255 255 / 16%) 0%, rgb(255 255 255 / 16%) 30%, transparent 34%), radial-gradient(circle, rgb(0 0 0 / 40%) 0%, rgb(0 0 0 / 40%) 30%, transparent 34%); background-repeat: no-repeat; background-size: 7px 7px; background-position: 12px 12px, 13px 13px; }
+.pal-picker__rivets::after { position: absolute; top: 12px; right: 12px; bottom: 12px; left: 12px; content: ''; background-image: radial-gradient(circle, rgb(255 255 255 / 16%) 0%, rgb(255 255 255 / 16%) 30%, transparent 34%); background-repeat: no-repeat; background-position: top right, bottom left, bottom right; background-size: 7px 7px; box-shadow: 0 0 0 0 transparent; }
+.pal-picker__dialog::after { position: absolute; z-index: 6; top: 0; right: 0; left: 0; height: 3px; content: ''; pointer-events: none; background: linear-gradient(90deg, transparent, #7fe7ff, transparent); box-shadow: 0 0 18px 3px rgb(76 201 232 / 55%); opacity: 0; will-change: transform, opacity; animation: device-scan 700ms 140ms var(--motion-soft) both; }
+
 .pal-picker__header, .collection-import__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.1rem 1.25rem .8rem; }
+.pal-picker__header { position: relative; z-index: 2; align-items: center; }
 .pal-picker__header h2, .collection-import__header h2 { font-family: 'Anton', sans-serif; font-size: 1.55rem; font-weight: 400; letter-spacing: .05em; line-height: 1; text-transform: uppercase; }
 .pal-picker__header p, .collection-import__header p { margin-top: .35rem; color: var(--muted-foreground); font-size: .74rem; line-height: 1.4; }
 .pal-picker__trigger { width: 100%; justify-content: flex-start; font-weight: 500; }
-.pal-picker__controls { display: grid; gap: .65rem; border-top: 1px solid color-mix(in srgb, var(--border) 80%, #38c4e2); padding: .85rem 1.25rem; }
-.pal-picker__search { display: flex; height: 2.55rem; align-items: center; gap: .5rem; border: 1px solid #31576a; border-radius: .45rem; padding: 0 .7rem; background: #0a171f; color: #95b3c1; }
+
+.pal-picker__lens { position: relative; display: grid; flex: none; width: 2.15rem; height: 2.15rem; place-items: center; border-radius: 50%; background: radial-gradient(circle at 34% 28%, color-mix(in srgb, var(--lens-color, #4cc9e8) 92%, white), var(--lens-color, #4cc9e8) 46%, color-mix(in srgb, var(--lens-color, #4cc9e8) 55%, #04070a) 82%); box-shadow: 0 0 0 3px #060b0f, 0 0 0 4px color-mix(in srgb, var(--lens-color, #4cc9e8) 55%, transparent), 0 0 16px 1px color-mix(in srgb, var(--lens-color, #4cc9e8) 65%, transparent); transition: background .2s var(--motion-soft), box-shadow .2s var(--motion-soft); }
+.pal-picker__lens-glint { position: absolute; top: 18%; left: 24%; width: 32%; height: 22%; border-radius: 50%; background: rgb(255 255 255 / 75%); filter: blur(1px); }
+
+.pal-picker__console { position: relative; z-index: 2; display: grid; gap: .65rem; margin: 0 1.1rem; border-top: 1px solid rgb(255 255 255 / 8%); border-bottom: 1px solid rgb(0 0 0 / 35%); padding: .85rem .15rem; }
+.pal-picker__search { display: flex; height: 2.55rem; align-items: center; gap: .5rem; border: 1px solid #31576a; border-radius: .45rem; padding: 0 .7rem; background: #0a171f; color: #95b3c1; box-shadow: inset 0 1px 3px rgb(0 0 0 / 45%); }
 .pal-picker__search svg { width: .9rem; height: .9rem; flex: none; }.pal-picker__search input { min-width: 0; flex: 1; outline: none; background: transparent; color: #ecf8fb; font-size: .82rem; }
 .pal-picker__elements { display: flex; flex-wrap: wrap; gap: .35rem; }.pal-picker__elements button { padding-right: .55rem; padding-left: .55rem; font-size: .64rem; }
 .pal-picker__elements img { display: inline-block; width: .8rem; height: .8rem; }
-.pal-picker__summary { display: flex; justify-content: space-between; gap: 1rem; border-top: 1px solid rgb(113 156 174 / 18%); padding: .55rem 1.25rem; color: #8daebd; font-family: 'Oxanium', system-ui, sans-serif; font-size: .65rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
-.pal-picker__grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-content: start; gap: .55rem; overflow: auto; padding: 0 1.25rem 1rem; }
-.pal-picker__card { position: relative; display: grid; min-height: 8.7rem; width: 100%; grid-template-columns: 1fr auto; grid-template-rows: auto 1fr auto; overflow: hidden; border: 1px solid #294858; border-radius: .55rem; padding: .42rem; background: linear-gradient(150deg, #162630, #0a1219 72%); color: #dcebf0; text-align: left; transition: transform .15s var(--motion-soft), border-color .15s var(--motion-soft), background .15s var(--motion-soft); }
-.pal-picker__card:hover:not(:disabled), .pal-picker__card:focus-visible { transform: translateY(-2px); border-color: #57cee9; background: linear-gradient(150deg, #1b3440, #0c1820 72%); outline: none; }
-.pal-picker__card:disabled { opacity: .38; cursor: not-allowed; }.pal-picker__card.is-selected { border-color: #52e5a1; background: linear-gradient(150deg, #173b34, #0a1918 72%); box-shadow: inset 0 0 0 1px rgb(132 247 190 / 24%); }
-.pal-picker__dex { color: #86a4b2; font-family: 'Oxanium', system-ui, sans-serif; font-size: .53rem; font-weight: 800; }.pal-picker__element { justify-self: end; font-family: 'Oxanium', system-ui, sans-serif; font-size: .49rem; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
-.pal-picker__art { grid-column: 1 / -1; display: grid; min-height: 4.5rem; place-items: center; overflow: hidden; background: radial-gradient(ellipse at 50% 55%, rgb(94 214 239 / 23%), transparent 63%); }.pal-picker__art > span { transform: scale(1.08); }
-.pal-picker__card strong { grid-column: 1 / -1; overflow: hidden; color: #effbfe; font-family: 'Anton', sans-serif; font-size: .78rem; font-weight: 400; letter-spacing: .035em; line-height: 1.05; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }.pal-picker__card > svg { position: absolute; right: .38rem; bottom: .35rem; width: .8rem; height: .8rem; color: #6bf0b2; }
-.pal-picker__more { justify-self: center; margin: 0 auto .85rem; }.pal-picker__footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-top: 1px solid color-mix(in srgb, var(--border) 78%, #36c7e8); padding: .7rem 1.25rem; background: rgb(3 9 14 / 46%); }.pal-picker__footer span { color: #93adba; font-size: .7rem; }
+
+.pal-picker__screen { position: relative; z-index: 2; display: flex; min-height: 0; flex-direction: column; margin: .75rem 1.1rem 1.1rem; overflow: hidden; border: 1px solid #08141a; border-radius: .9rem; background: repeating-linear-gradient(180deg, rgb(255 255 255 / 2.5%) 0, rgb(255 255 255 / 2.5%) 1px, transparent 1px, transparent 3px), radial-gradient(ellipse at 50% -10%, rgb(76 201 232 / 10%), transparent 55%), #050c11; box-shadow: inset 0 2px 10px rgb(0 0 0 / 65%), inset 0 0 0 1px rgb(255 255 255 / 4%); }
+.pal-picker__summary { display: flex; flex: none; justify-content: space-between; gap: 1rem; border-bottom: 1px solid rgb(113 156 174 / 14%); padding: .55rem 1.1rem; color: #8daebd; font-family: 'Oxanium', system-ui, sans-serif; font-size: .65rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.pal-picker__grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-content: start; gap: .55rem; overflow: auto; padding: .85rem 1.1rem; }
+.pal-picker__grid > li { content-visibility: auto; contain-intrinsic-size: 10rem 8.7rem; }
+.pal-picker__card { position: relative; display: grid; min-height: 8.7rem; width: 100%; grid-template-columns: 1fr auto; grid-template-rows: auto 1fr auto; overflow: hidden; border: 1px solid #24404f; border-radius: .55rem; padding: .42rem; background: linear-gradient(180deg, rgb(255 255 255 / 5%), transparent 22%), linear-gradient(150deg, #142530, #08121a 72%); color: #dcebf0; text-align: left; transition: transform .15s var(--motion-soft), border-color .15s var(--motion-soft), background .15s var(--motion-soft), box-shadow .15s var(--motion-soft); }
+.pal-picker__card:hover:not(:disabled), .pal-picker__card:focus-visible { transform: translateY(-2px); border-color: #57cee9; background: linear-gradient(180deg, rgb(255 255 255 / 7%), transparent 26%), linear-gradient(150deg, #1b3440, #0c1820 72%); box-shadow: 0 0 0 1px rgb(87 206 233 / 30%), 0 8px 16px -6px rgb(0 0 0 / 55%); outline: none; }
+.pal-picker__card:disabled { opacity: .38; cursor: not-allowed; }.pal-picker__card.is-selected { border-color: #52e5a1; background: linear-gradient(180deg, rgb(255 255 255 / 6%), transparent 22%), linear-gradient(150deg, #163b32, #071714 72%); box-shadow: inset 0 0 0 1px rgb(132 247 190 / 24%); }
+.pal-picker__dex { color: #86a4b2; font-family: 'Oxanium', system-ui, sans-serif; font-size: .53rem; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .05em; }.pal-picker__element { justify-self: end; font-family: 'Oxanium', system-ui, sans-serif; font-size: .49rem; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
+.pal-picker__art { grid-column: 1 / -1; display: grid; min-height: 4.5rem; place-items: center; overflow: hidden; border-radius: .4rem; background: radial-gradient(ellipse at 50% 55%, rgb(94 214 239 / 23%), transparent 63%); }.pal-picker__art > span { transform: scale(1.08); }
+.pal-picker__card strong { grid-column: 1 / -1; overflow: hidden; color: #effbfe; font-family: 'Anton', sans-serif; font-size: .78rem; font-weight: 400; letter-spacing: .035em; line-height: 1.05; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.pal-picker__led { position: absolute; right: .38rem; bottom: .35rem; display: grid; width: 1.05rem; height: 1.05rem; place-items: center; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #baffdd, #24c883 55%, #0d5c3f 90%); box-shadow: 0 0 6px 1px rgb(74 222 128 / 70%); }
+.pal-picker__led svg { width: .62rem; height: .62rem; color: #04150d; }
+.pal-picker__more { justify-self: center; margin: 0 auto .85rem; }.pal-picker__footer { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-top: 1px solid color-mix(in srgb, var(--border) 78%, #36c7e8); padding: .7rem 1.25rem; background: rgb(3 9 14 / 46%); }.pal-picker__footer span { color: #93adba; font-size: .7rem; }
 .collection-panel__add-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
 .collection-panel__add-actions .pal-picker__trigger, .collection-panel__add-actions .collection-import__trigger { width: 100%; min-width: 0; min-height: 2.5rem; justify-content: center; padding-inline: .55rem; font-size: .72rem; line-height: 1.15; white-space: normal; }
 .collection-panel__add-actions .pal-picker__trigger span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1892,8 +1964,9 @@ button.tree-pal-card.tree-pal-card--target:active { transform: scale(1.015); }
   .passive-picker__group [cmdk-group-items] { grid-template-columns: 1fr; }
   .target-passive-slots { grid-template-columns: 1fr; }
   .pal-picker__dialog, .collection-import__dialog { width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem); border-radius: .8rem; }
-  .pal-picker__header, .pal-picker__controls, .pal-picker__summary, .pal-picker__grid, .pal-picker__footer, .collection-import__header, .collection-import__body, .collection-import__preview { padding-right: .8rem; padding-left: .8rem; }
-  .pal-picker__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .4rem; }.pal-picker__card { min-height: 7.8rem; }.pal-picker__art { min-height: 3.8rem; }
+  .pal-picker__header, .pal-picker__footer, .collection-import__header, .collection-import__body, .collection-import__preview { padding-right: .8rem; padding-left: .8rem; }
+  .pal-picker__console, .pal-picker__screen { margin-right: .5rem; margin-left: .5rem; }
+  .pal-picker__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .4rem; }.pal-picker__grid > li { contain-intrinsic-size: 8rem 7.8rem; }.pal-picker__card { min-height: 7.8rem; }.pal-picker__art { min-height: 3.8rem; }
   .collection-import__screenshots { grid-template-columns: repeat(2, minmax(0, 1fr)); }.collection-import__preview ul { grid-template-columns: 1fr; }
 }
 
@@ -1952,6 +2025,27 @@ button.tree-pal-card.tree-pal-card--target:active { transform: scale(1.015); }
 @keyframes pokedex-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes pokedex-enter { from { transform: translate3d(14px, 0, 0); } to { transform: translate3d(0, 0, 0); } }
 
+/* Barrido de escaneo tipo Pokedex: una sola pasada al abrir el panel, nunca en bucle. */
+/* transform en vez de top: el barrido no debe disparar layout en cada frame,
+   solo compositing. Con top, el coste escalaba con la complejidad del panel
+   (mucho mas notorio en el picker con 30-48 tarjetas que en el dossier). */
+@keyframes device-scan { 0% { transform: translateY(0); opacity: 0; } 6% { opacity: 1; } 94% { opacity: 1; } 100% { transform: translateY(100vh); opacity: 0; } }
+.pokedex-dossier::after {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  content: '';
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--pokedex-element, var(--primary)) 85%, white), transparent);
+  box-shadow: 0 0 18px 2px color-mix(in srgb, var(--pokedex-element, var(--primary)) 55%, transparent);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: device-scan 700ms 140ms var(--motion-soft) both;
+}
+
 /* La carta sigue siendo una superficie estatica para el canvas. Los controles
    transparentes se superponen sin modificar sus dimensiones de layout. */
 .tree-pal-card-shell { position: relative; width: 236px; min-height: 366px; }
@@ -1976,6 +2070,7 @@ button.tree-pal-card.tree-pal-card--target:active { transform: scale(1.015); }
   .collection-pokedex-card:hover { transform: none; }
   .pokedex-related-grid button:hover { transform: none; }
   .pokedex-dossier, .pokedex-dossier__overlay { animation: none; }
+  .pokedex-dossier::after, .pal-picker__dialog::after { animation: none; content: none; }
 }
 
 .loading-dot {

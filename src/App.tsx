@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { AlertTriangle, Database, Egg, Languages, Sparkles } from 'lucide-react'
+import { AlertTriangle, Database, Languages, Sparkles } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { PalaxisMark } from '@/components/palaxis-mark'
 import { PassiveBadge } from '@/components/passive-badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -86,7 +87,7 @@ function Header({ onHome }: { onHome: () => void }) {
         onClick={onHome}
       >
         <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-primary/35 bg-primary/10 shadow-[0_0_24px_color-mix(in_oklch,var(--primary)_26%,transparent)]">
-          <Egg className="size-5 text-primary" aria-hidden="true" />
+          <PalaxisMark className="size-5 text-primary" />
         </span>
         <div className="min-w-0">
           <h1 className="truncate font-[Anton] text-xl uppercase leading-none tracking-wide sm:text-2xl">{t('header.title')}</h1>
@@ -149,7 +150,7 @@ function EmptyState() {
     <div className="empty-state mx-auto flex w-full max-w-[110rem] flex-col items-center justify-center gap-6 px-4 py-16 text-center sm:py-24">
       <span className="empty-state__emblem relative flex size-24 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/20">
         <span className="empty-state__ring absolute inset-0 rounded-full bg-primary/10" aria-hidden="true" />
-        <Egg className="relative size-12 text-primary" aria-hidden="true" />
+        <PalaxisMark className="relative size-12 text-primary" />
       </span>
       <div className="max-w-md space-y-2">
         <h2 className="text-2xl font-bold tracking-tight">{t('emptyState.title')}</h2>
@@ -168,7 +169,7 @@ function LoadingState() {
   return (
     <Card className="loading-card loading-state" role="status" aria-live="polite">
       <CardContent className="flex flex-col items-center justify-center gap-3 p-8 text-center">
-        <Egg className="loading-state__egg size-7 text-primary" aria-hidden="true" />
+        <PalaxisMark className="loading-state__egg size-7 text-primary" />
         <p className="text-sm font-medium text-foreground">{t('loadingState.text')}</p>
         <span className="flex items-center gap-1.5" aria-hidden="true">
           <span className="loading-dot" style={{ animationDelay: '0ms' }} />

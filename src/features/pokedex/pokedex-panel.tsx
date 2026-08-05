@@ -74,8 +74,8 @@ function PokedexPanel({ palId, onClose, onOpen }: { palId: string | null; onClos
     <Dialog.Root open={!!palId} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="pokedex-dossier__overlay" />
-        <Dialog.Content className="pokedex-dossier" aria-describedby={undefined}>
-          <div className="pokedex-dossier__hero" style={{ '--pokedex-element': elementInfo.color } as CSSProperties}>
+        <Dialog.Content className="pokedex-dossier" aria-describedby={undefined} style={{ '--pokedex-element': elementInfo.color } as CSSProperties}>
+          <div className="pokedex-dossier__hero">
             <div className="pokedex-dossier__hero-meta"><span>{dexLabel(pal)}</span><span>{elementInfo.label}</span></div>
             <Button variant="ghost" size="icon-sm" className="pokedex-dossier__close" aria-label={t('pokedex.close')} onClick={onClose}><X aria-hidden="true" /></Button>
             <PalIcon palId={pal.id} size={188} bare className="pokedex-dossier__art" />
