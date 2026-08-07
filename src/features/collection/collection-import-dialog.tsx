@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { PalPicker } from '@/components/pal-picker'
 import { PalIcon } from '@/components/pal-icon'
 import { candidatesToOwned, parseCollectionImport, type CollectionImportResult } from '@/domain/collection-import'
+import { parseCharactersFromLevelSav, ownedRecordsToImportResult } from '@/domain/save-import/pal-save-parser'
+import { GvasFormatError } from '@/domain/save-import/gvas-reader'
 import { loadDatabase, palName } from '@/domain/database'
 import { useT } from '@/i18n/language-store'
 import { usePlannerStore } from '@/state/planner-store'
@@ -66,10 +68,31 @@ export function CollectionImportDialog() {
     previewUrlsRef.current.push(...next.map((entry) => entry.url))
     setScreenshots((current) => [...current, ...next])
   }
+  const readSave = async (file: File) => {
+    resetStatus()
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer())
+      const records = parseCharactersFromLevelSav(bytes)
+      const parsed = ownedRecordsToImportResult(records)
+      if (parsed.candidates.length === 0) {
+        setError(t('collectionImport.saveEmpty'))
+        return
+      }
+      setResult(parsed)
+    } catch (reason) {
+      setError(reason instanceof GvasFormatError ? t('collectionImport.saveInvalid') : t('collectionImport.error'))
+    }
+  }
   const chooseFolder = (files: FileList | null) => {
-    const json = files && Array.from(files).find((file) => file.name.toLocaleLowerCase().endsWith('.json'))
-    if (json) void readJson(json)
-    else setError(t('collectionImport.saveFolderDescription'))
+    const all = files ? Array.from(files) : []
+    // El save de Palworld guarda TODOS los personajes del mundo -jugadores y
+    // Pals, en base o en party- en Level.sav; no hace falta combinarlo con
+    // ningun otro archivo de la carpeta.
+    const sav = all.find((file) => file.name.toLocaleLowerCase() === 'level.sav')
+    if (sav) { void readSave(sav); return }
+    const json = all.find((file) => file.name.toLocaleLowerCase().endsWith('.json'))
+    if (json) { void readJson(json); return }
+    setError(t('collectionImport.saveFolderDescription'))
   }
 
   return (

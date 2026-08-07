@@ -24,5 +24,6 @@ export function plan(input: PlannerInput, settings?: Partial<PlannerSettings>): 
 export * from './resolver'
 export * from './inheritance'
 export * from './cost'
+export * from './direct-preview'
 export { planBreeding } from './planner'
 export type { PlannerContext, PlannerSettings } from './planner'

@@ -126,6 +126,8 @@ export interface PlannerInput {
   owned: OwnedPal[]
   mode: PlannerMode
   options?: Partial<PlannerOptions>
+  /** Fuente fijada por pasiva: `{ [passiveId]: ownedUid }`. Ver PlannerState.pinnedSources. */
+  pinnedSources?: Record<string, string>
 }
 
 /** Origen de un Pal dentro del plan. */
@@ -176,6 +178,10 @@ export interface PlanResult {
     combinedChance: number
     settledStates: number
     elapsedMs: number
+    /** Dificultad (0..2) del Pal salvaje mas dificil de la ruta. 0 si no hay capturas. */
+    maxCaptureDifficulty?: number
+    /** Suma de la dificultad de todas las capturas de la ruta. */
+    totalCaptureDifficulty?: number
   }
 }
 
@@ -196,6 +202,14 @@ export interface RouteAlternative {
   efficiencyScore: number
   recommended: boolean
 }
+
+/**
+ * Las 3 alternativas SIEMPRE presentes, en sus 3 identidades fijas -Only My
+ * Collection / Easiest / Fastest-, nunca reordenadas ni ocultas. Una entrada
+ * con `result.ok === false` sigue siendo una entrada real: `result.reason`
+ * explica por que esa politica no tiene ruta con los datos actuales.
+ */
+export type RouteAlternatives = Record<PlannerMode, RouteAlternative>
 
 /** Plan consolidado de varios objetivos. Cada raiz sigue siendo una ruta real
  * del motor; la capa de proyecto deduplica estados compatibles para exponer

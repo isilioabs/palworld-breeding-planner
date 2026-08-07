@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { Crown, Egg, Maximize2, Package, Swords, Target, ZoomIn, ZoomOut } from 'lucide-react'
+import { Crown, Egg, Maximize2, Package, Sparkle, Swords, Target, ZoomIn, ZoomOut } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -531,22 +531,30 @@ const TreeNode = memo(function TreeNode({ node, collapsed, onToggle, onCenter, i
           {/* tronco que baja del hijo hasta la union de las dos ramas */}
           <div className="tree-connector" aria-hidden="true" />
           {/*
-            Cada rama ocupa su ancho natural (forzarlas iguales duplicaria el
-            ancho en cada nivel). La barra horizontal va del centro de un padre
-            al del otro, y el centro de la fila -donde baja el tronco del hijo-
-            siempre cae entre ambos, asi que el tronco aterriza en la barra.
+            minmax(min-content,1fr) y no minmax(0,1fr): con minimo 0, una rama
+            simple (una sola captura) se encogia por debajo del ancho fijo de
+            su propia carta en cuanto la rama hermana tenia un subarbol mas
+            profundo/ancho -la carta desbordaba su columna y quedaba pintada
+            ENCIMA de la carta vecina (bug reportado: "las cartas se montan
+            encima de otras"). min-content garantiza que ninguna columna baje
+            de lo que su propia carta necesita; 1fr sigue repartiendo el
+            sobrante a partes iguales entre columnas que ya cumplen su minimo,
+            asi que ramas de igual profundidad se siguen viendo simetricas.
           */}
-          <div className="relative flex items-start">
+          <div className="relative grid" style={{ gridTemplateColumns: `repeat(${parents.length}, minmax(min-content, 1fr))` }}>
             {/* El "+" marca donde se juntan los dos padres para dar el Pal de arriba. */}
             <span className="tree-junction absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full border border-border bg-card px-1.5 py-px text-[11px] font-bold leading-none text-muted-foreground shadow-sm">
               +
             </span>
-            {parents.map((parent, index) => (
+            {(parents as PlanNode[]).map((parent, index, all) => (
               <div
                 key={parent.key}
                 className={cn(
                   'tree-branch relative flex flex-col items-center px-5 pt-10',
-                  index === 0 ? 'tree-branch--left' : 'tree-branch--right',
+                  all.length === 1 && 'tree-branch--single',
+                  all.length > 1 && index === 0 && 'tree-branch--first',
+                  all.length > 1 && index === all.length - 1 && 'tree-branch--last',
+                  all.length > 1 && index !== 0 && index !== all.length - 1 && 'tree-branch--middle',
                 )}
               >
                 <TreeNode node={parent} collapsed={collapsed} onToggle={onToggle} onCenter={onCenter} compact={compact} revealDepth={revealDepth} />
@@ -677,6 +685,12 @@ const TreePalCard = memo(function TreePalCard({
   const { openPal } = usePokedex()
   const elementInfo = ELEMENT_INFO[element]
   const passiveSlots = [...passives.slice(0, 4), ...Array.from({ length: Math.max(0, 4 - passives.length) }, () => null)]
+  // Traza visual: `passives` ya son solo las deseadas que ESTE nodo porta (el
+  // solver las asigna en build()), asi que no hace falta recalcular nada -un
+  // Pal propio que las lleva es la fuente; una cria intermedia que las lleva
+  // es quien las transporta hacia el objetivo.
+  const isPassiveSource = owned && passives.length > 0
+  const isPassiveCarrier = isBreed && passives.length > 0
   const stateLabel = isRoot
     ? t('tree.legendTarget')
     : owned
@@ -697,6 +711,11 @@ const TreePalCard = memo(function TreePalCard({
         {!compact && <span className="tree-pal-card__element">{elementInfo.label}</span>}
         <PalIcon palId={palId} size={compact ? 96 : 118} bare className="tree-pal-card__portrait" />
         {!compact && <span className="tree-pal-card__state">{stateLabel}</span>}
+        {isPassiveCarrier && (
+          <span className="tree-pal-card__trace-badge" title={t('tree.passiveTraceCarrier')} aria-hidden="true">
+            <Sparkle aria-hidden="true" />
+          </span>
+        )}
       </div>
       <div className="tree-pal-card__title-row">
         <span className="tree-pal-card__name">{name}</span>
@@ -751,7 +770,15 @@ const TreePalCard = memo(function TreePalCard({
     </>
   )
 
-  const className = cn('tree-pal-card', compact && 'tree-pal-card--compact', isRoot && 'tree-pal-card--target', owned && 'tree-pal-card--owned', !isBreed && !owned && !isRoot && 'tree-pal-card--capture')
+  const className = cn(
+    'tree-pal-card',
+    compact && 'tree-pal-card--compact',
+    isRoot && 'tree-pal-card--target',
+    owned && 'tree-pal-card--owned',
+    !isBreed && !owned && !isRoot && 'tree-pal-card--capture',
+    isPassiveSource && 'tree-pal-card--passive-source',
+    isPassiveCarrier && 'tree-pal-card--passive-carrier',
+  )
   const style = { '--tree-element': elementInfo.color } as CSSProperties
   return (
     <div className="tree-pal-card-shell">

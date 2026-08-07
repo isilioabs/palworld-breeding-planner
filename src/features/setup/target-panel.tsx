@@ -1,4 +1,4 @@
-import { ChevronUp, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -79,7 +79,7 @@ export function TargetPanel() {
                 return (
                   <li key={id}>
                     <Button variant="outline" size="sm" className="target-passive-slot" data-rank={passive?.rank ?? 0} aria-label={t('targetPanel.removePassive', { name: passiveName(passive) })} onClick={() => dispatch({ type: 'toggleDesired', passiveId: id })}>
-                      <span className="target-passive-slot__arrows" aria-hidden="true">{Array.from({ length: Math.max(1, Math.min(3, Math.abs(passive?.rank ?? 0))) }, (_, index) => <ChevronUp key={index} />)}</span>
+                      <span className="target-passive-slot__arrows" aria-hidden="true">{Array.from({ length: Math.max(1, Math.min(3, Math.abs(passive?.rank ?? 0))) }, (_, index) => <i key={index} />)}</span>
                       <span>{passiveName(passive)}</span><X className="size-3.5" aria-hidden="true" />
                     </Button>
                   </li>

@@ -14,6 +14,14 @@ export interface PlannerState {
   desiredPassives: string[]
   owned: OwnedPal[]
   mode: PlannerMode
+  /**
+   * Fuente fijada por pasiva: `{ [passiveId]: ownedUid }`. Restriccion del
+   * planificador, no del perfil del Pal -por eso vive aqui y no en
+   * `OwnedPal`- para poder fijar la MISMA pasiva a distintos Pals segun el
+   * proyecto sin tocar la coleccion. Sin entrada = el planificador elige la
+   * mejor fuente disponible automaticamente.
+   */
+  pinnedSources: Record<string, string>
 }
 
 const EMPTY: PlannerState = {
@@ -22,6 +30,7 @@ const EMPTY: PlannerState = {
   desiredPassives: [],
   owned: [],
   mode: 'breeding',
+  pinnedSources: {},
 }
 
 export type PlannerAction =
@@ -36,6 +45,7 @@ export type PlannerAction =
   | { type: 'updateOwned'; uid: string; patch: Partial<Omit<OwnedPal, 'uid'>> }
   | { type: 'removeOwned'; uid: string }
   | { type: 'clearOwned' }
+  | { type: 'setPinnedSource'; passiveId: string; ownedUid: string | null }
   | { type: 'loadDraft'; draft: ProjectDraft }
   | { type: 'reset' }
 
@@ -92,10 +102,20 @@ function reducer(state: PlannerState, action: PlannerAction): PlannerState {
         ...state,
         owned: state.owned.map((o) => (o.uid === action.uid ? { ...o, ...action.patch } : o)),
       }
-    case 'removeOwned':
-      return { ...state, owned: state.owned.filter((o) => o.uid !== action.uid) }
+    case 'removeOwned': {
+      // Si el Pal eliminado era la fuente fijada de alguna pasiva, se
+      // desfija: no tiene sentido conservar un pin que apunta a nadie.
+      const pinnedSources = Object.fromEntries(Object.entries(state.pinnedSources).filter(([, uid]) => uid !== action.uid))
+      return { ...state, owned: state.owned.filter((o) => o.uid !== action.uid), pinnedSources }
+    }
     case 'clearOwned':
-      return { ...state, owned: [] }
+      return { ...state, owned: [], pinnedSources: {} }
+    case 'setPinnedSource': {
+      const pinnedSources = { ...state.pinnedSources }
+      if (action.ownedUid) pinnedSources[action.passiveId] = action.ownedUid
+      else delete pinnedSources[action.passiveId]
+      return { ...state, pinnedSources }
+    }
     case 'loadDraft':
       {
         const targetPalIds = normalizeTargets(action.draft.targetPalIds, action.draft.targetPalId)
@@ -105,6 +125,7 @@ function reducer(state: PlannerState, action: PlannerAction): PlannerState {
         desiredPassives: action.draft.desiredPassives.slice(0, MAX_DESIRED_PASSIVES),
         owned: normalizeCollection(action.draft.owned),
         mode: action.draft.mode,
+        pinnedSources: {},
         }
       }
     case 'reset':

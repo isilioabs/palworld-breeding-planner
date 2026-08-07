@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { BookOpen, Boxes, ChevronRight, Database, GitCompareArrows, Network, ScanSearch, Sparkles, Swords, WifiOff } from 'lucide-react'
+import { BookOpen, Boxes, ChevronRight, Database, GitCompareArrows, Network, ScanSearch, Sparkles, Swords, WifiOff, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PalaxisMark } from '@/components/palaxis-mark'
 import { PalIcon } from '@/components/pal-icon'
@@ -10,6 +10,7 @@ import { useReveal } from '@/lib/use-reveal'
 interface LandingPageProps {
   onLaunch: () => void
   onLoadDemo: () => void
+  onOpenQuick: () => void
 }
 
 const FEATURES = [
@@ -40,7 +41,7 @@ const FAQS = [
   { id: 'collection', questionKey: 'landing.faq.collection.question', answerKey: 'landing.faq.collection.answer' },
 ] as const
 
-export function LandingPage({ onLaunch, onLoadDemo }: LandingPageProps) {
+export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick }: LandingPageProps) {
   const t = useT()
   const [featuresRef, featuresVisible] = useReveal<HTMLElement>()
   const [reasonsRef, reasonsVisible] = useReveal<HTMLElement>()
@@ -53,6 +54,7 @@ export function LandingPage({ onLaunch, onLoadDemo }: LandingPageProps) {
         <button type="button" className="landing-brand" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <span><PalaxisMark /></span><strong>PALAXIS</strong>
         </button>
+        <Button size="sm" variant="ghost" onClick={onOpenQuick}><Zap aria-hidden="true" />{t('quickPath.navLabel')}</Button>
         <Button size="sm" onClick={onLaunch}>{t('landing.launch')}<ChevronRight aria-hidden="true" /></Button>
       </nav>
 
@@ -66,6 +68,9 @@ export function LandingPage({ onLaunch, onLoadDemo }: LandingPageProps) {
             <Button size="lg" onClick={onLaunch}>{t('landing.launch')}<ChevronRight aria-hidden="true" /></Button>
             <Button size="lg" variant="outline" onClick={onLoadDemo}>{t('landing.loadDemo')}</Button>
           </div>
+          <button type="button" className="landing-hero__quick-link" onClick={onOpenQuick}>
+            <Zap aria-hidden="true" />{t('quickPath.heroLink')}
+          </button>
           <ul className="landing-proof" aria-label={t('landing.proofLabel')}>
             <li><Database aria-hidden="true" />{t('landing.proofOffline')}</li>
             <li><ScanSearch aria-hidden="true" />{t('landing.proofInstant')}</li>

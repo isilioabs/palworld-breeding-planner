@@ -9,9 +9,11 @@ import { dexLabel, loadDatabase, palName, workTypeLabel } from '@/domain/databas
 import { getResolver } from '@/domain/breeding'
 import { ELEMENT_INFO } from '@/domain/element'
 import type { Pal } from '@/domain/types'
+import { ROLE_ICON } from '@/features/setup/build-advisor'
 import { useLang, useT } from '@/i18n/language-store'
 import type { TranslationKey } from '@/i18n/translations'
 import { usePlannerStore } from '@/state/planner-store'
+import { cn } from '@/lib/utils'
 
 interface PokedexControls {
   openPal: (palId: string) => void
@@ -112,7 +114,7 @@ function PokedexPanel({ palId, onClose, onOpen }: { palId: string | null; onClos
 
             <section className="pokedex-dossier__section">
               <div className="pokedex-dossier__section-heading"><Box aria-hidden="true" /> <h3>{t('pokedex.recommendedBuilds')}</h3></div>
-              {dossier.builds.length ? <ul className="pokedex-build-list">{dossier.builds.slice(0, 3).map((build) => <li key={build.role}><span>{build.icon} {t(`buildAdvisor.role.${build.role}` as TranslationKey)}</span><b>{build.rating}/5</b></li>)}</ul> : <p className="pokedex-dossier__muted">{t('pokedex.noBuilds')}</p>}
+              {dossier.builds.length ? <ul className="pokedex-build-list">{dossier.builds.slice(0, 3).map((build) => { const RoleIcon = ROLE_ICON[build.role].icon; return <li key={build.role}><span><RoleIcon className={cn('size-3.5', ROLE_ICON[build.role].className)} aria-hidden="true" /> {t(`buildAdvisor.role.${build.role}` as TranslationKey)}</span><b>{build.rating}/5</b></li> })}</ul> : <p className="pokedex-dossier__muted">{t('pokedex.noBuilds')}</p>}
             </section>
 
             <section className="pokedex-dossier__section">

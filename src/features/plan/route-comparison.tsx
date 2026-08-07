@@ -1,14 +1,15 @@
-import { Award, Egg, Gauge, Gem, Layers, Target } from 'lucide-react'
+import { Award, Egg, Gauge, Gem, Layers, Mountain, Target } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { useT } from '@/i18n/language-store'
 import { cn, formatNumber } from '@/lib/utils'
-import type { RouteAlternative } from '@/domain/types'
+import { MODE_ORDER } from '@/domain/breeding/cost'
+import type { PlannerMode, RouteAlternatives } from '@/domain/types'
 import { track } from '@/lib/analytics'
 
 interface RouteComparisonProps {
-  routes: RouteAlternative[]
-  activeRouteId: string | null
-  onSelect: (routeId: string) => void
+  routes: RouteAlternatives | null
+  activeRouteId: PlannerMode | null
+  onSelect: (mode: PlannerMode) => void
 }
 
 const MODE_TONES = {
@@ -17,10 +18,16 @@ const MODE_TONES = {
   hybrid: 'is-hybrid',
 } as const
 
+/**
+ * Siempre las 3 tarjetas -Only My Collection / Easiest / Fastest-, en ese
+ * orden fijo (MODE_ORDER, nunca por puntuacion). Una politica sin ruta
+ * valida sigue mostrando su tarjeta, con el motivo explicado en vez de
+ * desaparecer del comparador.
+ */
 export function RouteComparison({ routes, activeRouteId, onSelect }: RouteComparisonProps) {
   const t = useT()
 
-  if (routes.length < 2) return null
+  if (!routes) return null
 
   return (
     <section className="route-comparison" aria-labelledby="route-comparison-title">
@@ -33,25 +40,44 @@ export function RouteComparison({ routes, activeRouteId, onSelect }: RouteCompar
       </header>
 
       <div className="route-comparison__grid" role="radiogroup" aria-label={t('routeComparison.title')}>
-        {routes.map((route, index) => {
+        {MODE_ORDER.map((mode, index) => {
+          const route = routes[mode]
+          const name = t(`routeComparison.mode.${mode}`)
+          const active = mode === activeRouteId
+          const available = route.result.ok && route.result.stats
+
+          if (!available) {
+            return (
+              <div
+                key={mode}
+                className={cn('route-comparison__card', MODE_TONES[mode], 'is-unavailable')}
+                style={{ animationDelay: `${index * 55}ms` }}
+              >
+                <div className="route-comparison__card-topline">
+                  <span className="route-comparison__name">{name}</span>
+                  <Badge variant="muted">{t('routeComparison.unavailable')}</Badge>
+                </div>
+                <p className="route-comparison__unavailable-reason">{route.result.reason}</p>
+              </div>
+            )
+          }
+
           const stats = route.result.stats!
-          const name = t(`routeComparison.mode.${route.mode}`)
-          const active = route.id === activeRouteId
           return (
             <button
-              key={route.id}
+              key={mode}
               type="button"
               role="radio"
               aria-checked={active}
               aria-label={t('routeComparison.select', { name })}
               className={cn(
                 'route-comparison__card',
-                MODE_TONES[route.mode],
+                MODE_TONES[mode],
                 active && 'is-active',
                 route.recommended && 'is-recommended',
               )}
               style={{ animationDelay: `${index * 55}ms` }}
-              onClick={() => { onSelect(route.id); track('route_compared', { route: route.mode }) }}
+              onClick={() => { onSelect(mode); track('route_compared', { route: mode }) }}
             >
               <div className="route-comparison__card-topline">
                 <span className="route-comparison__name">{name}</span>
@@ -72,6 +98,9 @@ export function RouteComparison({ routes, activeRouteId, onSelect }: RouteCompar
                 <div><dt><Layers aria-hidden="true" />{t('routeComparison.generations')}</dt><dd>{stats.generations}</dd></div>
                 <div><dt><Target aria-hidden="true" />{t('routeComparison.captures')}</dt><dd>{stats.capturesNeeded}</dd></div>
                 <div><dt><Gem aria-hidden="true" />{t('routeComparison.legendary')}</dt><dd>{route.legendaryUsage}</dd></div>
+                {stats.capturesNeeded > 0 && (
+                  <div><dt><Mountain aria-hidden="true" />{t('routeComparison.hardestCapture')}</dt><dd>{formatNumber(stats.maxCaptureDifficulty ?? 0)}</dd></div>
+                )}
               </dl>
 
               <div className="route-comparison__effort">

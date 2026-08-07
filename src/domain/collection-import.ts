@@ -13,7 +13,7 @@ export interface CollectionImportCandidate {
 export interface CollectionImportResult {
   candidates: CollectionImportCandidate[]
   skipped: number
-  source: 'palaxis' | 'collection' | 'generic'
+  source: 'palaxis' | 'collection' | 'generic' | 'save'
 }
 
 type UnknownRecord = Record<string, unknown>
@@ -29,7 +29,7 @@ const firstArray = (value: unknown): unknown[] | null => {
   return null
 }
 
-function resolvePalId(value: unknown): string | null {
+export function resolvePalId(value: unknown): string | null {
   if (typeof value !== 'string' && typeof value !== 'number') return null
   const needle = String(value).trim().toLocaleLowerCase()
   if (!needle) return null
@@ -38,7 +38,7 @@ function resolvePalId(value: unknown): string | null {
   return exact?.id ?? null
 }
 
-function resolvePassives(value: unknown): string[] {
+export function resolvePassives(value: unknown): string[] {
   if (!Array.isArray(value)) return []
   const db = loadDatabase()
   return [...new Set(value.flatMap((item) => {
@@ -62,8 +62,9 @@ function resolveGender(value: unknown): Gender | undefined {
 /**
  * Lee formatos seguros y explícitos: un export de Palaxis, una lista de
  * colección o una lista genérica con palId/species, pasivas y género. Los
- * archivos .sav binarios no se interpretan aquí: requieren un exportador local
- * dedicado antes de exponer datos de un mundo al navegador.
+ * .sav binarios reales SÍ se soportan, pero por su propio camino -ver
+ * `domain/save-import/pal-save-parser.ts` y `ownedRecordsToImportResult()`-
+ * porque no son JSON y necesitan su propio lector binario.
  */
 export function parseCollectionImport(text: string): CollectionImportResult {
   let raw: unknown

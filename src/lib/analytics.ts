@@ -8,6 +8,8 @@ export type ProductEvent =
   | 'landing_opened'
   | 'planner_launched'
   | 'plan_shared'
+  | 'quick_path_opened'
+  | 'quick_path_open_full_planner'
 
 /**
  * Adaptador local-first. No transmite datos por defecto; cuando se configure

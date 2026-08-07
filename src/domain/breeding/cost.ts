@@ -44,6 +44,14 @@ export function canCapture(pal: Pal, tier: CaptureTier): boolean {
   return tier === 'any' || isEasyToCatch(pal)
 }
 
+/**
+ * Nivel de prioridad para un orden lexicografico. Cuando `CostWeights.priorityOrder`
+ * esta presente, el buscador ordena los estados por esta tupla (el primer nivel
+ * manda; los siguientes solo desempatan) en vez de por el escalar ponderado.
+ * Ver `orderingKey()` en planner.ts.
+ */
+export type PriorityLevel = 'maxCapture' | 'totalCapture' | 'eggs' | 'steps' | 'generations'
+
 export interface CostWeights {
   /** Coste fijo por generacion. Sube -> arboles mas planos. */
   step: number
@@ -69,8 +77,18 @@ export interface CostWeights {
    * coste. El coste por paso minimiza el NUMERO de cruces, que no es lo mismo
    * que la profundidad del arbol: un arbol equilibrado de 7 cruces tiene menos
    * generaciones que una cadena de 5.
+   *
+   * Ignorado si `priorityOrder` esta presente (ver mas abajo); se mantiene
+   * solo por compatibilidad con pesos construidos a mano fuera de `MODES`.
    */
   depthFirst: boolean
+  /**
+   * Orden lexicografico explicito: el buscador prefiere el estado con el
+   * nivel mas prioritario mas bajo, y solo mira el siguiente nivel para
+   * desempatar. Sustituye a `depthFirst`/al escalar ponderado cuando esta
+   * presente. Ver `orderingKey()` en planner.ts para como se codifica.
+   */
+  priorityOrder?: PriorityLevel[]
 }
 
 /** Factor de la clave lexicografica (generaciones, coste). Ver `depthFirst`. */
@@ -79,6 +97,9 @@ export const DEPTH_PRIORITY_SCALE = 1e6
 export const MODE_ORDER: PlannerMode[] = ['collection', 'breeding', 'hybrid']
 
 export const MODES: Record<PlannerMode, { weights: CostWeights }> = {
+  // "Only My Collection": nunca captura (captureTier:'none' ya lo garantiza).
+  // Entre las rutas posibles con lo que tienes, prioriza menos huevos
+  // esperados y, para desempatar, menos pasos.
   collection: {
     weights: {
       step: 6,
@@ -89,8 +110,14 @@ export const MODES: Record<PlannerMode, { weights: CostWeights }> = {
       genderLock: 2,
       captureTier: 'none',
       depthFirst: false,
+      priorityOrder: ['eggs', 'steps'],
     },
   },
+  // "Easiest Route": evita capturas dificiles por encima de todo. Orden:
+  // dificultad maxima de captura en toda la ruta, luego dificultad total,
+  // luego huevos, luego pasos, luego generaciones. captureTier:'easy' ya
+  // saca del todo a los bosses del conjunto de partida; priorityOrder ademas
+  // prefiere, entre lo que queda, lo mas accesible.
   breeding: {
     weights: {
       step: 3,
@@ -101,8 +128,12 @@ export const MODES: Record<PlannerMode, { weights: CostWeights }> = {
       genderLock: 6,
       captureTier: 'easy',
       depthFirst: false,
+      priorityOrder: ['maxCapture', 'totalCapture', 'eggs', 'steps', 'generations'],
     },
   },
+  // "Fastest Route": generaciones ante todo, luego pasos, luego huevos. La
+  // dificultad de captura solo desempata al final -captureTier:'any' permite
+  // usar cualquier Pal, legendarios incluidos, si acorta la ruta.
   hybrid: {
     weights: {
       step: 40,
@@ -113,6 +144,7 @@ export const MODES: Record<PlannerMode, { weights: CostWeights }> = {
       genderLock: 3,
       captureTier: 'any',
       depthFirst: true,
+      priorityOrder: ['generations', 'steps', 'eggs', 'maxCapture'],
     },
   },
 }

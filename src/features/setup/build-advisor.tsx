@@ -1,14 +1,25 @@
-import { Star } from 'lucide-react'
+import { Hammer, Package, ShieldCheck, Star, Swords, Wind, type LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { PassiveBadge } from '@/components/passive-badge'
-import { getBuildsFor } from '@/domain/builds'
+import { getBuildsFor, type BuildRole } from '@/domain/builds'
 import { loadDatabase } from '@/domain/database'
 import { useT } from '@/i18n/language-store'
 import type { TranslationKey } from '@/i18n/translations'
 import { usePlannerStore } from '@/state/planner-store'
 import { track } from '@/lib/analytics'
 import { cn } from '@/lib/utils'
+
+/** Icono por rol en vez del emoji que trae builds.json (ese campo sigue
+ * existiendo en el dato, pero ya no se renderiza). Se exporta para que la
+ * ficha de Pal use el mismo icono en su lista de builds recomendados. */
+export const ROLE_ICON: Record<BuildRole, { icon: LucideIcon; className: string }> = {
+  'Base Worker': { icon: Hammer, className: 'text-primary' },
+  Combat: { icon: Swords, className: 'text-amber-400' },
+  Tank: { icon: ShieldCheck, className: 'text-sky-400' },
+  Mount: { icon: Wind, className: 'text-violet-400' },
+  Transport: { icon: Package, className: 'text-cyan-400' },
+}
 
 /**
  * Build Advisor: sugiere hasta 5 builds (Trabajador de base, Combate,
@@ -53,6 +64,7 @@ export function BuildAdvisor({ showHeading = true }: { showHeading?: boolean }) 
         {builds.map((build) => {
           const applied =
             state.desiredPassives.length === build.passives.length && build.passives.every((id) => state.desiredPassives.includes(id))
+          const RoleIcon = ROLE_ICON[build.role].icon
           return (
             <Card
               key={build.role}
@@ -64,9 +76,7 @@ export function BuildAdvisor({ showHeading = true }: { showHeading?: boolean }) 
               <CardContent className="space-y-2.5 p-3.5">
                 <div className="flex items-start justify-between gap-2">
                   <span className="flex min-w-0 items-center gap-1.5 text-sm font-bold">
-                    <span className="shrink-0 text-base" aria-hidden="true">
-                      {build.icon}
-                    </span>
+                    <RoleIcon className={cn('size-4 shrink-0', ROLE_ICON[build.role].className)} aria-hidden="true" />
                     <span className="truncate">{t(`buildAdvisor.role.${build.role}` as TranslationKey)}</span>
                   </span>
                   <span className="flex shrink-0 items-center gap-px" aria-label={`${build.rating}/5`}>

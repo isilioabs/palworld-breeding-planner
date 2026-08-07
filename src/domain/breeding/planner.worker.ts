@@ -7,7 +7,7 @@
 import { getPlannerContext, plan } from './index'
 import { MODE_ORDER } from './cost'
 import { planProject } from './project-planner'
-import type { PlanNode, PlanResult, PlannerInput, ProjectPlan, RouteAlternative } from '../types'
+import type { PlanNode, PlanResult, PlannerInput, PlannerMode, ProjectPlan, RouteAlternative, RouteAlternatives } from '../types'
 
 export interface PlanRequest {
   requestId: number
@@ -17,68 +17,72 @@ export interface PlanRequest {
 export interface PlanResponse {
   requestId: number
   result: PlanResult
-  routes: RouteAlternative[]
+  routes: RouteAlternatives
   project?: ProjectPlan
 }
 
 self.onmessage = (event: MessageEvent<PlanRequest>) => {
   const { requestId, input } = event.data
   let result: PlanResult
-  let routes: RouteAlternative[] = []
+  let routes: RouteAlternatives
   let project: ProjectPlan | undefined
   try {
+    routes = planAlternatives(input)
     if ((input.targetPalIds?.length ?? 0) > 1) {
       project = planProject(input)
       result = project.ok && project.roots?.[0]
         ? { ok: true, root: project.roots[0] }
         : { ok: false, reason: project.reason }
     } else {
-      routes = planAlternatives(input)
-      result = routes.find((route) => route.mode === input.mode)?.result ?? plan(input)
+      result = routes[input.mode]?.result ?? plan(input)
     }
   } catch (error) {
-    result = { ok: false, reason: `Error interno del planificador: ${(error as Error).message}` }
+    const message = `Error interno del planificador: ${(error as Error).message}`
+    result = { ok: false, reason: message }
+    routes = Object.fromEntries(MODE_ORDER.map((mode) => [
+      mode,
+      { id: mode, mode, result: { ok: false, reason: message }, legendaryUsage: 0, expectedEffort: Number.POSITIVE_INFINITY, efficiencyScore: 0, recommended: false },
+    ])) as RouteAlternatives
   }
   ;(self as unknown as Worker).postMessage({ requestId, result, routes, project } satisfies PlanResponse)
 }
 
 /**
  * Reutiliza el mismo Dijkstra para cada politica de coste ya disponible.
- * No se modifica el algoritmo ni se fabrican rutas: se muestran solo los
- * optimos validos que devuelve el motor y se eliminan arboles identicos.
+ * Siempre las 3 -Only My Collection / Easiest / Fastest-, en sus 3
+ * identidades fijas: una politica sin ruta valida sigue siendo una entrada
+ * real (con `result.ok:false` y su motivo), nunca se omite ni se reordena.
  */
-function planAlternatives(input: PlannerInput): RouteAlternative[] {
-  const modes = [input.mode, ...MODE_ORDER.filter((mode) => mode !== input.mode)]
-  const seen = new Set<string>()
-  const candidates: Array<Omit<RouteAlternative, 'efficiencyScore' | 'recommended'>> = []
+function planAlternatives(input: PlannerInput): RouteAlternatives {
   const palsById = new Map(getPlannerContext().pals.map((pal) => [pal.id, pal]))
 
-  for (const mode of modes) {
+  const base: Record<PlannerMode, Omit<RouteAlternative, 'efficiencyScore' | 'recommended'>> = {} as never
+  for (const mode of MODE_ORDER) {
     const result = plan({ ...input, mode })
-    if (!result.ok || !result.root || !result.stats) continue
-    const signature = routeSignature(result.root)
-    if (seen.has(signature)) continue
-    seen.add(signature)
-    const legendaryUsage = countLegendaryUsage(result.root, palsById)
-    candidates.push({
+    const legendaryUsage = result.ok && result.root ? countLegendaryUsage(result.root, palsById) : 0
+    base[mode] = {
       id: mode,
       mode,
       result,
       legendaryUsage,
-      expectedEffort: expectedEffort(result, legendaryUsage),
-    })
+      expectedEffort: result.ok && result.stats ? expectedEffort(result, legendaryUsage) : Number.POSITIVE_INFINITY,
+    }
   }
 
-  if (candidates.length === 0) return []
-  const bestEffort = Math.min(...candidates.map((route) => route.expectedEffort))
-  return candidates
-    .map((route) => ({
-      ...route,
-      efficiencyScore: Math.max(1, Math.round((bestEffort / Math.max(1, route.expectedEffort)) * 100)),
-      recommended: route.expectedEffort === bestEffort,
-    }))
-    .sort((a, b) => b.efficiencyScore - a.efficiencyScore || a.expectedEffort - b.expectedEffort)
-    .slice(0, 4)
+  const validEfforts = MODE_ORDER.filter((mode) => base[mode].result.ok).map((mode) => base[mode].expectedEffort)
+  const bestEffort = validEfforts.length > 0 ? Math.min(...validEfforts) : Number.POSITIVE_INFINITY
+
+  const routes: Record<PlannerMode, RouteAlternative> = {} as never
+  for (const mode of MODE_ORDER) {
+    const entry = base[mode]
+    const ok = entry.result.ok
+    routes[mode] = {
+      ...entry,
+      efficiencyScore: ok ? Math.max(1, Math.round((bestEffort / Math.max(1, entry.expectedEffort)) * 100)) : 0,
+      recommended: ok && entry.expectedEffort === bestEffort,
+    }
+  }
+  return routes
 }
 
 function expectedEffort(result: PlanResult, legendaryUsage: number): number {
@@ -97,10 +101,4 @@ function countLegendaryUsage(root: PlanNode, palsById: Map<string, { rarity: num
   }
   walk(root)
   return legendary.size
-}
-
-function routeSignature(node: PlanNode): string {
-  const own = node.kind === 'owned' ? `:${node.ownedUid ?? ''}` : ''
-  const parents = node.parents ? `(${routeSignature(node.parents[0])},${routeSignature(node.parents[1])})` : ''
-  return `${node.palId}:${node.kind}:${[...node.passives].sort().join(',')}${own}${parents}`
 }

@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { Heart, Plus, Search, Star, Trash2, X } from 'lucide-react'
+import { Heart, Pin, Plus, Search, Star, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PassiveBadge } from '@/components/passive-badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { PalPicker } from '@/components/pal-picker'
 import { PassivePicker } from '@/components/passive-picker'
 import { PalIcon } from '@/components/pal-icon'
-import { loadDatabase, palName } from '@/domain/database'
+import { loadDatabase, palName, passiveName } from '@/domain/database'
 import { ELEMENT_INFO } from '@/domain/element'
 import type { ElementType, Gender, OwnedPal, Pal } from '@/domain/types'
 import { useT } from '@/i18n/language-store'
@@ -153,11 +153,27 @@ function CollectionEditor({ entry, onClose }: { entry: OwnedPal; onClose: () => 
             </div>
             {entry.passives.length > 0 ? (
               <ul className="mt-2 flex flex-wrap gap-1.5">
-                {entry.passives.map((id) => (
-                  <li key={id}>
-                    <PassiveBadge passive={db.passiveById.get(id)} className={state.desiredPassives.includes(id) ? 'ring-1 ring-emerald-400/60' : undefined} />
-                  </li>
-                ))}
+                {entry.passives.map((id) => {
+                  const isDesired = state.desiredPassives.includes(id)
+                  const isPinned = state.pinnedSources[id] === entry.uid
+                  return (
+                    <li key={id} className="flex items-center gap-1">
+                      <PassiveBadge passive={db.passiveById.get(id)} className={isDesired ? 'ring-1 ring-emerald-400/60' : undefined} />
+                      {isDesired && (
+                        <Button
+                          variant={isPinned ? 'secondary' : 'ghost'}
+                          size="icon-sm"
+                          aria-label={t(isPinned ? 'collectionPanel.unpinSource' : 'collectionPanel.pinSource', { name: passiveName(db.passiveById.get(id)) })}
+                          aria-pressed={isPinned}
+                          title={t(isPinned ? 'collectionPanel.unpinSourceHint' : 'collectionPanel.pinSourceHint')}
+                          onClick={() => dispatch({ type: 'setPinnedSource', passiveId: id, ownedUid: isPinned ? null : entry.uid })}
+                        >
+                          <Pin className="size-3" fill={isPinned ? 'currentColor' : 'none'} aria-hidden="true" />
+                        </Button>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
             ) : <p className="mt-2 text-xs text-muted-foreground">{t('collectionPanel.noPassives')}</p>}
           </div>
