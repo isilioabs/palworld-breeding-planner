@@ -21,6 +21,7 @@ import { diffStats, type StatDelta } from '@/features/plan/plan-utils'
 import { PokedexProvider } from '@/features/pokedex/pokedex-panel'
 import { LandingPage } from '@/features/launch/landing-page'
 import { QuickPathFinder } from '@/features/quick-path/quick-path-finder'
+import { PalPage } from '@/features/pals/pal-page'
 import { Onboarding } from '@/features/launch/onboarding'
 import { ProductMenu } from '@/features/launch/product-menu'
 import { TrackingConsent } from '@/features/launch/tracking-consent'
@@ -389,6 +390,7 @@ function Layout({ onHome, onOpenQuick }: { onHome: () => void; onOpenQuick: () =
 }
 
 const QUICK_PATH_PATH = '/rapido'
+const PAL_PATH_PREFIX = '/pals/'
 
 /**
  * Ruta minima con la History API real (sin dependencia de router): solo hace
@@ -420,6 +422,12 @@ function ExperienceGate() {
     track('quick_path_opened')
   }
   const exitQuick = () => navigate('/')
+  const navigateToPal = (slug: string) => navigate(`${PAL_PATH_PREFIX}${slug}`)
+  const openTargetFromPalPage = () => {
+    localStorage.setItem(LAUNCHED_KEY, 'true')
+    setPlannerOpen(true)
+    navigate('/')
+  }
 
   const launch = () => {
     localStorage.setItem(LAUNCHED_KEY, 'true')
@@ -452,6 +460,10 @@ function ExperienceGate() {
   }
 
   if (route === QUICK_PATH_PATH) return <QuickPathFinder onExit={exitQuick} />
+  if (route.startsWith(PAL_PATH_PREFIX)) {
+    const slug = route.slice(PAL_PATH_PREFIX.length)
+    return <PalPage slug={slug} onExit={exitQuick} onOpenTarget={openTargetFromPalPage} onNavigate={navigateToPal} />
+  }
   if (!plannerOpen) return <LandingPage onLaunch={launch} onLoadDemo={loadDemo} onOpenQuick={openQuick} />
   return <><Layout onHome={goHome} onOpenQuick={openQuick} /><Onboarding open={onboardingOpen} onStart={finishOnboarding} /></>
 }

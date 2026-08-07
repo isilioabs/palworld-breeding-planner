@@ -4,9 +4,8 @@ import { BookOpen, Box, ChevronRight, Crosshair, MapPin, PackageCheck, Sparkles,
 import { Button } from '@/components/ui/button'
 import { PassiveBadge } from '@/components/passive-badge'
 import { PalIcon } from '@/components/pal-icon'
-import { getBuildsFor } from '@/domain/builds'
+import { buildPalDossier } from '@/domain/pal-dossier'
 import { dexLabel, loadDatabase, palName, workTypeLabel } from '@/domain/database'
-import { getResolver } from '@/domain/breeding'
 import { ELEMENT_INFO } from '@/domain/element'
 import type { Pal } from '@/domain/types'
 import { ROLE_ICON } from '@/features/setup/build-advisor'
@@ -53,22 +52,11 @@ function PokedexPanel({ palId, onClose, onOpen }: { palId: string | null; onClos
   const pal = palId ? db.palById.get(palId) : undefined
   const owned = !!pal && state.owned.some((entry) => entry.palId === pal.id)
   const locale = lang === 'en' ? 'en-US' : 'es-ES'
-  const dossier = useMemo(() => {
-    if (!pal) return null
-    const builds = getBuildsFor(pal.id)
-    const buildPassives = [...new Set(builds.flatMap((build) => build.passives))]
-    const bestPassives = (buildPassives.length ? buildPassives : db.passives.filter((passive) => passive.rank > 0).sort((a, b) => b.rank - a.rank).map((passive) => passive.id)).slice(0, 6)
-    const related = db.pals
-      .filter((candidate) => candidate.id !== pal.id && candidate.elements.some((element) => pal.elements.includes(element)))
-      .sort((a, b) => Math.abs(a.dex - pal.dex) - Math.abs(b.dex - pal.dex))
-      .slice(0, 6)
-    const recipes = getResolver().parentsOf(pal.id).slice(0, 8)
-    return { builds, bestPassives, related, recipes }
-  }, [db.pals, db.passives, pal])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- buildPalDossier ya lee loadDatabase() internamente; solo el id decide si hay que recalcular.
+  const dossier = useMemo(() => (palId ? buildPalDossier(palId) : null), [palId])
 
   if (!pal || !dossier) return null
-  const mainElement = pal.elements[0] ?? 'neutral'
-  const elementInfo = ELEMENT_INFO[mainElement]
+  const { elementInfo, bestPassives, recipes, related } = dossier
   const topWork = pal.work[0] ? workTypeLabel(pal.work[0].type) : t('pokedex.noWork')
   const wildRange = pal.wild ? t('pokedex.wildRange', { min: pal.wild[0], max: pal.wild[1] }) : t('pokedex.breedOnly')
 
@@ -109,7 +97,7 @@ function PokedexPanel({ palId, onClose, onOpen }: { palId: string | null; onClos
 
             <section className="pokedex-dossier__section">
               <div className="pokedex-dossier__section-heading"><Sparkles aria-hidden="true" /> <h3>{t('pokedex.bestPassives')}</h3></div>
-              <div className="flex flex-wrap gap-1.5">{dossier.bestPassives.map((id) => <PassiveBadge key={id} passive={db.passiveById.get(id)} />)}</div>
+              <div className="flex flex-wrap gap-1.5">{bestPassives.map((passive) => <PassiveBadge key={passive.id} passive={passive} />)}</div>
             </section>
 
             <section className="pokedex-dossier__section">
@@ -119,12 +107,12 @@ function PokedexPanel({ palId, onClose, onOpen }: { palId: string | null; onClos
 
             <section className="pokedex-dossier__section">
               <div className="pokedex-dossier__section-heading"><MapPin aria-hidden="true" /> <h3>{t('pokedex.related')}</h3></div>
-              <ul className="pokedex-related-grid">{dossier.related.map((related) => <li key={related.id}><button type="button" onClick={() => onOpen(related.id)}><PalIcon palId={related.id} size={34} bare /><span>{palName(related)}</span><ChevronRight aria-hidden="true" /></button></li>)}</ul>
+              <ul className="pokedex-related-grid">{related.map((entry) => <li key={entry.id}><button type="button" onClick={() => onOpen(entry.id)}><PalIcon palId={entry.id} size={34} bare /><span>{palName(entry)}</span><ChevronRight aria-hidden="true" /></button></li>)}</ul>
             </section>
 
             <section className="pokedex-dossier__section">
               <div className="pokedex-dossier__section-heading"><Crosshair aria-hidden="true" /> <h3>{t('pokedex.recipes')}</h3></div>
-              {dossier.recipes.length ? <ul className="pokedex-recipe-list">{dossier.recipes.map(([a, b]) => <li key={`${a}-${b}`}><button type="button" onClick={() => onOpen(a)}>{palName(db.palById.get(a))}</button><span>+</span><button type="button" onClick={() => onOpen(b)}>{palName(db.palById.get(b))}</button></li>)}</ul> : <p className="pokedex-dossier__muted">{t('pokedex.noRecipes')}</p>}
+              {recipes.length ? <ul className="pokedex-recipe-list">{recipes.map(([a, b]) => <li key={`${a}-${b}`}><button type="button" onClick={() => onOpen(a)}>{palName(db.palById.get(a))}</button><span>+</span><button type="button" onClick={() => onOpen(b)}>{palName(db.palById.get(b))}</button></li>)}</ul> : <p className="pokedex-dossier__muted">{t('pokedex.noRecipes')}</p>}
             </section>
           </div>
         </Dialog.Content>

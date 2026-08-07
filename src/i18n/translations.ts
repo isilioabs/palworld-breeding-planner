@@ -557,6 +557,10 @@ export const es = {
   'quickPath.statSteps': 'Cruces: {count}',
   'quickPath.statCaptures': 'Capturas: {count}',
   'quickPath.openFullPlanner': '¿Buscas pasivas específicas? Abre el planificador completo',
+
+  'palPage.notFound': 'No encontramos ese Pal.',
+  'palPage.intro': '{name} en Palworld: elemento, hábitat, mejores pasivas y cómo criarlo, todo en una sola página.',
+  'palPage.planRoute': 'Planificar ruta de crianza para {name}',
 } as const
 
 export type TranslationKey = keyof typeof es
@@ -1111,6 +1115,10 @@ export const en: Record<TranslationKey, string> = {
   'quickPath.statSteps': 'Crosses: {count}',
   'quickPath.statCaptures': 'Captures: {count}',
   'quickPath.openFullPlanner': 'Looking for specific passives? Open the full planner',
+
+  'palPage.notFound': "We couldn't find that Pal.",
+  'palPage.intro': "{name} in Palworld: element, habitat, best passives, and how to breed it, all on one page.",
+  'palPage.planRoute': 'Plan a breeding route for {name}',
 }
 
 export const DICTS: Record<Lang, Record<TranslationKey, string>> = { es, en }

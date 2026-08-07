@@ -2,8 +2,9 @@ import { useSyncExternalStore } from 'react'
 import { getLang, setLang, subscribeLang, type Lang } from './lang'
 import { DICTS, type TranslationKey } from './translations'
 
-/** Sustituye `{token}` en la plantilla por `vars.token`. Sin libreria: solo hay interpolacion simple, sin plurales complejos ni ICU. */
-function interpolate(template: string, vars?: Record<string, string | number>): string {
+/** Sustituye `{token}` en la plantilla por `vars.token`. Sin libreria: solo hay interpolacion simple, sin plurales complejos ni ICU.
+ * Exportada para poder traducir fuera de React (ej. el script de prerenderizado de paginas por Pal, que no puede usar el hook `useT`). */
+export function interpolate(template: string, vars?: Record<string, string | number>): string {
   if (!vars) return template
   return template.replace(/\{(\w+)\}/g, (match, key) => (key in vars ? String(vars[key]) : match))
 }
