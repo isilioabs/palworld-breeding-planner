@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { BookOpen, Box, ChevronRight, Crosshair, MapPin, PackageCheck, Sparkles, X } from 'lucide-react'
+import { BookOpen, Box, ChevronRight, Compass, Crosshair, MapPin, Package, PackageCheck, Shield, Sparkles, Swords, X, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PassiveBadge } from '@/components/passive-badge'
 import { PalIcon } from '@/components/pal-icon'
@@ -56,7 +56,8 @@ function PokedexPanel({ palId, onClose, onOpen }: { palId: string | null; onClos
   const dossier = useMemo(() => (palId ? buildPalDossier(palId) : null), [palId])
 
   if (!pal || !dossier) return null
-  const { elementInfo, bestPassives, recipes, related } = dossier
+  const { elementInfo, bestPassives, recipes, related, combatStats, drops, activeSkills, partnerSkill, partnerSkillSource, wildSpawns, wikiSourceUrl } = dossier
+  const hasWikiData = activeSkills.length > 0 || partnerSkillSource === 'wiki' || wildSpawns.length > 0
   const topWork = pal.work[0] ? workTypeLabel(pal.work[0].type) : t('pokedex.noWork')
   const wildRange = pal.wild ? t('pokedex.wildRange', { min: pal.wild[0], max: pal.wild[1] }) : t('pokedex.breedOnly')
 
@@ -99,6 +100,67 @@ function PokedexPanel({ palId, onClose, onOpen }: { palId: string | null; onClos
               <div className="pokedex-dossier__section-heading"><Sparkles aria-hidden="true" /> <h3>{t('pokedex.bestPassives')}</h3></div>
               <div className="flex flex-wrap gap-1.5">{bestPassives.map((passive) => <PassiveBadge key={passive.id} passive={passive} />)}</div>
             </section>
+
+            {combatStats && (
+              <section className="pokedex-dossier__section">
+                <div className="pokedex-dossier__section-heading"><Swords aria-hidden="true" /> <h3>{t('pokedex.combatStats')}</h3></div>
+                <ul className="pokedex-work-grid">
+                  <li><span>{t('pokedex.hp')}</span><b>{combatStats.hp}</b><i aria-hidden="true" /></li>
+                  <li><span>{t('pokedex.meleeAttack')}</span><b>{combatStats.meleeAttack}</b><i aria-hidden="true" /></li>
+                  <li><span>{t('pokedex.shotAttack')}</span><b>{combatStats.shotAttack}</b><i aria-hidden="true" /></li>
+                  <li><span>{t('pokedex.defense')}</span><b>{combatStats.defense}</b><i aria-hidden="true" /></li>
+                  <li><span>{t('pokedex.support')}</span><b>{combatStats.support}</b><i aria-hidden="true" /></li>
+                </ul>
+              </section>
+            )}
+
+            {drops.length > 0 && (
+              <section className="pokedex-dossier__section">
+                <div className="pokedex-dossier__section-heading"><Package aria-hidden="true" /> <h3>{t('pokedex.dropItems')}</h3></div>
+                <ul className="pokedex-recipe-list">
+                  {drops.map((drop) => (
+                    <li key={drop.itemId}><span>{drop.itemName}</span><span className="pokedex-dossier__muted">{drop.min === drop.max ? drop.min : `${drop.min}-${drop.max}`} · {drop.rate}%</span></li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {activeSkills.length > 0 && (
+              <section className="pokedex-dossier__section">
+                <div className="pokedex-dossier__section-heading"><Zap aria-hidden="true" /> <h3>{t('pokedex.activeSkills')}</h3></div>
+                <ul className="pokedex-recipe-list">
+                  {activeSkills.map((skill) => (
+                    <li key={skill.name}><span>{skill.name}</span><span className="pokedex-dossier__muted">{t('pokedex.activeSkillLevel', { level: skill.level })}</span></li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {partnerSkill && (
+              <section className="pokedex-dossier__section">
+                <div className="pokedex-dossier__section-heading"><Shield aria-hidden="true" /> <h3>{t('pokedex.partnerSkill')}</h3></div>
+                <p className="pokedex-dossier__partner"><strong>{partnerSkill.name}</strong> {partnerSkill.description}</p>
+                {partnerSkillSource === 'game8' && <p className="pokedex-dossier__muted" style={{ fontSize: '11px' }}>{t('pokedex.partnerSkillAttribution')}</p>}
+              </section>
+            )}
+
+            {wildSpawns.length > 0 && (
+              <section className="pokedex-dossier__section">
+                <div className="pokedex-dossier__section-heading"><Compass aria-hidden="true" /> <h3>{t('pokedex.wildSpawn')}</h3></div>
+                <ul className="pokedex-related-grid">
+                  {wildSpawns.map((spawn, i) => (
+                    <li key={`${spawn.region}-${i}`}>{spawn.region}{spawn.coordinates ? ` (${spawn.coordinates[0]}, ${spawn.coordinates[1]})` : ''}</li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {hasWikiData && wikiSourceUrl && (
+              <p className="pokedex-dossier__muted" style={{ fontSize: '11px', textAlign: 'center' }}>
+                {t('pokedex.dataAttribution')}{' '}
+                <a href={wikiSourceUrl} target="_blank" rel="noopener noreferrer nofollow">{t('pokedex.viewSource')}</a>
+              </p>
+            )}
 
             <section className="pokedex-dossier__section">
               <div className="pokedex-dossier__section-heading"><Box aria-hidden="true" /> <h3>{t('pokedex.recommendedBuilds')}</h3></div>

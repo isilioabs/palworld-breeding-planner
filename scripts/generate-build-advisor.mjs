@@ -198,6 +198,20 @@ async function main() {
   const perRole = Object.fromEntries(ROLES.map((r) => [r.role, 0]))
   for (const entries of Object.values(builds)) for (const e of entries) perRole[e.role]++
   console.log('> Pals por rol:', perRole)
+
+  // mount-tiers.json: ground/flying POR SEPARADO (a diferencia del build
+  // "Mount" de arriba, que se queda con el mejor de los dos) -para la Tier
+  // List, que quiere 2 categorias distintas en vez de una fusionada.
+  const tiersByPalId = (tiers) => {
+    const out = {}
+    for (const [tier, names] of Object.entries(tiers)) {
+      for (const name of names) out[palByName.get(name).id] = TIER_STARS[tier]
+    }
+    return out
+  }
+  const mountTiers = { ground: tiersByPalId(GROUND_MOUNT_TIERS), flying: tiersByPalId(FLYING_MOUNT_TIERS) }
+  await writeFile(path.join(ROOT, 'src/data/mount-tiers.json'), JSON.stringify(mountTiers) + '\n', 'utf8')
+  console.log(`> mount-tiers.json generado: ${Object.keys(mountTiers.ground).length} monturas terrestres, ${Object.keys(mountTiers.flying).length} voladoras.`)
 }
 
 main().catch((err) => {

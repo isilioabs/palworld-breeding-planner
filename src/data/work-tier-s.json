@@ -1,0 +1,89 @@
+{
+  "Kindling": [
+    "Umihebi_Fire",
+    "KabukiMan",
+    "CatMage_Fire"
+  ],
+  "Watering": [
+    "Umihebi",
+    "Suzaku_Water",
+    "BlueSkyDragon",
+    "PoseidonOrca",
+    "JellyfishGhost",
+    "JellyfishFairy"
+  ],
+  "Planting": [
+    "LotusDragon",
+    "FlowerPrince",
+    "MushroomDragon_Dark",
+    "BlueberryFairy",
+    "LeafPrincess",
+    "LilyQueen",
+    "Plesiosaur"
+  ],
+  "GenerateElectricity": [
+    "ThunderDragonMan",
+    "KingSunfish_Thunder",
+    "ThunderFluffyBird"
+  ],
+  "Handiwork": [
+    "MonochromeQueen",
+    "Sekhmet",
+    "Anubis"
+  ],
+  "Gathering": [
+    "NightBlueHorse_Neutral",
+    "LegendDeer",
+    "IceHorse_Dark",
+    "JetDragon",
+    "MushroomDragon_Dark",
+    "BlueberryFairy",
+    "LeafPrincess",
+    "LilyQueen",
+    "Plesiosaur"
+  ],
+  "Lumbering": [
+    "WhiteDeer",
+    "WhiteDeer_Dark",
+    "WhiteShieldDragon",
+    "MushroomDragon_Dark"
+  ],
+  "Mining": [
+    "KingBahamut",
+    "KingBahamut_Dragon",
+    "BlackMetalDragon",
+    "DomeArmorDragon",
+    "Anubis"
+  ],
+  "MedicineProduction": [
+    "Mothman",
+    "MushroomLady",
+    "NightLady_Dark",
+    "LilyQueen_Dark"
+  ],
+  "Cooling": [
+    "SnowTigerBeastman",
+    "IceHorse",
+    "BlackPuppy_Ice"
+  ],
+  "Transporting": [
+    "YakushimaBoss001",
+    "MimicDog",
+    "GhostDragon",
+    "Horus_Water",
+    "Horus",
+    "ThiefBird",
+    "GhostDragon_Fire",
+    "Anubis"
+  ],
+  "Farming": [
+    "LazyCatfish_Gold",
+    "WhiteMoth_Neutral",
+    "SoldierBee",
+    "IceFox",
+    "WhiteMoth",
+    "MushroomDragon",
+    "SweetsSheep",
+    "SweetsSheep_Ground"
+  ]
+}

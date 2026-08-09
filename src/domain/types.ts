@@ -29,6 +29,58 @@ export interface Pal {
 
 export type ElementType = 'neutral' | 'fire' | 'water' | 'grass' | 'electric' | 'ice' | 'ground' | 'dark' | 'dragon'
 
+/** Stats de combate reales del juego. Fuente: DT_PalMonsterParameter (ver scripts/generate-pal-stats.mjs). */
+export interface PalCombatStats {
+  hp: number
+  meleeAttack: number
+  shotAttack: number
+  defense: number
+  support: number
+  craftSpeed: number
+  stamina: number
+  walkSpeed: number
+  runSpeed: number
+  swimSpeed: number
+  /** Aptitud de trabajo completa (los 12 tipos, no solo las 2 mejores de Pal.work). 0 = sin aptitud, ausente si es 0. */
+  workSuitability: Partial<Record<WorkType, number>>
+}
+
+/** Un item que un Pal puede soltar al ser derrotado/capturado. Fuente: DT_PalDropItem. */
+export interface PalDrop {
+  itemId: string
+  itemName: string
+  rate: number
+  min: number
+  max: number
+}
+
+/** Habilidad activa aprendida por nivel. Fuente: Palworld Wiki (Fandom), CC BY-SA. */
+export interface PalActiveSkill {
+  name: string
+  level: number
+}
+
+/**
+ * Skill de compañero real (no sintetizada). Fuente: game8.co (ver
+ * scripts/data-sources/game8-partner-skills-raw.json) -reemplaza a la wiki de
+ * Fandom para este campo especifico: varias descripciones de Fandom estaban
+ * truncadas/incompletas (confirmado a mano con Necromus, Orserk, Cryolinx
+ * Terra, Chillet, Pyrin, Azurobe, Maraith).
+ */
+export interface PalPartnerSkill {
+  name: string
+  description: string
+  /** Categorias curadas por game8 (ej. "Player Attack Buff", "Mount"). Ausente para el puñado de Pals sin fila en game8 (fallback a Fandom). */
+  tags?: string[]
+}
+
+/** Un lugar donde el Pal aparece en estado salvaje. Fuente: Palworld Wiki (Fandom), CC BY-SA. */
+export interface PalWildSpawn {
+  region: string
+  coordinates: [number, number] | null
+  note: string
+}
+
 /** Tipos de trabajo del juego, tal cual los usa WorkSuitability. */
 export type WorkType =
   | 'Kindling'

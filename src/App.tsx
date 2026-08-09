@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, Database, Info, Languages, Sparkles, Zap } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { AlertTriangle, Crown, Database, Info, Languages, MessageCircle, Sparkles, SlidersHorizontal, Zap } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { PalaxisMark } from '@/components/palaxis-mark'
 import { PassiveBadge } from '@/components/passive-badge'
@@ -22,8 +22,10 @@ import { PokedexProvider } from '@/features/pokedex/pokedex-panel'
 import { LandingPage } from '@/features/launch/landing-page'
 import { QuickPathFinder } from '@/features/quick-path/quick-path-finder'
 import { PalPage } from '@/features/pals/pal-page'
+import { PalsIndexPage } from '@/features/pals/pals-index-page'
+import { TierListPage } from '@/features/tiers/tier-list-page'
+import { FeedbackPage } from '@/features/launch/feedback-page'
 import { Onboarding } from '@/features/launch/onboarding'
-import { ProductMenu } from '@/features/launch/product-menu'
 import { TrackingConsent } from '@/features/launch/tracking-consent'
 import { usePlanner } from '@/hooks/use-planner'
 import { useLang, useT } from '@/i18n/language-store'
@@ -66,6 +68,49 @@ function DocumentLanguageSync() {
   return null
 }
 
+const NAV_TABS = [
+  { path: '/planner', labelKey: 'nav.breedingPlanner', icon: SlidersHorizontal } as const,
+  { path: '/pals', labelKey: 'nav.pals', icon: Database } as const,
+  { path: '/tiers', labelKey: 'nav.tiers', icon: Crown } as const,
+  { path: '/rapido', labelKey: 'nav.quickPath', icon: Zap } as const,
+  { path: '/feedback', labelKey: 'nav.feedback', icon: MessageCircle } as const,
+]
+
+function isNavActive(route: string, path: string) {
+  if (path === '/pals') return route === '/pals' || route.startsWith('/pals/')
+  return route === path
+}
+
+function HeaderNav({ route, onNavigate }: { route: string; onNavigate: (path: string) => void }) {
+  const t = useT()
+  return (
+    <nav aria-label="Palaxis" className="flex items-center gap-0.5 overflow-x-auto">
+      {NAV_TABS.map(({ path, labelKey, icon: Icon }) => {
+        const active = isNavActive(route, path)
+        return (
+          <a
+            key={path}
+            href={path}
+            aria-current={active ? 'page' : undefined}
+            onClick={(event) => {
+              if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+              event.preventDefault()
+              onNavigate(path)
+            }}
+            className={cn(
+              'flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold no-underline transition-colors sm:px-2.5',
+              active ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+            )}
+          >
+            <Icon className="size-3.5" aria-hidden="true" />
+            <span className="hidden sm:inline">{t(labelKey)}</span>
+          </a>
+        )
+      })}
+    </nav>
+  )
+}
+
 function LanguageToggle() {
   const [lang, setLang] = useLang()
   const t = useT()
@@ -79,13 +124,13 @@ function LanguageToggle() {
   )
 }
 
-function Header({ onHome, onOpenQuick }: { onHome: () => void; onOpenQuick: () => void }) {
+function Header({ onHome, route, onNavigate }: { onHome: () => void; route: string; onNavigate: (path: string) => void }) {
   const { mechanics } = loadDatabase()
   const t = useT()
   const [lang] = useLang()
   const locale = lang === 'en' ? 'en-US' : 'es-ES'
   return (
-    <header className="relative z-30 flex min-h-16 shrink-0 items-center gap-x-3 gap-y-1 border-b border-border/90 bg-card/80 px-3 shadow-[0_8px_30px_rgba(0,0,0,0.18)] backdrop-blur-xl sm:px-5">
+    <header className="relative z-30 flex min-h-16 shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-border/90 bg-card/80 px-3 shadow-[0_8px_30px_rgba(0,0,0,0.18)] backdrop-blur-xl sm:px-5">
       <button
         type="button"
         className="app-brand flex min-w-0 items-center gap-2.5 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -102,13 +147,14 @@ function Header({ onHome, onOpenQuick }: { onHome: () => void; onOpenQuick: () =
           </p>
         </div>
       </button>
+      <HeaderNav route={route} onNavigate={onNavigate} />
       <RichTooltip
         asChild={false}
         title={t('header.datasetTitle', { version: mechanics.sourceVersion })}
         description={t('header.datasetDescription', { count: mechanics.counts.verifiedPairs.toLocaleString(locale) })}
         detail={t('header.datasetDetail')}
       >
-        <Badge variant="muted" className="hidden gap-1 sm:inline-flex">
+        <Badge variant="muted" className="hidden gap-1 lg:inline-flex">
           <Database className="size-3" aria-hidden="true" />
           {t('header.badge', { pals: mechanics.counts.pals, combos: mechanics.counts.uniqueCombos + mechanics.counts.genderCombos })}
         </Badge>
@@ -116,12 +162,6 @@ function Header({ onHome, onOpenQuick }: { onHome: () => void; onOpenQuick: () =
       <span className="ml-auto hidden text-[11px] text-muted-foreground xl:inline">
         {t('header.footerLine', { version: mechanics.sourceVersion, count: mechanics.counts.verifiedPairs.toLocaleString(locale) })}
       </span>
-      <RichTooltip title={t('quickPath.navLabel')} description={t('quickPath.navHint')}>
-        <Button variant="ghost" size="icon-sm" aria-label={t('quickPath.navLabel')} onClick={onOpenQuick}>
-          <Zap className="size-4" aria-hidden="true" />
-        </Button>
-      </RichTooltip>
-      <ProductMenu />
       <LanguageToggle />
     </header>
   )
@@ -363,7 +403,7 @@ function PlanArea() {
  * posicion de scroll, y el arbol siempre recibe todo el espacio que el
  * sidebar deja libre (`flex-1 min-w-0`).
  */
-function Layout({ onHome, onOpenQuick }: { onHome: () => void; onOpenQuick: () => void }) {
+function Layout({ onHome, route, onNavigate }: { onHome: () => void; route: string; onNavigate: (path: string) => void }) {
   const t = useT()
   return (
     <div className="flex h-screen flex-col bg-background">
@@ -373,7 +413,7 @@ function Layout({ onHome, onOpenQuick }: { onHome: () => void; onOpenQuick: () =
       >
         {t('layout.skipLink')}
       </a>
-      <Header onHome={onHome} onOpenQuick={onOpenQuick} />
+      <Header onHome={onHome} route={route} onNavigate={onNavigate} />
       <div className="flex min-h-0 flex-1">
         <Sidebar />
         <main id="plan-main" className="min-w-0 flex-1 overflow-y-auto scroll-smooth pb-[calc(4.5rem+env(safe-area-inset-bottom))] sm:pb-0">
@@ -391,6 +431,10 @@ function Layout({ onHome, onOpenQuick }: { onHome: () => void; onOpenQuick: () =
 
 const QUICK_PATH_PATH = '/rapido'
 const PAL_PATH_PREFIX = '/pals/'
+const PLANNER_PATH = '/planner'
+const PALS_INDEX_PATH = '/pals'
+const TIERS_PATH = '/tiers'
+const FEEDBACK_PATH = '/feedback'
 
 /**
  * Ruta minima con la History API real (sin dependencia de router): solo hace
@@ -422,6 +466,7 @@ function ExperienceGate() {
     track('quick_path_opened')
   }
   const exitQuick = () => navigate('/')
+  const exitPalPage = () => navigate(PALS_INDEX_PATH)
   const navigateToPal = (slug: string) => navigate(`${PAL_PATH_PREFIX}${slug}`)
   const openTargetFromPalPage = () => {
     localStorage.setItem(LAUNCHED_KEY, 'true')
@@ -444,6 +489,7 @@ function ExperienceGate() {
   const goHome = () => {
     setOnboardingOpen(false)
     setPlannerOpen(false)
+    navigate('/')
     track('landing_opened')
   }
 
@@ -459,13 +505,41 @@ function ExperienceGate() {
     track('demo_loaded')
   }
 
-  if (route === QUICK_PATH_PATH) return <QuickPathFinder onExit={exitQuick} />
-  if (route.startsWith(PAL_PATH_PREFIX)) {
+  // Entrar directo a /planner (nav, bookmark, link externo) debe abrir el
+  // planner de una, igual que el boton "Launch" de la landing -sin esto, un
+  // usuario que nunca "lanzo" antes veria la landing en vez de la pagina que
+  // pidio por URL.
+  useEffect(() => {
+    if (route === PLANNER_PATH && !plannerOpen) launch()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- launch() se redefine cada render; solo importa reaccionar a cambios de ruta/estado.
+  }, [route, plannerOpen])
+
+  // El header con las pestañas es el MISMO componente en todas las pantallas
+  // -salvo el planner, que ya lo integra dentro de su propio shell de alto
+  // fijo (Layout), y la landing, que tiene su propia nav de marketing (con
+  // el CTA "Launch") y no debe llevar un segundo header encima.
+  let content: ReactNode
+  let showGlobalHeader = true
+  if (route === QUICK_PATH_PATH) {
+    content = <QuickPathFinder onExit={exitQuick} />
+  } else if (route.startsWith(PAL_PATH_PREFIX)) {
     const slug = route.slice(PAL_PATH_PREFIX.length)
-    return <PalPage slug={slug} onExit={exitQuick} onOpenTarget={openTargetFromPalPage} onNavigate={navigateToPal} />
+    content = <PalPage slug={slug} onExit={exitPalPage} onOpenTarget={openTargetFromPalPage} onNavigate={navigateToPal} />
+  } else if (route === PALS_INDEX_PATH) {
+    content = <PalsIndexPage onNavigate={navigateToPal} />
+  } else if (route === TIERS_PATH) {
+    content = <TierListPage onNavigate={navigateToPal} />
+  } else if (route === FEEDBACK_PATH) {
+    content = <FeedbackPage />
+  } else if (!plannerOpen && route !== PLANNER_PATH) {
+    content = <LandingPage onLaunch={launch} onLoadDemo={loadDemo} onOpenQuick={openQuick} onNavigate={navigate} />
+    showGlobalHeader = false
+  } else {
+    content = <><Layout onHome={goHome} route={route} onNavigate={navigate} /><Onboarding open={onboardingOpen} onStart={finishOnboarding} /></>
+    showGlobalHeader = false
   }
-  if (!plannerOpen) return <LandingPage onLaunch={launch} onLoadDemo={loadDemo} onOpenQuick={openQuick} />
-  return <><Layout onHome={goHome} onOpenQuick={openQuick} /><Onboarding open={onboardingOpen} onStart={finishOnboarding} /></>
+
+  return showGlobalHeader ? <><Header onHome={goHome} route={route} onNavigate={navigate} />{content}</> : content
 }
 
 export default function App() {

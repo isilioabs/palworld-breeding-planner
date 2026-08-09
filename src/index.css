@@ -1430,12 +1430,12 @@ button:not(:disabled):focus-visible,
 .landing-nav { display: flex; align-items: center; justify-content: space-between; padding-block: 1.25rem; }
 .landing-nav .button svg, .landing-hero__actions svg, .landing-cta svg { width: 1rem; height: 1rem; }
 .landing-brand { display: flex; align-items: center; gap: .55rem; color: inherit; letter-spacing: .08em; }
-.landing-brand span { display: grid; width: 2rem; height: 2rem; place-items: center; border: 1px solid rgb(243 192 52 / 60%); border-radius: .65rem; background: rgb(243 192 52 / 10%); color: #f6cc54; }
+.landing-brand span { display: grid; width: 2rem; height: 2rem; place-items: center; border: 1px solid color-mix(in oklch, var(--primary) 60%, transparent); border-radius: .65rem; background: color-mix(in oklch, var(--primary) 10%, transparent); color: var(--primary); }
 .landing-brand svg { width: 1rem; height: 1rem; }
 .landing-brand strong { font-family: 'Anton', Impact, sans-serif; font-size: 1.1rem; font-weight: 400; }
 .landing-hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(19rem, .9fr); align-items: center; gap: clamp(2.5rem, 7vw, 6rem); min-height: min(43rem, calc(100vh - 5rem)); padding-block: 4.5rem 5rem; }
 .landing-hero__copy { position: relative; }
-.landing-hero__mark { position: absolute; z-index: -1; top: -4.5rem; left: -3.5rem; width: 24rem; height: 24rem; color: #f3cb58; opacity: .18; filter: drop-shadow(0 0 46px rgb(243 203 88 / 45%)); pointer-events: none; }
+.landing-hero__mark { position: absolute; z-index: -1; top: -4.5rem; left: -3.5rem; width: 24rem; height: 24rem; color: var(--primary); opacity: .18; filter: drop-shadow(0 0 46px color-mix(in oklch, var(--primary) 45%, transparent)); pointer-events: none; }
 
 /* Entrada progresiva al hacer scroll: un solo disparo por seccion via
    IntersectionObserver (useReveal), nunca en bucle. Los hijos se escalonan
@@ -1453,9 +1453,15 @@ button:not(:disabled):focus-visible,
 .landing-hero h1 em { display: block; color: #f1c653; font-style: normal; }
 .landing-hero__copy > p { max-width: 35rem; margin-top: 1.25rem; color: #a8bbc3; font-size: clamp(.95rem, 1.4vw, 1.08rem); line-height: 1.65; }
 .landing-hero__actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1.8rem; }
-.landing-hero__quick-link { display: inline-flex; align-items: center; gap: .4rem; margin-top: 1rem; border: 0; background: none; color: #88a4ae; font-size: .78rem; font-weight: 650; cursor: pointer; transition: color 120ms ease; }
-.landing-hero__quick-link:hover { color: #6cd9cc; }
-.landing-hero__quick-link svg { width: .85rem; height: .85rem; }
+/* Fila de accesos al resto de funciones (Pals, Tier List, Quick Path,
+   Feedback) directo desde el hero -antes solo Quick Path tenia link aca.
+   Misma escala que los botones grandes del hero (Launch/Load demo, h-10
+   px-6 text-sm) para que llamen la atencion igual, no un link chiquito
+   perdido debajo. */
+.landing-hero__tabs { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1.35rem; }
+.landing-hero__tab { display: inline-flex; align-items: center; gap: .55rem; border: 1.5px solid rgba(108, 217, 204, .38); border-radius: .6rem; padding: .65rem 1.15rem; background: rgba(108, 217, 204, .1); color: #cfe4e8; font-size: .92rem; font-weight: 700; text-decoration: none; transition: color 120ms ease, border-color 120ms ease, background-color 120ms ease, transform 120ms ease; }
+.landing-hero__tab:hover { border-color: #6cd9cc; background: rgba(108, 217, 204, .2); color: #fff; transform: translateY(-1px); }
+.landing-hero__tab svg { width: 1.05rem; height: 1.05rem; color: #6cd9cc; }
 .landing-proof { display: flex; flex-wrap: wrap; gap: .55rem 1rem; margin-top: 1.5rem; color: #88a4ae; font-size: .72rem; }
 .landing-proof li { display: flex; align-items: center; gap: .35rem; }
 .landing-proof svg { width: .8rem; height: .8rem; color: #6cd9cc; }
@@ -1858,6 +1864,15 @@ button.tree-pal-card.tree-pal-card--target:active { transform: scale(1.015); }
 /* Selector de pasivas: el dialogo mantiene una escala legible y un lenguaje
    TCG simple. Los cuatro tiers se leen por seccion y no por un arcoiris de
    colores repetidos en cada fila. */
+/*
+ * PalCombobox (~300 Pals) y PassivePicker (~100 pasivas, override abajo)
+ * montan TODOS sus [cmdk-item] de una al abrirse -cmdk filtra ocultando con
+ * CSS, no desmontando, para mantener la navegacion por teclado. Mismo fix
+ * que el de la Tier List: content-visibility salta layout/paint de los que
+ * quedan fuera del scroll del popover/dialogo.
+ */
+[cmdk-item] { content-visibility: auto; contain-intrinsic-size: auto 2.25rem; }
+
 .passive-picker__overlay { position: fixed; z-index: 90; inset: 0; background: rgb(2 7 12 / 76%); }
 .passive-picker__dialog { position: fixed; z-index: 91; top: 50%; left: 50%; display: grid; width: min(52rem, calc(100vw - 2rem)); max-height: min(48rem, calc(100dvh - 2rem)); grid-template-rows: auto auto minmax(0, 1fr) auto; overflow: hidden; transform: translate(-50%, -50%); border: 1px solid color-mix(in srgb, var(--primary) 45%, var(--border)); border-radius: 1rem; background: linear-gradient(145deg, #17232e, #0c131b 72%); box-shadow: 0 28px 80px rgb(0 0 0 / 52%); outline: none; }
 .passive-picker__header { display: flex; align-items: start; justify-content: space-between; gap: 1rem; padding: 1.1rem 1.25rem .8rem; }
@@ -1888,7 +1903,7 @@ button.tree-pal-card.tree-pal-card--target:active { transform: scale(1.015); }
 .passive-picker__group + .passive-picker__group { margin-top: .85rem; }
 .passive-picker__group [cmdk-group-heading] { padding: .1rem 0 .45rem !important; color: #91b6c8 !important; font-family: 'Oxanium', system-ui, sans-serif; font-size: .65rem !important; font-weight: 800 !important; letter-spacing: .1em; text-transform: uppercase; }
 .passive-picker__group [cmdk-group-items] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; }
-.passive-picker__item { min-width: 0; min-height: 3.3rem; border: 1px solid #27566a; border-left: 4px solid #3a9bbb; border-radius: .3rem; padding: .45rem .55rem !important; background: #0d202a; color: #dceef4; }
+.passive-picker__item { min-width: 0; min-height: 3.3rem; border: 1px solid #27566a; border-left: 4px solid #3a9bbb; border-radius: .3rem; padding: .45rem .55rem !important; background: #0d202a; color: #dceef4; content-visibility: auto; contain-intrinsic-size: auto 3.3rem; }
 .passive-picker__item strong { overflow: hidden; color: #edf8fc; font-size: .76rem; text-overflow: ellipsis; white-space: nowrap; }
 .passive-picker__item span:last-of-type span { overflow: hidden; color: #7d9fad; font-size: .64rem; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
 .passive-picker__item[data-selected='true'] { border-color: #39ec9a; background: #12332c; color: #aaf5d1; }
@@ -2292,6 +2307,80 @@ button.pc-card-trigger { cursor: pointer; }
 .passive-badge--legendary .passive-badge__arrows i:nth-child(1) { background: linear-gradient(160deg, #ff8fb0, #ff4f7d); }
 .passive-badge--legendary .passive-badge__arrows i:nth-child(2) { background: linear-gradient(160deg, #ffe98a, #ffab2e); }
 .passive-badge--legendary .passive-badge__arrows i:nth-child(3) { background: linear-gradient(160deg, #7de6ff, #6a6bff); }
+
+/*
+ * Tier List: 5 bandas S..D. El mismo lenguaje de color que ya significa
+ * "legendario"/"gold" en las pasivas (passive-badge--legendary/--gold) se
+ * reusa para S/A -asi que S en la Tier List y rango 4 en una pasiva son
+ * visualmente el MISMO concepto en toda la app, no una paleta nueva.
+ * B/C/D extienden esa escala con plata/azul/gris.
+ */
+.tier-hero { position: relative; overflow: hidden; border-radius: 1.1rem; border: 1px solid rgba(226, 231, 240, .12); background: linear-gradient(165deg, #171a24, #0c0e13); padding: 1.75rem 1.5rem; }
+.tier-hero__glow { position: absolute; inset: -40% -10% auto auto; width: 22rem; height: 22rem; background: radial-gradient(circle, color-mix(in oklch, var(--primary) 35%, transparent), transparent 70%); pointer-events: none; }
+.tier-hero__content { position: relative; display: flex; flex-direction: column; gap: 1rem; }
+.tier-hero__stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; margin-top: .25rem; }
+@media (min-width: 640px) { .tier-hero__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.tier-hero-stat { display: flex; align-items: center; gap: .6rem; border-radius: .7rem; border: 1px solid rgba(226, 231, 240, .1); background: rgb(255 255 255 / 3%); padding: .65rem .8rem; }
+.tier-hero-stat__value { font-size: 1.05rem; font-weight: 800; line-height: 1.15; color: var(--foreground); }
+.tier-hero-stat__label { font-size: .68rem; color: var(--muted-foreground); }
+
+.tier-view-toggle { display: flex; align-items: center; gap: .5rem; border-radius: .75rem; border: 1px solid rgba(226, 231, 240, .14); background: rgb(255 255 255 / 3%); padding: .55rem 1rem; font-size: .8rem; font-weight: 700; color: var(--muted-foreground); transition: border-color 120ms ease, color 120ms ease, background-color 120ms ease; }
+.tier-view-toggle:hover { color: var(--foreground); }
+.tier-view-toggle--active { border-color: color-mix(in oklch, var(--primary) 60%, transparent); background: color-mix(in oklch, var(--primary) 14%, transparent); color: var(--primary); }
+
+.tier-band { display: flex; align-items: stretch; gap: 0; border-radius: .85rem; overflow: hidden; border: 1px solid rgba(226, 231, 240, .12); background: linear-gradient(165deg, #1a1c22, #101216); min-height: 4.5rem; }
+.tier-band__letter { display: flex; flex: none; flex-direction: column; width: 5.5rem; align-items: center; justify-content: center; font-family: 'Anton', Impact, sans-serif; font-size: 1.9rem; letter-spacing: .02em; text-align: center; }
+.tier-band__subtitle { font-family: inherit; font-size: .55rem; font-weight: 700; letter-spacing: .1em; color: var(--muted-foreground); -webkit-text-fill-color: var(--muted-foreground); background: none; }
+/*
+ * content-visibility: auto -categorias grandes (Best Combat Pals, ~300
+ * chips en total) le pedian al navegador layout+paint de todos los chips de
+ * las 5 bandas de una, incluso los que estaban fuera de pantalla. Con esto
+ * el navegador salta ese trabajo para bandas que todavia no entraron en
+ * viewport y lo hace on-demand al hacer scroll -mismo contenido, sin
+ * virtualizacion en JS. contain-intrinsic-size evita que el navegador tenga
+ * que adivinar la altura antes de medir el contenido real.
+ */
+.tier-band__chips { display: flex; flex: 1; flex-wrap: wrap; align-content: flex-start; gap: .5rem; padding: .75rem; min-width: 0; content-visibility: auto; contain-intrinsic-size: auto 4.5rem; }
+.tier-band__empty { display: block; align-self: center; margin-inline: auto; font-size: .75rem; color: var(--muted-foreground); }
+
+.tier-band--s { border-color: transparent; background: linear-gradient(165deg, #211c33, #14121c) padding-box, linear-gradient(100deg, #ff5f8f, #ffb038, #ffe94a, #46e08a, #46c8ff, #a06bff, #ff5f8f) border-box; border-width: 1px; box-shadow: inset 0 0 0 1px rgb(255 238 255 / 20%), 0 0 22px rgb(176 107 255 / 25%); }
+.tier-band--s .tier-band__letter { background: linear-gradient(100deg, #ff5f8f, #ffb038, #ffe94a, #46e08a, #46c8ff, #a06bff, #ff5f8f); background-size: 220% 100%; animation: pcRainbow 4s linear infinite; -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: 0 0 18px rgb(176 107 255 / 45%); }
+
+.tier-band--a { border-color: #dfae43; box-shadow: 0 0 16px rgb(223 174 67 / 16%); }
+.tier-band--a .tier-band__letter { background: linear-gradient(165deg, #fff8da, #f0cd6e 42%, #b98a22); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+.tier-band--b { border-color: color-mix(in oklch, var(--primary) 55%, transparent); }
+.tier-band--b .tier-band__letter { color: var(--primary); }
+
+.tier-band--c { border-color: rgba(120, 150, 200, .4); }
+.tier-band--c .tier-band__letter { color: #93a8c9; }
+
+.tier-band--d { border-color: rgba(226, 231, 240, .16); }
+.tier-band--d .tier-band__letter { color: var(--muted-foreground); }
+
+.tier-band--e { border-color: rgba(226, 231, 240, .08); opacity: .78; }
+.tier-band--e .tier-band__letter { color: color-mix(in oklch, var(--muted-foreground) 60%, transparent); }
+
+.tier-chip { display: flex; flex: none; width: 4.5rem; flex-direction: column; align-items: center; gap: .15rem; border-radius: .6rem; border: 1px solid transparent; padding: .4rem .3rem; text-align: center; text-decoration: none; transition: transform 120ms ease, border-color 120ms ease, background-color 120ms ease; }
+.tier-chip:hover, .tier-chip:focus-visible { transform: translateY(-2px); border-color: color-mix(in oklch, var(--primary) 50%, transparent); background: rgb(255 255 255 / 4%); outline: none; }
+.tier-chip__name { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .62rem; font-weight: 700; color: var(--foreground); }
+.tier-chip__stat { font-size: .58rem; font-weight: 600; color: var(--muted-foreground); }
+.tier-chip--owned { box-shadow: inset 0 0 0 1.5px color-mix(in oklch, var(--primary) 70%, transparent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tier-band--s .tier-band__letter { animation: none; }
+}
+
+/*
+ * background-position animado (pcRainbow) repinta el gradiente en cada
+ * frame -no es GPU-compositable como transform/opacity. Un solo elemento no
+ * es grave, pero combinado con listas largas en celulares de gama media/baja
+ * suma jank real durante el scroll. Se apaga en touch/mobile, donde el
+ * usuario tampoco se queda mirando fijo la animacion.
+ */
+@media (hover: none), (pointer: coarse) {
+  .tier-band--s .tier-band__letter { animation: none; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .pc-anim { animation: none !important; }

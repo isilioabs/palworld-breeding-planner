@@ -7,12 +7,12 @@
  * no hace falta que coincidan byte a byte, ver plan).
  */
 import { useMemo } from 'react'
-import { ArrowLeft, Crosshair, MapPin, Sparkles, Swords } from 'lucide-react'
+import { ArrowLeft, Compass, Crosshair, MapPin, Package, Shield, Sparkles, Swords, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { PalIcon } from '@/components/pal-icon'
 import { PassiveBadge } from '@/components/passive-badge'
-import { PalaxisMark } from '@/components/palaxis-mark'
+import { PageSection } from '@/components/page-heading'
 import { buildPalDossier } from '@/domain/pal-dossier'
 import { getPalSlugIndex, palSlug } from '@/domain/slug'
 import { dexLabel, loadDatabase, palName } from '@/domain/database'
@@ -57,20 +57,15 @@ export function PalPage({ slug, onExit, onOpenTarget, onNavigate }: PalPageProps
     )
   }
 
-  const { pal, elementInfo, bestPassives, recipes, related, wildLevelRange } = dossier
+  const { pal, elementInfo, bestPassives, recipes, related, wildLevelRange, combatStats, drops, activeSkills, partnerSkill, partnerSkillSource, wildSpawns, wikiSourceUrl } = dossier
+  const hasWikiData = activeSkills.length > 0 || partnerSkillSource === 'wiki' || wildSpawns.length > 0
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
-      <header className="flex items-center justify-between gap-3">
-        <button type="button" className="flex items-center gap-2 rounded-lg text-left text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={onExit}>
-          <ArrowLeft className="size-4" aria-hidden="true" />
-          {t('quickPath.back')}
-        </button>
-        <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-          <PalaxisMark className="size-4 text-primary" />
-          Palaxis
-        </span>
-      </header>
+      <button type="button" className="flex w-fit items-center gap-2 rounded-lg text-left text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={onExit}>
+        <ArrowLeft className="size-4" aria-hidden="true" />
+        {t('quickPath.back')}
+      </button>
 
       <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:items-start sm:text-left">
         <PalIcon palId={pal.id} size={110} bare />
@@ -94,16 +89,95 @@ export function PalPage({ slug, onExit, onOpenTarget, onNavigate }: PalPageProps
 
       <Card>
         <CardContent className="space-y-2 p-4">
-          <SectionHeading icon={Sparkles} title={t('pokedex.bestPassives')} />
+          <PageSection icon={Sparkles} title={t('pokedex.bestPassives')} />
           <div className="flex flex-wrap gap-1.5">
             {bestPassives.map((passive) => <PassiveBadge key={passive.id} passive={passive} />)}
           </div>
         </CardContent>
       </Card>
 
+      {combatStats && (
+        <Card>
+          <CardContent className="space-y-2 p-4">
+            <PageSection icon={Swords} title={t('pokedex.combatStats')} />
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              <StatTile label={t('pokedex.hp')} value={String(combatStats.hp)} />
+              <StatTile label={t('pokedex.meleeAttack')} value={String(combatStats.meleeAttack)} />
+              <StatTile label={t('pokedex.shotAttack')} value={String(combatStats.shotAttack)} />
+              <StatTile label={t('pokedex.defense')} value={String(combatStats.defense)} />
+              <StatTile label={t('pokedex.support')} value={String(combatStats.support)} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {drops.length > 0 && (
+        <Card>
+          <CardContent className="space-y-2 p-4">
+            <PageSection icon={Package} title={t('pokedex.dropItems')} />
+            <ul className="grid gap-1.5 sm:grid-cols-2">
+              {drops.map((drop) => (
+                <li key={drop.itemId} className="flex items-center justify-between gap-2 rounded-lg border border-border/70 px-2.5 py-1.5 text-sm">
+                  <span className="truncate">{drop.itemName}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">{drop.min === drop.max ? drop.min : `${drop.min}-${drop.max}`} · {drop.rate}%</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {activeSkills.length > 0 && (
+        <Card>
+          <CardContent className="space-y-2 p-4">
+            <PageSection icon={Zap} title={t('pokedex.activeSkills')} />
+            <ul className="grid gap-1.5 sm:grid-cols-2">
+              {activeSkills.map((skill) => (
+                <li key={skill.name} className="flex items-center justify-between gap-2 rounded-lg border border-border/70 px-2.5 py-1.5 text-sm">
+                  <span className="truncate">{skill.name}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">{t('pokedex.activeSkillLevel', { level: skill.level })}</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {partnerSkill && (
+        <Card>
+          <CardContent className="space-y-2 p-4">
+            <PageSection icon={Shield} title={t('pokedex.partnerSkill')} />
+            <p className="text-sm"><strong>{partnerSkill.name}</strong> {partnerSkill.description && `— ${partnerSkill.description}`}</p>
+            {partnerSkillSource === 'game8' && <p className="text-[11px] text-muted-foreground">{t('pokedex.partnerSkillAttribution')}</p>}
+          </CardContent>
+        </Card>
+      )}
+
+      {wildSpawns.length > 0 && (
+        <Card>
+          <CardContent className="space-y-2 p-4">
+            <PageSection icon={Compass} title={t('pokedex.wildSpawn')} />
+            <ul className="flex flex-wrap gap-2">
+              {wildSpawns.map((spawn, i) => (
+                <li key={`${spawn.region}-${i}`} className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-semibold">
+                  {spawn.region}{spawn.coordinates ? ` (${spawn.coordinates[0]}, ${spawn.coordinates[1]})` : ''}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {hasWikiData && wikiSourceUrl && (
+        <p className="text-center text-[11px] text-muted-foreground">
+          {t('pokedex.dataAttribution')}{' '}
+          <a href={wikiSourceUrl} target="_blank" rel="noopener noreferrer nofollow" className="underline hover:text-foreground">{t('pokedex.viewSource')}</a>
+        </p>
+      )}
+
       <Card>
         <CardContent className="space-y-2 p-4">
-          <SectionHeading icon={Crosshair} title={t('pokedex.recipes')} />
+          <PageSection icon={Crosshair} title={t('pokedex.recipes')} />
           {recipes.length ? (
             <ul className="grid gap-1.5 sm:grid-cols-2">
               {recipes.map(([a, b]) => (
@@ -121,7 +195,7 @@ export function PalPage({ slug, onExit, onOpenTarget, onNavigate }: PalPageProps
       {related.length > 0 && (
         <Card>
           <CardContent className="space-y-2 p-4">
-            <SectionHeading icon={MapPin} title={t('pokedex.related')} />
+            <PageSection icon={MapPin} title={t('pokedex.related')} />
             <ul className="flex flex-wrap gap-2">
               {related.map((entry) => <li key={entry.id}><PalPageRelatedLink pal={entry} onNavigate={onNavigate} /></li>)}
             </ul>
@@ -167,15 +241,6 @@ function StatTile({ label, value }: { label: string; value: string }) {
     <div className="rounded-lg border border-border bg-card px-3 py-2 text-center">
       <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="text-sm font-semibold">{value}</p>
-    </div>
-  )
-}
-
-function SectionHeading({ icon: Icon, title }: { icon: typeof Sparkles; title: string }) {
-  return (
-    <div className="flex items-center gap-2 text-sm font-bold">
-      <Icon className="size-4 text-primary" aria-hidden="true" />
-      {title}
     </div>
   )
 }

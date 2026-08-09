@@ -11,9 +11,9 @@
  */
 import { getBuildsFor, type PalBuild } from './builds'
 import { getResolver } from './breeding'
-import { dexLabel, loadDatabase, palName, workTypeLabel } from './database'
+import { dexLabel, getPalCombatStats, getPalDrops, getPalPartnerSkill, getPalWikiData, loadDatabase, palName, workTypeLabel } from './database'
 import { ELEMENT_INFO, type ElementInfo } from './element'
-import type { Pal, Passive } from './types'
+import type { Pal, PalActiveSkill, PalCombatStats, PalDrop, PalPartnerSkill, PalWildSpawn, Passive } from './types'
 
 export interface PalDossier {
   pal: Pal
@@ -28,6 +28,20 @@ export interface PalDossier {
   /** null = solo se cria, no existe en estado salvaje. */
   wildLevelRange: [number, number] | null
   topWorkLabel: string
+  /** Fuente: DT_PalMonsterParameter (export local del juego). null si el Pal no tiene fila. */
+  combatStats: PalCombatStats | null
+  /** Fuente: DT_PalDropItem. Vacio si no hay drops registrados. */
+  drops: PalDrop[]
+  /** Fuente: Palworld Wiki (Fandom), CC BY-SA. Vacio si la pagina no matcheo. */
+  activeSkills: PalActiveSkill[]
+  /** Fuente: game8.co (respaldo: Palworld Wiki/Fandom para lo que game8 no cubre). null si no hay dato. */
+  partnerSkill: PalPartnerSkill | null
+  /** De donde vino `partnerSkill` -distinto del resto de wikiSourceUrl/CC BY-SA, que solo cubre Fandom. null si partnerSkill es null. */
+  partnerSkillSource: 'game8' | 'wiki' | null
+  /** Fuente: Palworld Wiki (Fandom), CC BY-SA. Vacio si no hay dato. */
+  wildSpawns: PalWildSpawn[]
+  /** URL de la pagina fuente en la Palworld Wiki, para el credito de atribucion CC BY-SA. null si no hay dato de esa fuente. */
+  wikiSourceUrl: string | null
 }
 
 export function buildPalDossier(palId: string): PalDossier | null {
@@ -49,6 +63,10 @@ export function buildPalDossier(palId: string): PalDossier | null {
     .sort((a, b) => Math.abs(a.dex - pal.dex) - Math.abs(b.dex - pal.dex))
     .slice(0, 6)
   const recipes = getResolver().parentsOf(pal.id).slice(0, 8)
+  const wikiData = getPalWikiData(pal.id)
+  const game8PartnerSkill = getPalPartnerSkill(pal.id)
+  const partnerSkill = game8PartnerSkill ?? wikiData?.partnerSkill ?? null
+  const partnerSkillSource = game8PartnerSkill ? 'game8' : wikiData?.partnerSkill ? 'wiki' : null
 
   return {
     pal,
@@ -59,6 +77,15 @@ export function buildPalDossier(palId: string): PalDossier | null {
     recipes,
     wildLevelRange: pal.wild,
     topWorkLabel: pal.work[0] ? workTypeLabel(pal.work[0].type) : '',
+    combatStats: getPalCombatStats(pal.id),
+    drops: getPalDrops(pal.id),
+    activeSkills: wikiData?.activeSkills ?? [],
+    // game8 primero (mas completo, ver PalPartnerSkill en types.ts); Fandom
+    // como respaldo solo para el puñado de Pals que game8 no cubre.
+    partnerSkill,
+    partnerSkillSource,
+    wildSpawns: wikiData?.wildSpawns ?? [],
+    wikiSourceUrl: wikiData?.sourceUrl ?? null,
   }
 }
 

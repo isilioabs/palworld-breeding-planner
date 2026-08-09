@@ -10,13 +10,12 @@
  * un efecto lateral de no tocar el selector de pasivas en el flujo grande.
  */
 import { useMemo, useState } from 'react'
-import { ArrowLeft, SlidersHorizontal, X, Zap } from 'lucide-react'
+import { ArrowLeft, Info, SlidersHorizontal, Sparkles, X, Zap } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PalIcon } from '@/components/pal-icon'
 import { PalPicker } from '@/components/pal-picker'
-import { PalaxisMark } from '@/components/palaxis-mark'
 import { BreedingTree } from '@/features/plan/breeding-tree'
-import { plan } from '@/domain/breeding'
+import { buildDirectPreviewNode, getResolver, pickDirectPreviewPair, plan, type DirectPreviewResult } from '@/domain/breeding'
 import { loadDatabase, palName } from '@/domain/database'
 import type { OwnedPal } from '@/domain/types'
 import { useT } from '@/i18n/language-store'
@@ -45,6 +44,18 @@ export function QuickPathFinder({ onExit }: { onExit: () => void }) {
     return plan({ targetPalId, targetPalIds: [targetPalId], desiredPassives: [], owned, mode: 'hybrid' })
   }, [targetPalId, owned])
 
+  // Vista previa instantanea (una sola generacion, sin pasar por el buscador
+  // completo): en cuanto se elige un objetivo, sin Pals propios todavia, ya
+  // hay una pareja de cria real para mostrar -mismo mecanismo que usa el
+  // planner completo (ver PlanArea en App.tsx). Se recalcula solo mientras no
+  // haya una ruta real: en cuanto plan() encuentra una (por ejemplo al añadir
+  // Pals propios que acortan el camino), esa pasa a ser la que se muestra.
+  const hasRealRoute = !!(result?.ok && result.root)
+  const directPreview: DirectPreviewResult | null = useMemo(() => {
+    if (!targetPalId || hasRealRoute) return null
+    return pickDirectPreviewPair(targetPalId, 'hybrid', owned, getResolver(), db.palById)
+  }, [targetPalId, hasRealRoute, owned, db.palById])
+
   const openFullPlanner = () => {
     if (targetPalId) dispatch({ type: 'setTarget', palId: targetPalId })
     track('quick_path_open_full_planner')
@@ -53,20 +64,14 @@ export function QuickPathFinder({ onExit }: { onExit: () => void }) {
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-6 px-4 py-8 sm:px-6">
-      <header className="flex items-center justify-between gap-3">
-        <button
-          type="button"
-          className="flex items-center gap-2 rounded-lg text-left text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          onClick={onExit}
-        >
-          <ArrowLeft className="size-4" aria-hidden="true" />
-          {t('quickPath.back')}
-        </button>
-        <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-          <PalaxisMark className="size-4 text-primary" />
-          Palaxis
-        </span>
-      </header>
+      <button
+        type="button"
+        className="flex w-fit items-center gap-2 rounded-lg text-left text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        onClick={onExit}
+      >
+        <ArrowLeft className="size-4" aria-hidden="true" />
+        {t('quickPath.back')}
+      </button>
 
       <div className="space-y-1.5">
         <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -120,7 +125,7 @@ export function QuickPathFinder({ onExit }: { onExit: () => void }) {
         </CardContent>
       </Card>
 
-      <QuickPathResult targetPalId={targetPalId} result={result} onOpenFullPlanner={openFullPlanner} />
+      <QuickPathResult targetPalId={targetPalId} result={result} directPreview={directPreview} onOpenFullPlanner={openFullPlanner} />
     </div>
   )
 }
@@ -128,10 +133,12 @@ export function QuickPathFinder({ onExit }: { onExit: () => void }) {
 function QuickPathResult({
   targetPalId,
   result,
+  directPreview,
   onOpenFullPlanner,
 }: {
   targetPalId: string | null
   result: ReturnType<typeof plan> | null
+  directPreview: DirectPreviewResult | null
   onOpenFullPlanner: () => void
 }) {
   const t = useT()
@@ -142,6 +149,39 @@ function QuickPathResult({
         <CardContent className="flex flex-col items-center gap-2 py-10 text-center text-sm text-muted-foreground">
           <Zap className="size-6 text-muted-foreground/60" aria-hidden="true" />
           {t('quickPath.emptyState')}
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Sin ruta real todavia (tipico: recien elegiste el objetivo, sin Pals
+  // propios que la acorten): la vista previa directa YA es una receta real de
+  // cria, solo que de una sola generacion -no un mensaje de espera.
+  if (!result?.ok && directPreview) {
+    if (directPreview.kind === 'pair') {
+      return (
+        <div className="space-y-1.5">
+          <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+            <Sparkles className="size-3" aria-hidden="true" />
+            {t('directPreview.title')}
+          </p>
+          <BreedingTree root={buildDirectPreviewNode(targetPalId, directPreview)} />
+          <button
+            type="button"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+            onClick={onOpenFullPlanner}
+          >
+            <SlidersHorizontal className="size-3.5" aria-hidden="true" />
+            {t('quickPath.openFullPlanner')}
+          </button>
+        </div>
+      )
+    }
+    return (
+      <Card className="border-dashed">
+        <CardContent className="flex items-start gap-2 p-4 text-sm text-muted-foreground">
+          <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <p>{t(directPreview.reason === 'no-owned-pair' ? 'directPreview.unavailableCollection' : 'directPreview.unavailableNoParents')}</p>
         </CardContent>
       </Card>
     )

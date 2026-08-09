@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { BookOpen, Boxes, ChevronRight, Database, GitCompareArrows, Network, ScanSearch, Sparkles, Swords, WifiOff, Zap } from 'lucide-react'
+import { BookOpen, Boxes, ChevronRight, Crown, Database, GitCompareArrows, MessageCircle, Network, ScanSearch, Sparkles, Swords, WifiOff, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PalaxisMark } from '@/components/palaxis-mark'
 import { PalIcon } from '@/components/pal-icon'
@@ -11,7 +11,22 @@ interface LandingPageProps {
   onLaunch: () => void
   onLoadDemo: () => void
   onOpenQuick: () => void
+  /** Navega a una ruta real de la app (Pals, Tier List, Feedback...) sin recargar la pagina. */
+  onNavigate: (path: string) => void
 }
+
+/**
+ * El resto de las funciones de Palaxis, accesibles desde el hero -antes solo
+ * "Quick Path" tenia un link directo aca; el resto (Pals, Tier List,
+ * Feedback) solo se veian una vez adentro del planner. `/planner` no esta:
+ * "Launch" ya cumple ese rol.
+ */
+const HERO_TABS = [
+  { path: '/pals', labelKey: 'nav.pals', icon: Database } as const,
+  { path: '/tiers', labelKey: 'nav.tiers', icon: Crown } as const,
+  { path: '/rapido', labelKey: 'nav.quickPath', icon: Zap } as const,
+  { path: '/feedback', labelKey: 'nav.feedback', icon: MessageCircle } as const,
+]
 
 const FEATURES = [
   { icon: Network, key: 'planner' },
@@ -41,7 +56,7 @@ const FAQS = [
   { id: 'collection', questionKey: 'landing.faq.collection.question', answerKey: 'landing.faq.collection.answer' },
 ] as const
 
-export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick }: LandingPageProps) {
+export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: LandingPageProps) {
   const t = useT()
   const [featuresRef, featuresVisible] = useReveal<HTMLElement>()
   const [reasonsRef, reasonsVisible] = useReveal<HTMLElement>()
@@ -68,9 +83,23 @@ export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick }: LandingPagePr
             <Button size="lg" onClick={onLaunch}>{t('landing.launch')}<ChevronRight aria-hidden="true" /></Button>
             <Button size="lg" variant="outline" onClick={onLoadDemo}>{t('landing.loadDemo')}</Button>
           </div>
-          <button type="button" className="landing-hero__quick-link" onClick={onOpenQuick}>
-            <Zap aria-hidden="true" />{t('quickPath.heroLink')}
-          </button>
+          <nav className="landing-hero__tabs" aria-label={t('landing.navigation')}>
+            {HERO_TABS.map(({ path, labelKey, icon: Icon }) => (
+              <a
+                key={path}
+                href={path}
+                className="landing-hero__tab"
+                onClick={(event) => {
+                  if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+                  event.preventDefault()
+                  if (path === '/rapido') onOpenQuick()
+                  else onNavigate(path)
+                }}
+              >
+                <Icon aria-hidden="true" />{t(labelKey)}
+              </a>
+            ))}
+          </nav>
           <ul className="landing-proof" aria-label={t('landing.proofLabel')}>
             <li><Database aria-hidden="true" />{t('landing.proofOffline')}</li>
             <li><ScanSearch aria-hidden="true" />{t('landing.proofInstant')}</li>

@@ -32,4 +32,28 @@ describe('buildPalDossier', () => {
     const dossier = buildPalDossier(breedOnly.id)
     expect(dossier!.wildLevelRange).toBeNull()
   })
+
+  it('un Pal con datos reales del juego trae stats de combate, drops, habilidades y partner skill', () => {
+    const dossier = buildPalDossier('Anubis')
+    expect(dossier!.combatStats).not.toBeNull()
+    expect(dossier!.combatStats!.hp).toBeGreaterThan(0)
+    expect(dossier!.drops.length).toBeGreaterThan(0)
+    expect(dossier!.activeSkills.length).toBeGreaterThan(0)
+    expect(dossier!.partnerSkill).not.toBeNull()
+    expect(dossier!.wildSpawns.length).toBeGreaterThan(0)
+    expect(dossier!.wikiSourceUrl).toContain('palworld.fandom.com')
+  })
+
+  it('un Pal sin pagina en la Palworld Wiki (crossover de Terraria) no rompe el dossier: arrays vacios, no undefined', () => {
+    // YakushimaMonster001_Blue (Blue Slime) no tiene pagina propia en
+    // palworld.fandom.com NI fila en game8.co -confirmado cruzando ambas
+    // fuentes (ver pal-wiki-data.json y pal-partner-skills.json).
+    const dossier = buildPalDossier('YakushimaMonster001_Blue')
+    expect(dossier).not.toBeNull()
+    expect(dossier!.activeSkills).toEqual([])
+    expect(dossier!.partnerSkill).toBeNull()
+    expect(dossier!.wildSpawns).toEqual([])
+    expect(dossier!.wikiSourceUrl).toBeNull()
+    expect(Array.isArray(dossier!.drops)).toBe(true)
+  })
 })
