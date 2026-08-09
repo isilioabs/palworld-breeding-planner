@@ -554,7 +554,6 @@ export const es = {
   'work.Transporting': 'Transportar',
   'work.Farming': 'Cultivar',
 
-  'quickPath.navLabel': 'Búsqueda rápida',
   'quickPath.navHint': 'Encuentra la cadena de crianza más corta hasta un Pal, sin pasivas.',
   'quickPath.back': 'Volver',
   'quickPath.title': 'Búsqueda rápida de crianza',
@@ -1179,7 +1178,6 @@ export const en: Record<TranslationKey, string> = {
   'work.Transporting': 'Transporting',
   'work.Farming': 'Farming',
 
-  'quickPath.navLabel': 'Quick lookup',
   'quickPath.navHint': 'Find the shortest breeding chain to a Pal, no passives required.',
   'quickPath.back': 'Back',
   'quickPath.title': 'Quick breeding lookup',

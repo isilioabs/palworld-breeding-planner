@@ -69,7 +69,6 @@ export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
         <button type="button" className="landing-brand" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <span><PalaxisMark /></span><strong>PALAXIS</strong>
         </button>
-        <Button size="sm" variant="ghost" onClick={onOpenQuick}><Zap aria-hidden="true" />{t('quickPath.navLabel')}</Button>
         <Button size="sm" onClick={onLaunch}>{t('landing.launch')}<ChevronRight aria-hidden="true" /></Button>
       </nav>
 
