@@ -1,18 +1,21 @@
 /**
  * Landing page de Palaxis -unica pagina tocada por este rediseño (ver
  * conversacion: "redesigning ONLY the landing page"). No cambia el shell de
- * la app, el algoritmo de crianza/rutas, el sistema de cartas, la Paldex, el
- * calculo de la Tier List, ni los colores de marca -todo eso se REUSA via
- * datos y componentes reales (getBuildsFor, getTierList, PalIcon,
- * PassiveBadge, PalCombobox, loadDatabase().mechanics), nunca duplicado.
+ * la app, el algoritmo de crianza/rutas, la Paldex, el calculo de la Tier
+ * List, ni los colores de marca -todo eso se REUSA via datos y componentes
+ * reales (getBuildsFor, getTierList, PalIcon, PassiveBadge, PalCombobox,
+ * loadDatabase().mechanics), nunca duplicado.
  *
- * Arquitectura de la pagina (de arriba a abajo), pensada para no repetir el
- * mismo contenido dos veces pese a que el brief pide temas que se solapan
- * (breeding intelligence / collection intelligence / build advisor aparecen
- * en varias secciones del brief): el hero + Three Routes + Collection
- * Intelligence YA cubren "breeding inteligente" y "conoce tu coleccion" a
- * fondo, asi que la franja de "3 historias" mas abajo queda deliberadamente
- * compacta (titular + CTA), en vez de repetir el mismo visual tres veces.
+ * Pasada de pulido (reduce repeticion, sube jerarquia visual, acorta la
+ * pagina): se elimino la franja grande de "3 historias" (ya cubiertas por
+ * Hero+Three Routes+Collection Intelligence) a favor de un grid "More from
+ * Palaxis" mas chico; la seccion de credibilidad se fusiono en la Trust
+ * Strip. Tambien es donde la landing empieza a reusar la carta TCG premium
+ * real (`PalCard`, src/components/pal-card.tsx, via el puente
+ * `LandingTcgCard`) en vez de inventar una carta simplificada -pero solo en
+ * 3 sitios (hero, Collection Intelligence, vitrina de Paldex), nunca en
+ * listas grandes, siguiendo el mismo presupuesto de animacion (`.pc-anim`)
+ * que ya protege el rendimiento del arbol real.
  */
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import {
@@ -27,7 +30,7 @@ import {
   GitCompareArrows,
   Menu,
   MessageCircle,
-  Network,
+  PlusCircle,
   Sparkles,
   Swords,
   WifiOff,
@@ -50,7 +53,7 @@ import { useReveal } from '@/lib/use-reveal'
 import { cn } from '@/lib/utils'
 import { usePlannerStore } from '@/state/planner-store'
 import { LandingMiniTree } from './landing-mini-tree'
-import { LandingPalCard } from './landing-pal-card'
+import { LandingTcgCard } from './landing-tcg-card'
 
 interface LandingPageProps {
   onLaunch: () => void
@@ -71,47 +74,53 @@ const NAV_LINKS = [
 
 const POPULAR_TARGETS = ['Anubis', 'JetDragon', 'BlackGriffon', 'BlackCentaur']
 
+/** Cada modo explica visualmente POR QUE difiere: insignia por padre (owned/easy/hard capture) + comparacion compacta. Todo marcado como ejemplo ilustrativo, no un calculo real del planner. */
 const ROUTE_MODES = [
   {
     id: 'collection',
     icon: Boxes,
     titleKey: 'landing.routes.collection.title',
     descriptionKey: 'landing.routes.collection.description',
-    statKey: 'landing.routes.collection.stat',
     parents: [
-      { palId: 'CaptainPenguin', labelKey: 'landing.tree.collection' },
-      { palId: 'Ronin', labelKey: 'landing.tree.collection' },
+      { palId: 'CaptainPenguin', labelKey: 'landing.tree.collection', badgeKey: 'landing.tree.owned' },
+      { palId: 'Ronin', labelKey: 'landing.tree.collection', badgeKey: 'landing.tree.owned' },
     ],
+    stats: { generations: 4, steps: 6, difficultyKey: 'landing.difficulty.none' },
   },
   {
     id: 'easiest',
     icon: Compass,
     titleKey: 'landing.routes.easiest.title',
     descriptionKey: 'landing.routes.easiest.description',
-    statKey: 'landing.routes.easiest.stat',
     parents: [
-      { palId: 'Carbunclo', labelKey: 'landing.tree.capture' },
-      { palId: 'LazyDragon', labelKey: 'landing.tree.capture' },
+      { palId: 'Carbunclo', labelKey: 'landing.tree.capture', badgeKey: 'landing.tree.easyCapture' },
+      { palId: 'LazyDragon', labelKey: 'landing.tree.capture', badgeKey: 'landing.tree.easyCapture' },
     ],
+    stats: { generations: 6, steps: 9, difficultyKey: 'landing.difficulty.low' },
   },
   {
     id: 'fastest',
     icon: Zap,
     titleKey: 'landing.routes.fastest.title',
     descriptionKey: 'landing.routes.fastest.description',
-    statKey: 'landing.routes.fastest.stat',
     parents: [
-      { palId: 'CaptainPenguin', labelKey: 'landing.tree.collection' },
-      { palId: 'BlackCentaur', labelKey: 'landing.tree.capture' },
+      { palId: 'CaptainPenguin', labelKey: 'landing.tree.collection', badgeKey: 'landing.tree.owned' },
+      { palId: 'BlackCentaur', labelKey: 'landing.tree.capture', badgeKey: 'landing.tree.hardCapture' },
     ],
+    stats: { generations: 3, steps: 5, difficultyKey: 'landing.difficulty.high' },
   },
-] as const satisfies readonly { id: string; icon: typeof Boxes; titleKey: TranslationKey; descriptionKey: TranslationKey; statKey: TranslationKey; parents: { palId: string; labelKey: TranslationKey }[] }[]
+] as const satisfies readonly {
+  id: string
+  icon: typeof Boxes
+  titleKey: TranslationKey
+  descriptionKey: TranslationKey
+  parents: { palId: string; labelKey: TranslationKey; badgeKey: TranslationKey }[]
+  stats: { generations: number; steps: number; difficultyKey: TranslationKey }
+}[]
 
-const STORIES = [
-  { icon: Network, titleKey: 'landing.story.breeding.title', descriptionKey: 'landing.story.breeding.description', ctaKey: 'landing.story.breeding.cta', action: 'launch' } as const,
-  { icon: Boxes, titleKey: 'landing.story.collection.title', descriptionKey: 'landing.story.collection.description', ctaKey: 'landing.story.collection.cta', action: 'anchor', anchor: '#collection-intelligence' } as const,
-  { icon: Sparkles, titleKey: 'landing.story.advisor.title', descriptionKey: 'landing.story.advisor.description', ctaKey: 'landing.story.advisor.cta', action: 'anchor', anchor: '#build-advisor' } as const,
-]
+/** Coleccion de ejemplo de Collection Intelligence: 3 Pals que ya estaban en la caja + 1 recien anadido (Bushi), cuya llegada es la que explica el antes/despues. */
+const COLLECTION_BASE = ['CaptainPenguin', 'LazyDragon', 'Carbunclo']
+const COLLECTION_ADDED = 'Ronin'
 
 const TOOLS = [
   { icon: Database, titleKey: 'nav.pals', descriptionKey: 'landing.tools.pals.description', path: '/pals', kind: 'route' } as const,
@@ -168,11 +177,10 @@ export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
 
   const [routesRef, routesVisible] = useReveal<HTMLElement>()
   const [collectionRef, collectionVisible] = useReveal<HTMLElement>()
-  const [storiesRef, storiesVisible] = useReveal<HTMLElement>()
+  const [moreRef, moreVisible] = useReveal<HTMLElement>()
   const [paldexRef, paldexVisible] = useReveal<HTMLElement>()
   const [tierRef, tierVisible] = useReveal<HTMLElement>()
   const [advisorRef, advisorVisible] = useReveal<HTMLElement>()
-  const [credibilityRef, credibilityVisible] = useReveal<HTMLElement>()
   const [howRef, howVisible] = useReveal<HTMLElement>()
   const [guideRef, guideVisible] = useReveal<HTMLElement>()
   const [ctaRef, ctaVisible] = useReveal<HTMLElement>()
@@ -218,8 +226,12 @@ export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
             ))}
           </div>
           <div className="landing-routes__preview">
-            <LandingMiniTree targetPalId="Anubis" parents={[...activeRoute.parents]} />
-            <p className="landing-routes__stat">{t(activeRoute.statKey)}</p>
+            <LandingMiniTree key={routeMode} targetPalId="Anubis" parents={[...activeRoute.parents]} />
+            <dl className="landing-routes__compare">
+              <div><dt>{t('landing.routes.compare.generations')}</dt><dd>{activeRoute.stats.generations}</dd></div>
+              <div><dt>{t('landing.routes.compare.steps')}</dt><dd>{activeRoute.stats.steps}</dd></div>
+              <div><dt>{t('landing.routes.compare.difficulty')}</dt><dd>{t(activeRoute.stats.difficultyKey)}</dd></div>
+            </dl>
             <span className="landing-routes__example-tag">{t('landing.exampleTag')}</span>
           </div>
         </div>
@@ -233,11 +245,17 @@ export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
         <div className="landing-collection__grid">
           <div className="landing-collection__panel">
             <h3>{t('landing.collection.yourBox')}</h3>
-            <ul className="landing-collection__owned">
-              {['CaptainPenguin', 'Ronin', 'LazyDragon', 'Carbunclo'].map((palId) => (
-                <li key={palId}><PalIcon palId={palId} size={34} /><span>{palName(db.palById.get(palId))}</span></li>
+            <div className="landing-collection__cards">
+              {COLLECTION_BASE.map((palId, index) => (
+                <div key={palId} className="landing-collection__card" style={{ '--i': index } as CSSProperties}>
+                  <LandingTcgCard palId={palId} size={104} compact owned onNavigate={onNavigate} />
+                </div>
               ))}
-            </ul>
+              <div className="landing-collection__card landing-collection__card--added" style={{ '--i': COLLECTION_BASE.length } as CSSProperties}>
+                <span className="landing-collection__event"><PlusCircle aria-hidden="true" />{t('landing.collection.event', { pal: palName(db.palById.get(COLLECTION_ADDED)) })}</span>
+                <LandingTcgCard palId={COLLECTION_ADDED} size={104} compact owned onNavigate={onNavigate} />
+              </div>
+            </div>
           </div>
           <div className="landing-collection__compare">
             <div className="landing-collection__before">
@@ -262,31 +280,11 @@ export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
         <p className="landing-collection__note">{t('landing.collection.explanation')}<span className="landing-routes__example-tag">{t('landing.exampleTag')}</span></p>
       </section>
 
-      <section ref={storiesRef} className={cn('landing-section landing-stories reveal', storiesVisible && 'is-in')} aria-labelledby="stories-title">
+      <section ref={moreRef} className={cn('landing-section landing-section--tight landing-more reveal', moreVisible && 'is-in')} aria-labelledby="more-title">
         <div className="landing-section__heading">
-          <span>{t('landing.stories.eyebrow')}</span>
-          <h2 id="stories-title">{t('landing.stories.title')}</h2>
+          <span>{t('landing.more.eyebrow')}</span>
+          <h2 id="more-title">{t('landing.more.title')}</h2>
         </div>
-        <ul className="landing-stories__grid">
-          {STORIES.map((story, index) => (
-            <li key={story.titleKey} style={{ '--i': index } as CSSProperties}>
-              <story.icon aria-hidden="true" />
-              <strong>{t(story.titleKey)}</strong>
-              <p>{t(story.descriptionKey)}</p>
-              <a
-                href={story.action === 'anchor' ? story.anchor : '/planner'}
-                className="landing-stories__cta"
-                onClick={(event) => {
-                  event.preventDefault()
-                  if (story.action === 'anchor') document.querySelector(story.anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                  else onLaunch()
-                }}
-              >
-                {t(story.ctaKey)}<ChevronRight aria-hidden="true" />
-              </a>
-            </li>
-          ))}
-        </ul>
         <ul className="landing-tools">
           {TOOLS.map((tool, index) => (
             <li key={tool.titleKey} style={{ '--i': index } as CSSProperties}>
@@ -308,15 +306,17 @@ export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
         </ul>
       </section>
 
-      <section ref={paldexRef} className={cn('landing-section reveal', paldexVisible && 'is-in')} aria-labelledby="paldex-title">
+      <section ref={paldexRef} className={cn('landing-section landing-section--tight reveal', paldexVisible && 'is-in')} aria-labelledby="paldex-title">
         <div className="landing-section__heading">
           <span>{t('landing.paldex.eyebrow')}</span>
           <h2 id="paldex-title">{t('landing.paldex.title')}</h2>
           <p>{t('landing.paldex.description', { count: db.mechanics.counts.pals })}</p>
         </div>
-        <ul className="landing-paldex__grid">
+        <ul className="landing-paldex__cards">
           {PALDEX_PREVIEW.map((palId, index) => (
-            <li key={palId} style={{ '--i': index } as CSSProperties}><LandingPalCard palId={palId} onNavigate={onNavigate} /></li>
+            <li key={palId} className="landing-paldex__card-slot" style={{ '--i': index } as CSSProperties}>
+              <LandingTcgCard palId={palId} size={192} onNavigate={onNavigate} />
+            </li>
           ))}
         </ul>
         <a
@@ -328,7 +328,7 @@ export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
         </a>
       </section>
 
-      <section ref={tierRef} className={cn('landing-section reveal', tierVisible && 'is-in')} aria-labelledby="tier-title">
+      <section ref={tierRef} className={cn('landing-section landing-section--tight reveal', tierVisible && 'is-in')} aria-labelledby="tier-title">
         <div className="landing-section__heading">
           <span>{t('landing.tierShowcase.eyebrow')}</span>
           <h2 id="tier-title">{t('landing.tierShowcase.title')}</h2>
@@ -336,27 +336,12 @@ export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
         <TierShowcase onNavigate={onNavigate} />
       </section>
 
-      <section id="build-advisor" ref={advisorRef} className={cn('landing-section landing-advisor reveal', advisorVisible && 'is-in')} aria-labelledby="advisor-title">
+      <section id="build-advisor" ref={advisorRef} className={cn('landing-section landing-section--tight landing-advisor reveal', advisorVisible && 'is-in')} aria-labelledby="advisor-title">
         <div className="landing-section__heading">
           <span>{t('landing.advisorShowcase.eyebrow')}</span>
           <h2 id="advisor-title">{t('landing.advisorShowcase.title')}</h2>
         </div>
         <BuildAdvisorShowcase onLaunch={onLaunch} />
-      </section>
-
-      <section ref={credibilityRef} className={cn('landing-section landing-credibility reveal', credibilityVisible && 'is-in')} aria-labelledby="credibility-title">
-        <div className="landing-section__heading">
-          <span>{t('landing.credibility.eyebrow')}</span>
-          <h2 id="credibility-title">{t('landing.credibility.title')}</h2>
-          <p>{t('landing.credibility.description', { pairs: db.mechanics.counts.verifiedPairs.toLocaleString('en-US') })}</p>
-        </div>
-        <a
-          href="#how-title"
-          className="landing-section__cta"
-          onClick={(event) => { event.preventDefault(); document.getElementById('how-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}
-        >
-          {t('landing.credibility.cta')}<ChevronRight aria-hidden="true" />
-        </a>
       </section>
 
       <section ref={howRef} className={cn('landing-section landing-section--how reveal', howVisible && 'is-in')} aria-labelledby="how-title">
@@ -401,7 +386,7 @@ export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
 
       <section id="guide" ref={guideRef} className={cn('landing-section landing-guide reveal', guideVisible && 'is-in')} aria-labelledby="guide-title">
         <div className="landing-section__heading">
-          <span className="landing-guide__badge">{t('landing.guide.comingSoon')}</span>
+          <span className="landing-guide__badge"><span className="landing-guide__dot" aria-hidden="true" />{t('landing.guide.comingSoon')}</span>
           <h2 id="guide-title">{t('landing.guide.title')}</h2>
           <p>{t('landing.guide.description')}</p>
         </div>
@@ -420,7 +405,7 @@ export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
         </div>
       </section>
 
-      <section ref={ctaRef} className={cn('landing-cta reveal', ctaVisible && 'is-in')} aria-labelledby="landing-cta-title">
+      <section id="final-cta" ref={ctaRef} className={cn('landing-cta reveal', ctaVisible && 'is-in')} aria-labelledby="landing-cta-title">
         <span className="landing-kicker"><Sparkles aria-hidden="true" />{t('landing.ctaEyebrow')}</span>
         <h2 id="landing-cta-title">{t('landing.ctaTitle')}</h2>
         <p>{t('landing.ctaDescription')}</p>
@@ -436,6 +421,7 @@ export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
       </section>
 
       <LandingFooter onNavigate={onNavigate} onOpenQuick={onOpenQuick} />
+      <MobileStickyCta onStartBreeding={() => startBreeding()} />
     </main>
   )
 }
@@ -536,17 +522,12 @@ function HeroSection({
   const db = loadDatabase()
 
   return (
-    <section className="landing-hero" aria-labelledby="landing-title">
+    <section id="landing-hero" className="landing-hero" aria-labelledby="landing-title">
       <div className="landing-hero__copy">
         <PalaxisMark className="landing-hero__mark" />
         <span className="landing-kicker"><WifiOff aria-hidden="true" />{t('landing.kicker')}</span>
         <h1 id="landing-title">{t('landing.titleA')} <em>{t('landing.titleB')}</em></h1>
         <p>{t('landing.description')}</p>
-
-        <div className="landing-hero__actions">
-          <Button size="lg" onClick={() => onStartBreeding()}>{t('landing.hero.primaryCta')}<ChevronRight aria-hidden="true" /></Button>
-          <Button size="lg" variant="outline" onClick={onLoadDemo}>{t('landing.hero.secondaryCta')}</Button>
-        </div>
 
         <div className="landing-hero__selector">
           <label htmlFor="landing-target-search" className="landing-hero__selector-label">{t('landing.hero.selectorLabel')}</label>
@@ -571,6 +552,11 @@ function HeroSection({
               </li>
             ))}
           </ul>
+        </div>
+
+        <div className="landing-hero__actions landing-hero__actions--secondary">
+          <Button variant="outline" onClick={() => onStartBreeding()}>{t('landing.hero.primaryCta')}<ChevronRight aria-hidden="true" /></Button>
+          <Button variant="ghost" onClick={onLoadDemo}>{t('landing.hero.secondaryCta')}</Button>
         </div>
 
         <nav className="landing-hero__tabs" aria-label={t('landing.navigation')}>
@@ -599,6 +585,7 @@ function HeroSection({
 
       <div className="landing-hero__visual" aria-label={t('landing.demoLabel')}>
         <div className="landing-demo__ambient" aria-hidden="true" />
+        <div className="landing-hero__visual-network" aria-hidden="true" />
         <div className="landing-hero__visual-eyebrow">
           <span className="landing-demo__lens" aria-hidden="true"><span /></span>
           {t('landing.exampleProject')}
@@ -609,6 +596,8 @@ function HeroSection({
             { palId: 'CaptainPenguin', labelKey: 'landing.tree.collection' },
             { palId: 'Ronin', labelKey: 'landing.tree.capture' },
           ]}
+          useCards
+          onNavigate={onNavigate}
         />
       </div>
     </section>
@@ -617,24 +606,37 @@ function HeroSection({
 
 /* ------------------------------------------------------------- Trust strip */
 
+/** Fusiona el antiguo bloque "Credibilidad de los datos" en la franja de confianza: mismos datos generados (mechanics.counts), sin repetir seccion. */
 function TrustStrip() {
   const t = useT()
   const { mechanics } = loadDatabase()
   const items = [
     { icon: Database, value: mechanics.counts.pals, labelKey: 'landing.trust.pals' as const },
     { icon: Egg, value: mechanics.counts.verifiedPairs.toLocaleString('en-US'), labelKey: 'landing.trust.pairs' as const },
-    { icon: Boxes, value: '', labelKey: 'landing.trust.collectionAware' as const },
+    { icon: GitCompareArrows, value: ROUTE_MODES.length, labelKey: 'landing.trust.routes' as const },
     { icon: WifiOff, value: '', labelKey: 'landing.trust.offline' as const },
   ]
   return (
     <section className="landing-trust" aria-label={t('landing.trust.label')}>
-      {items.map(({ icon: Icon, value, labelKey }) => (
-        <div key={labelKey} className="landing-trust__item">
-          <Icon aria-hidden="true" />
-          {value !== '' ? <strong>{value}</strong> : null}
-          <span>{t(labelKey)}</span>
-        </div>
-      ))}
+      <div className="landing-trust__grid">
+        {items.map(({ icon: Icon, value, labelKey }) => (
+          <div key={labelKey} className="landing-trust__item">
+            <Icon aria-hidden="true" />
+            {value !== '' ? <strong>{value}</strong> : null}
+            <span>{t(labelKey)}</span>
+          </div>
+        ))}
+      </div>
+      <div className="landing-trust__footer">
+        <p className="landing-trust__statement">{t('landing.trust.statement')}</p>
+        <a
+          href="#how-title"
+          className="landing-trust__cta"
+          onClick={(event) => { event.preventDefault(); document.getElementById('how-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}
+        >
+          {t('landing.trust.cta')}<ChevronRight aria-hidden="true" />
+        </a>
+      </div>
     </section>
   )
 }
@@ -676,7 +678,7 @@ function TierShowcase({ onNavigate }: { onNavigate: (path: string) => void }) {
       )}
       <a
         href="/tiers"
-        className="landing-section__cta"
+        className="landing-section__cta landing-section__cta--solid"
         onClick={(event) => { if (event.defaultPrevented || event.button !== 0) return; event.preventDefault(); onNavigate('/tiers') }}
       >
         {t('landing.tierShowcase.cta')}<ChevronRight aria-hidden="true" />
@@ -702,7 +704,7 @@ function BuildAdvisorShowcase({ onLaunch }: { onLaunch: () => void }) {
   const pal = db.palById.get(BUILD_ADVISOR_EXAMPLE_PAL)
   const build = getBuildsFor(BUILD_ADVISOR_EXAMPLE_PAL).find((entry) => entry.role === 'Base Worker') ?? getBuildsFor(BUILD_ADVISOR_EXAMPLE_PAL)[0]
   if (!pal || !build) return null
-  const passives = build.passives.map((id) => db.passiveById.get(id)).filter((passive): passive is NonNullable<typeof passive> => !!passive)
+  const passives = build.passives.slice(0, 4).map((id) => db.passiveById.get(id)).filter((passive): passive is NonNullable<typeof passive> => !!passive)
 
   return (
     <div className="landing-advisor__card">
@@ -792,5 +794,53 @@ function LandingFooter({ onNavigate, onOpenQuick }: { onNavigate: (path: string)
       </div>
       <p className="landing-footer-v2__disclaimer"><BookOpen aria-hidden="true" />{t('landing.footer.disclaimer')}</p>
     </footer>
+  )
+}
+
+/* --------------------------------------------------------- Mobile sticky CTA */
+
+/**
+ * Movil unicamente (oculto por CSS en desktop): aparece cuando el hero ya
+ * salio de vista y desaparece cuando el CTA final entra en vista -evita un
+ * segundo "Start Breeding" flotando justo encima del real. Dos
+ * IntersectionObserver EN VIVO (no el `useReveal` de una sola vez que usa el
+ * resto de la pagina) porque necesita reaccionar cada vez que el usuario
+ * cruza esos limites, no solo la primera.
+ */
+function MobileStickyCta({ onStartBreeding }: { onStartBreeding: () => void }) {
+  const t = useT()
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const hero = document.getElementById('landing-hero')
+    const finalCta = document.getElementById('final-cta')
+    if (!hero || !finalCta) return
+
+    let heroPassed = false
+    let ctaInView = false
+    const update = () => setVisible(heroPassed && !ctaInView)
+
+    const heroObserver = new IntersectionObserver(([entry]) => {
+      heroPassed = !entry.isIntersecting && entry.boundingClientRect.top < 0
+      update()
+    })
+    const ctaObserver = new IntersectionObserver(([entry]) => {
+      ctaInView = entry.isIntersecting
+      update()
+    })
+    heroObserver.observe(hero)
+    ctaObserver.observe(finalCta)
+    return () => {
+      heroObserver.disconnect()
+      ctaObserver.disconnect()
+    }
+  }, [])
+
+  return (
+    <div className={cn('landing-sticky-cta', visible && 'is-visible')} aria-hidden={!visible}>
+      <Button size="lg" className="w-full" onClick={onStartBreeding} tabIndex={visible ? 0 : -1}>
+        {t('landing.hero.primaryCta')}<ArrowRight aria-hidden="true" />
+      </Button>
+    </div>
   )
 }

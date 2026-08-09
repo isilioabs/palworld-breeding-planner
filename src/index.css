@@ -1459,10 +1459,10 @@ button:not(:disabled):focus-visible,
    con transition-delay leyendo --i, sin observers adicionales. */
 .landing-section.reveal, .landing-cta.reveal { opacity: 0; transform: translateY(26px); transition: opacity 650ms var(--motion-soft), transform 650ms var(--motion-soft); }
 .landing-section.reveal.is-in, .landing-cta.reveal.is-in { opacity: 1; transform: translateY(0); }
-.landing-stories__grid > li, .landing-tools > li, .landing-how > li, .landing-paldex__grid > li { opacity: 0; transform: translateY(16px); transition: opacity 500ms var(--motion-soft), transform 500ms var(--motion-soft); transition-delay: calc(var(--i, 0) * 80ms); }
-.reveal.is-in .landing-stories__grid > li, .reveal.is-in .landing-tools > li, .reveal.is-in .landing-how > li, .reveal.is-in .landing-paldex__grid > li { opacity: 1; transform: translateY(0); }
+.landing-tools > li, .landing-how > li, .landing-paldex__cards > li, .landing-collection__card { opacity: 0; transform: translateY(16px); transition: opacity 500ms var(--motion-soft), transform 500ms var(--motion-soft); transition-delay: calc(var(--i, 0) * 80ms); }
+.reveal.is-in .landing-tools > li, .reveal.is-in .landing-how > li, .reveal.is-in .landing-paldex__cards > li, .reveal.is-in .landing-collection__card { opacity: 1; transform: translateY(0); }
 @media (prefers-reduced-motion: reduce) {
-  .landing-section.reveal, .landing-cta.reveal, .landing-stories__grid > li, .landing-tools > li, .landing-how > li, .landing-paldex__grid > li { opacity: 1; transform: none; transition: none; }
+  .landing-section.reveal, .landing-cta.reveal, .landing-tools > li, .landing-how > li, .landing-paldex__cards > li, .landing-collection__card { opacity: 1; transform: none; transition: none; }
 }
 .landing-kicker { display: inline-flex; align-items: center; gap: .42rem; color: #f3cb58; font-family: 'Oxanium', system-ui, sans-serif; font-size: .64rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .landing-kicker svg { width: .88rem; height: .88rem; }
@@ -1474,13 +1474,17 @@ button:not(:disabled):focus-visible,
 .landing-hero h1 { max-width: 13ch; margin-top: 1rem; font-family: 'Anton', Impact, sans-serif; font-size: clamp(2.7rem, 6vw, 4.6rem); font-weight: 400; line-height: .98; letter-spacing: -.02em; text-transform: uppercase; }
 .landing-hero h1 em { display: block; color: #f1c653; font-style: normal; }
 .landing-hero__copy > p { max-width: 34rem; margin-top: 1.1rem; color: #a8bbc3; font-size: clamp(.9rem, 1.3vw, 1rem); line-height: 1.6; }
-.landing-hero__actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1.6rem; }
-.landing-hero__actions svg, .landing-cta svg { width: 1rem; height: 1rem; }
+.landing-cta svg { width: 1rem; height: 1rem; }
+/* Jerarquia del hero (pasada de pulido, seccion 3): "Find my route" (dentro
+   del selector) es la UNICA accion primaria -Start Breeding/Try Demo bajan
+   de peso (outline/ghost, tamano default) para no competir visualmente. */
+.landing-hero__actions--secondary { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.1rem; }
+.landing-hero__actions--secondary svg { width: 1rem; height: 1rem; }
 
 /* Selector de objetivo directo en el hero (brief seccion 3): PalCombobox
    real, sin segunda implementacion del planner -solo pre-selecciona el
    target (setTarget) y abre el planificador existente. */
-.landing-hero__selector { margin-top: 1.75rem; padding: 1rem; border: 1px solid rgb(107 135 145 / 24%); border-radius: .9rem; background: rgb(255 255 255 / 3%); }
+.landing-hero__selector { margin-top: 1.5rem; padding: 1rem; border: 1px solid rgb(107 135 145 / 24%); border-radius: .9rem; background: rgb(255 255 255 / 3%); }
 .landing-hero__selector-label { display: block; margin-bottom: .55rem; color: #cfe4e8; font-size: .78rem; font-weight: 700; }
 .landing-hero__selector-row { display: flex; flex-wrap: wrap; gap: .55rem; }
 .landing-hero__selector-row > *:first-child { flex: 1; min-width: 12rem; }
@@ -1496,18 +1500,28 @@ button:not(:disabled):focus-visible,
 /* Vitrina visual del hero: mismo bisel/lente que ya usaba la carta "Load
    Demo" original, ahora envolviendo el LandingMiniTree en vez de un
    mockup de progreso estatico. */
-.landing-hero__visual { position: relative; isolation: isolate; overflow: hidden; border: 1px solid color-mix(in srgb, #4cc9e8 45%, rgb(104 214 204 / 48%)); border-radius: 1.3rem; padding: 1.35rem 1.15rem; background: linear-gradient(145deg, rgb(15 34 40 / 97%), rgb(9 15 21 / 98%)); box-shadow: 0 0 0 5px rgb(4 10 14 / 65%) inset, 0 0 0 6px rgb(76 201 232 / 20%), 0 28px 80px rgb(0 0 0 / 42%), inset 0 1px rgb(255 255 255 / 8%); }
+.landing-hero__visual { position: relative; isolation: isolate; display: flex; flex-direction: column; align-items: center; overflow: hidden; border: 1px solid color-mix(in srgb, #4cc9e8 45%, rgb(104 214 204 / 48%)); border-radius: 1.3rem; padding: 1.35rem 1.15rem 1.75rem; background: linear-gradient(145deg, rgb(15 34 40 / 97%), rgb(9 15 21 / 98%)); box-shadow: 0 0 0 5px rgb(4 10 14 / 65%) inset, 0 0 0 6px rgb(76 201 232 / 20%), 0 28px 80px rgb(0 0 0 / 42%), inset 0 1px rgb(255 255 255 / 8%); }
 .landing-demo__ambient { position: absolute; z-index: -1; top: -4rem; right: -3rem; width: 13rem; height: 13rem; border-radius: 999px; background: #2e9fa7; opacity: .24; filter: blur(36px); }
-.landing-hero__visual-eyebrow { position: relative; z-index: 2; display: flex; align-items: center; gap: .48rem; margin-bottom: 1rem; color: #88c4c7; font-family: 'Oxanium', system-ui, sans-serif; font-size: .58rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+/* Red/particulas ambiente restringidas (brief hero seccion 3): puntos +
+   lineas finas MUY tenues detras del arbol, estaticas -no compiten con la
+   carta objetivo ni cuestan una capa animada mas. */
+.landing-hero__visual-network { position: absolute; inset: 0; z-index: 0; opacity: .5; background-image: radial-gradient(rgb(108 217 204 / 22%) 1.4px, transparent 1.6px), radial-gradient(rgb(241 198 83 / 14%) 1.2px, transparent 1.4px); background-size: 34px 34px, 52px 52px; background-position: 0 0, 17px 26px; mask-image: radial-gradient(closest-side, black, transparent 88%); }
+.landing-hero__visual-eyebrow { position: relative; z-index: 2; display: flex; align-items: center; gap: .48rem; margin-bottom: 1rem; color: #88c4c7; font-family: 'Oxanium', system-ui, sans-serif; font-size: .58rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; align-self: flex-start; }
 .landing-demo__lens { position: relative; display: grid; flex: none; width: 1.3rem; height: 1.3rem; place-items: center; border-radius: 50%; background: radial-gradient(circle at 34% 28%, #a4f3ff, #4cc9e8 46%, #0d5a6b 82%); box-shadow: 0 0 0 2px #050b0e, 0 0 0 3px rgb(76 201 232 / 50%), 0 0 10px 1px rgb(76 201 232 / 65%); }
 .landing-demo__lens span { position: absolute; top: 18%; left: 24%; width: 32%; height: 22%; border-radius: 50%; background: rgb(255 255 255 / 75%); filter: blur(.5px); }
+/* La vitrina del hero es la unica composicion que llega a mostrar la carta
+   TCG completa (ver landing-tcg-card.tsx) -10-15% mas grande en desktop
+   (brief hero seccion 3), un solo transform estatico sobre el wrapper. */
+@media (min-width: 1100px) {
+  .landing-hero__visual .landing-mini-tree--cards { transform: scale(1.13); transform-origin: center top; }
+}
 
 /* --------------------------------------------------------- Mini tree (compartido) */
 /* Composicion "target arriba, padres abajo" reusada en Hero / Three Routes /
    How it Works. Entrada escalonada <700ms (brief seccion 4), respeta
    prefers-reduced-motion mostrando el estado final directo. */
 .landing-mini-tree { display: flex; flex-direction: column; align-items: center; gap: .1rem; padding: .5rem; }
-.landing-mini-tree__target { display: flex; flex-direction: column; align-items: center; gap: .3rem; padding: .5rem .75rem; border: 1px solid rgb(241 198 83 / 45%); border-radius: .8rem; background: rgb(241 198 83 / 8%); opacity: 0; transform: translateY(-8px); transition: opacity 400ms var(--motion-soft), transform 400ms var(--motion-soft); animation: landing-tree-target-pulse 2.6s 700ms ease-in-out infinite; }
+.landing-mini-tree__target { position: relative; display: flex; flex-direction: column; align-items: center; gap: .3rem; padding: .5rem .75rem; border: 1px solid rgb(241 198 83 / 45%); border-radius: .8rem; background: rgb(241 198 83 / 8%); opacity: 0; transform: translateY(-8px); transition: opacity 400ms var(--motion-soft), transform 400ms var(--motion-soft); animation: landing-tree-target-pulse 2.6s 700ms ease-in-out infinite; }
 .landing-mini-tree.is-in .landing-mini-tree__target { opacity: 1; transform: translateY(0); }
 .landing-mini-tree__target span { color: #f1e6c2; font-size: .76rem; font-weight: 750; }
 .landing-mini-tree__connector { display: flex; flex-direction: column; align-items: center; gap: 0; width: 1px; height: 1.4rem; }
@@ -1518,20 +1532,54 @@ button:not(:disabled):focus-visible,
 .landing-mini-tree.is-in .landing-mini-tree__parent { opacity: 1; transform: translateY(0); }
 .landing-mini-tree__parent span { color: #cfe4e8; font-size: .68rem; font-weight: 700; }
 .landing-mini-tree__parent small { color: #7d9fad; font-size: .58rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+/* Insignia extra opcional (Three Routes tradeoff: owned/easy/hard capture). */
+.landing-mini-tree__parent-badge { margin-top: .1rem; padding: .1rem .5rem; border: 1px solid rgb(108 217 204 / 35%); border-radius: 999px; color: #8de8bb; font-size: .56rem; font-weight: 700; letter-spacing: .02em; }
 @keyframes landing-tree-target-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgb(241 198 83 / 35%); } 50% { box-shadow: 0 0 0 6px rgb(241 198 83 / 0%); } }
 @media (prefers-reduced-motion: reduce) {
   .landing-mini-tree__target, .landing-mini-tree__connector span, .landing-mini-tree__parent { opacity: 1; transform: none; transition: none; animation: none; }
 }
 
+/* Modo "carta real" del mini-arbol (solo el hero): el target/padres dejan de
+   ser un badge con icono y pasan a envolver LandingTcgCard -se quita el
+   fondo/borde de pastilla (la propia carta ya trae su marco) y se deja solo
+   un glow detras a modo de "profundidad", mas restrained que el pcEpic real. */
+.landing-mini-tree--cards .landing-mini-tree__target { padding: 0; border: none; background: none; animation: none; }
+.landing-mini-tree--cards .landing-mini-tree__target::before { content: ''; position: absolute; inset: -18%; z-index: -1; border-radius: 999px; background: radial-gradient(closest-side, rgb(241 198 83 / 30%), transparent 72%); filter: blur(14px); animation: landing-tree-target-pulse-glow 2.6s 700ms ease-in-out infinite; }
+.landing-mini-tree--cards .landing-mini-tree__parent { padding: 0; border: none; background: none; }
+@keyframes landing-tree-target-pulse-glow { 0%, 100% { opacity: .55; } 50% { opacity: .9; } }
+@media (prefers-reduced-motion: reduce) {
+  .landing-mini-tree--cards .landing-mini-tree__target::before { animation: none; }
+}
+
+/* Wrapper de escala para la carta TCG premium real (PalCard, 780x1000 fija):
+   el contenedor mide el tamano final, la carta se encoge con transform:scale
+   sin tocar el componente original. Presupuesto de animacion (.pc-anim) ya
+   protege el costo -aqui solo se limita CUANTAS aparecen a la vez (hero: 1
+   objetivo + 2 padres; Paldex: 3; Collection: 4 pequenas). */
+.landing-tcg-card { position: relative; display: block; overflow: hidden; border-radius: 1.1rem; text-decoration: none; }
+
 /* --------------------------------------------------------------- Trust strip */
-.landing-trust { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; padding-block: 1.5rem 2.5rem; border-top: 1px solid rgb(112 140 149 / 14%); border-bottom: 1px solid rgb(112 140 149 / 14%); }
+/* Fusiona el antiguo bloque "Credibilidad de los datos": misma franja, con
+   una frase de credibilidad + CTA debajo de los 4 datos generados. */
+.landing-trust { padding-block: 1.75rem 2.25rem; border-top: 1px solid rgb(112 140 149 / 14%); border-bottom: 1px solid rgb(112 140 149 / 14%); }
+.landing-trust__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
 .landing-trust__item { display: flex; align-items: center; gap: .55rem; color: #91a7af; font-size: .74rem; }
 .landing-trust__item svg { width: 1rem; height: 1rem; flex: none; color: #6cd9cc; }
 .landing-trust__item strong { color: #edf5f6; font-family: 'Oxanium', system-ui, sans-serif; font-size: .85rem; }
-@media (min-width: 700px) { .landing-trust { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.landing-trust__footer { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem 1.5rem; margin-top: 1.1rem; padding-top: 1.1rem; border-top: 1px solid rgb(112 140 149 / 12%); }
+.landing-trust__statement { color: #8fa5ad; font-size: .76rem; line-height: 1.5; }
+.landing-trust__cta { display: inline-flex; flex: none; align-items: center; gap: .35rem; color: #6cd9cc; font-size: .78rem; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.landing-trust__cta:hover { color: #9be9de; }
+.landing-trust__cta svg { width: .85rem; height: .85rem; }
+@media (min-width: 700px) { .landing-trust__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
 /* -------------------------------------------------------------- Sections */
 .landing-section { padding-block: 4.5rem; border-top: 1px solid rgb(112 140 149 / 14%); }
+/* Ritmo de la pagina (brief seccion 14): secciones "companero" (Paldex, Tier
+   List, Build Advisor, More from Palaxis) llevan menos aire vertical que las
+   de alto impacto (Hero, Routes, Collection Intelligence) para que la pagina
+   se sienta con ritmo, no una cadena identica de bloques del mismo peso. */
+.landing-section--tight { padding-block: 2.75rem; }
 .landing-section__heading { max-width: 39rem; }
 .landing-section__heading > span { color: #f1c653; font-family: 'Oxanium', system-ui, sans-serif; font-size: .62rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .landing-section h2, .landing-cta h2 { margin-top: .5rem; font-family: 'Anton', Impact, sans-serif; font-size: clamp(1.8rem, 3.4vw, 2.9rem); font-weight: 400; line-height: 1.05; letter-spacing: .01em; text-transform: uppercase; }
@@ -1539,6 +1587,9 @@ button:not(:disabled):focus-visible,
 .landing-section__cta { display: inline-flex; align-items: center; gap: .35rem; margin-top: 1.5rem; color: #6cd9cc; font-size: .82rem; font-weight: 700; text-decoration: none; }
 .landing-section__cta:hover { color: #9be9de; }
 .landing-section__cta svg { width: .9rem; height: .9rem; }
+/* CTA "solido" (Tier List showcase, brief seccion 7: "must visually stand out") -mismo link real, tratamiento de boton en vez de texto suelto. */
+.landing-section__cta--solid { padding: .6rem 1.1rem; border: 1px solid rgb(241 198 83 / 45%); border-radius: .6rem; background: rgba(241, 198, 83, .1); color: #f1e0ac; transition: border-color 140ms var(--motion-soft), background-color 140ms var(--motion-soft), color 140ms var(--motion-soft); }
+.landing-section__cta--solid:hover { border-color: #f1c653; background: rgba(241, 198, 83, .18); color: #fff3d2; }
 .landing-routes__example-tag { display: inline-block; margin-top: .6rem; padding: .18rem .55rem; border: 1px solid rgb(241 198 83 / 35%); border-radius: 999px; color: #e5c260; font-size: .6rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 
 /* ------------------------------------------------------ Three routes showcase */
@@ -1552,14 +1603,25 @@ button:not(:disabled):focus-visible,
 .landing-routes__tab.is-active { border-color: #6cd9cc; background: rgba(108, 217, 204, .08); }
 .landing-routes__tab.is-active svg { color: #f1c653; }
 .landing-routes__preview { display: flex; flex-direction: column; align-items: center; padding: 1.25rem 1rem; border: 1px solid rgb(107 135 145 / 24%); border-radius: 1rem; background: rgb(255 255 255 / 2%); text-align: center; }
-.landing-routes__stat { margin-top: .5rem; color: #cfe4e8; font-family: 'Oxanium', system-ui, sans-serif; font-size: .74rem; font-weight: 700; }
+/* Comparacion compacta bajo la vista previa (brief seccion 4: "show the
+   tradeoff"): generaciones / pasos / dificultad de captura, mismos 3 numeros
+   para los 3 modos asi el ojo puede comparar en vertical al cambiar pestana. */
+.landing-routes__compare { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; width: 100%; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgb(107 135 145 / 18%); }
+.landing-routes__compare dt { color: #7d9fad; font-size: .58rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+.landing-routes__compare dd { margin-top: .25rem; color: #edf5f6; font-family: 'Oxanium', system-ui, sans-serif; font-size: 1rem; font-weight: 700; }
 
 /* --------------------------------------------------------- Collection intelligence */
 .landing-collection__grid { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 1.75rem; margin-top: 2rem; align-items: start; }
 .landing-collection__panel { border: 1px solid rgb(107 135 145 / 24%); border-radius: .9rem; padding: 1rem; background: rgb(255 255 255 / 2%); }
 .landing-collection__panel h3 { color: #cfe4e8; font-size: .76rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
-.landing-collection__owned { display: grid; gap: .5rem; margin-top: .75rem; }
-.landing-collection__owned li { display: flex; align-items: center; gap: .55rem; color: #d7e6e9; font-size: .78rem; font-weight: 650; }
+/* Coleccion como cartas TCG reales compactas (brief 3B seccion 2), no una
+   simple lista con icono -el mismo lenguaje visual de la carta premium hace
+   que se lea como "activos de crianza reales", no nombres sueltos. */
+.landing-collection__cards { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: .9rem; }
+.landing-collection__card--added { position: relative; padding-top: 1.6rem; transition-delay: calc(320ms + var(--i, 0) * 110ms); }
+.landing-collection__event { position: absolute; top: 0; left: 0; display: inline-flex; align-items: center; gap: .3rem; color: #8de8bb; font-size: .6rem; font-weight: 700; white-space: nowrap; }
+.landing-collection__event svg { width: .78rem; height: .78rem; }
+.landing-collection__card--added .landing-tcg-card { outline: 2px solid rgb(108 217 204 / 55%); outline-offset: 3px; border-radius: 1.1rem; box-shadow: 0 0 22px -6px rgb(108 217 204 / 55%); }
 .landing-collection__compare { display: flex; align-items: center; gap: 1rem; }
 .landing-collection__before, .landing-collection__after { flex: 1; padding: .9rem; border: 1px solid rgb(107 135 145 / 24%); border-radius: .8rem; background: rgb(255 255 255 / 2%); }
 .landing-collection__after { border-color: rgb(108 217 204 / 40%); background: rgba(108, 217, 204, .06); }
@@ -1568,18 +1630,17 @@ button:not(:disabled):focus-visible,
 .landing-collection__before ul, .landing-collection__after ul { display: grid; gap: .35rem; }
 .landing-collection__before li, .landing-collection__after li { display: flex; align-items: baseline; gap: .4rem; color: #91a7af; font-size: .72rem; }
 .landing-collection__before b, .landing-collection__after b { color: #edf5f6; font-family: 'Oxanium', system-ui, sans-serif; font-size: 1rem; }
+/* Solo los numeros que CAMBIAN animan al entrar en vista (brief seccion 5) -
+   el "antes" aparece ya asentado, el "despues" llega con un pequeno pop. */
+.landing-collection__after b { display: inline-block; opacity: 0; transform: translateY(4px) scale(.92); transition: opacity 420ms 450ms var(--motion-soft), transform 420ms 450ms var(--motion-soft); }
+.landing-collection.is-in .landing-collection__after b { opacity: 1; transform: translateY(0) scale(1); }
 .landing-collection__arrow { width: 1.2rem; height: 1.2rem; flex: none; color: #6cd9cc; }
 .landing-collection__note { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin-top: 1.25rem; color: #91a7af; font-size: .78rem; line-height: 1.5; }
+@media (prefers-reduced-motion: reduce) {
+  .landing-collection__after b { opacity: 1; transform: none; transition: none; }
+}
 
-/* -------------------------------------------------------------- Feature stories + tools */
-.landing-stories__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; margin-top: 2rem; }
-.landing-stories__grid > li { min-height: 10.5rem; border: 1px solid rgb(107 135 145 / 27%); border-radius: .85rem; padding: 1.1rem; background: linear-gradient(145deg, rgb(255 255 255 / 4%), transparent); transition: transform .2s var(--motion-soft), border-color .2s var(--motion-soft); }
-.landing-stories__grid > li:hover { border-color: rgb(111 215 207 / 54%); transform: translateY(-3px); }
-.landing-stories__grid > li > svg { width: 1.3rem; height: 1.3rem; color: #74ded2; }
-.landing-stories__grid > li strong { display: block; margin-top: .9rem; color: #edf5f6; font-size: .88rem; }
-.landing-stories__grid > li p { margin-top: .4rem; color: #91a7af; font-size: .72rem; line-height: 1.5; }
-.landing-stories__cta { display: inline-flex; align-items: center; gap: .3rem; margin-top: .8rem; color: #6cd9cc; font-size: .74rem; font-weight: 700; text-decoration: none; }
-.landing-stories__cta svg { width: .82rem; height: .82rem; }
+/* -------------------------------------------------------------- More from Palaxis (tools) */
 .landing-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; margin-top: 1.4rem; }
 .landing-tools > li a { display: flex; align-items: center; gap: .65rem; min-height: 44px; padding: .75rem .85rem; border: 1px solid rgb(107 135 145 / 2%); border: 1px solid rgb(107 135 145 / 22%); border-radius: .7rem; background: rgb(255 255 255 / 2%); color: inherit; text-decoration: none; transition: border-color 140ms var(--motion-soft), background-color 140ms var(--motion-soft); }
 .landing-tools > li a:hover { border-color: rgb(111 215 207 / 45%); background: rgba(108, 217, 204, .05); }
@@ -1588,13 +1649,27 @@ button:not(:disabled):focus-visible,
 .landing-tools > li small { display: block; margin-top: .1rem; color: #8fa5ad; font-size: .64rem; line-height: 1.4; }
 
 /* --------------------------------------------------------------------- Paldex preview */
-.landing-paldex__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .85rem; margin-top: 2rem; }
-.landing-pal-card { display: flex; flex-direction: column; align-items: center; gap: .35rem; padding: 1.1rem .9rem; border: 1px solid color-mix(in srgb, var(--accent, #6cd9cc) 30%, rgb(107 135 145 / 30%)); border-radius: .9rem; background: linear-gradient(160deg, color-mix(in srgb, var(--accent, #6cd9cc) 10%, transparent), transparent 60%), rgb(255 255 255 / 2%); text-align: center; text-decoration: none; transition: transform 160ms var(--motion-soft), border-color 160ms var(--motion-soft), box-shadow 160ms var(--motion-soft); }
-.landing-pal-card:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--accent, #6cd9cc) 65%, transparent); box-shadow: 0 10px 26px -8px color-mix(in srgb, var(--accent, #6cd9cc) 35%, transparent); }
-.landing-pal-card__dex { align-self: flex-start; color: #7d9fad; font-family: 'Oxanium', system-ui, sans-serif; font-size: .58rem; font-weight: 700; letter-spacing: .06em; }
-.landing-pal-card__name { color: #edf5f6; font-size: .92rem; font-weight: 700; }
-.landing-pal-card__element { color: color-mix(in srgb, var(--accent, #6cd9cc) 80%, white); font-family: 'Oxanium', system-ui, sans-serif; font-size: .6rem; font-weight: 800; letter-spacing: .08em; }
-.landing-pal-card__passives { display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem; margin-top: .4rem; }
+/* Vitrina mas fuerte de la carta TCG real (brief 3B seccion 3): 3 cartas
+   completas con profundidad restringida -la del medio un poco mas alta,
+   las de los lados con leve rotacion/superposicion, sin efecto 3D exagerado. */
+.landing-paldex__cards { display: flex; justify-content: center; align-items: flex-end; gap: 0; margin-top: 2rem; }
+.landing-paldex__card-slot { position: relative; z-index: 2; margin-inline: -1.1rem; transform: rotate(calc((var(--i, 1) - 1) * 6deg)) translateY(calc(var(--i, 1) * 0px)); transition: transform 220ms var(--motion-soft); }
+.landing-paldex__card-slot:nth-child(2) { z-index: 3; transform: translateY(-.9rem); }
+.landing-paldex__card-slot:nth-child(1) { transform: rotate(-6deg) translateY(.5rem); }
+.landing-paldex__card-slot:nth-child(3) { transform: rotate(6deg) translateY(.5rem); }
+.landing-paldex__card-slot:hover { z-index: 4; }
+/*
+ * `PalCard` fija su propio `transform` inline (escala base + la escala de
+ * este wrapper, ver landing-tcg-card.tsx) -un inline style siempre gana
+ * sobre una regla `:hover` de hoja sin !important, asi que el lift de
+ * `.pc-card:hover` de index.css nunca se ve en la practica (queda latente
+ * para cuando ese componente se monte sin `style.transform`). El brillo/
+ * sombra de esa misma regla SI aplica (no son inline), asi que el glow mas
+ * fuerte en hover ya sale gratis; el lift de 4-6px (brief 3B seccion 3) se
+ * agrega aca, en el wrapper -sin tocar pal-card.tsx.
+ */
+.landing-tcg-card { transition: transform 180ms var(--motion-soft); }
+.landing-paldex__card-slot:hover .landing-tcg-card { transform: translateY(-6px); }
 
 /* --------------------------------------------------------------------- Tier List showcase */
 .landing-tier-showcase__tabs { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 2rem; }
@@ -1628,7 +1703,11 @@ button:not(:disabled):focus-visible,
 
 /* --------------------------------------------------------------------- Guide teaser */
 .landing-guide { border-top: 1px solid rgb(112 140 149 / 14%); }
-.landing-guide__badge { display: inline-block; margin-bottom: .5rem; padding: .2rem .6rem; border: 1px solid rgb(241 198 83 / 40%); border-radius: 999px; color: #e5c260; font-family: 'Oxanium', system-ui, sans-serif; font-size: .6rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.landing-guide__badge { display: inline-flex; align-items: center; gap: .4rem; margin-bottom: .5rem; padding: .2rem .6rem; border: 1px solid rgb(241 198 83 / 40%); border-radius: 999px; color: #e5c260; font-family: 'Oxanium', system-ui, sans-serif; font-size: .6rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+/* "Future-facing" pero restrained (brief 3B guia): un solo punto vivo, no un tratamiento de color nuevo fuera de la paleta ya establecida. */
+.landing-guide__dot { width: .4rem; height: .4rem; border-radius: 999px; background: #f1c653; box-shadow: 0 0 0 0 rgb(241 198 83 / 55%); animation: landing-guide-dot-pulse 1.8s ease-in-out infinite; }
+@keyframes landing-guide-dot-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgb(241 198 83 / 45%); } 50% { box-shadow: 0 0 0 4px rgb(241 198 83 / 0%); } }
+@media (prefers-reduced-motion: reduce) { .landing-guide__dot { animation: none; } }
 .landing-guide__preview { display: grid; gap: .6rem; max-width: 30rem; margin-top: 1.75rem; }
 .landing-guide__bubble { padding: .7rem .95rem; border-radius: .9rem; font-size: .82rem; line-height: 1.5; }
 .landing-guide__bubble--player { justify-self: flex-end; border: 1px solid rgb(107 135 145 / 27%); background: rgb(255 255 255 / 4%); color: #d7e6e9; }
@@ -1637,7 +1716,10 @@ button:not(:disabled):focus-visible,
 .landing-guide__bubble--guide a { display: inline-flex; align-items: center; gap: .3rem; color: #6cd9cc; font-size: .76rem; font-weight: 700; text-decoration: none; }
 
 /* --------------------------------------------------------------------- Final CTA */
-.landing-cta { display: flex; flex-direction: column; align-items: center; margin-block: 1.5rem 3.5rem; border: 1px solid rgb(112 218 204 / 36%); border-radius: 1rem; padding: clamp(2.25rem, 5vw, 3.75rem) 1.25rem; background: radial-gradient(circle at 50% 0, rgb(57 173 170 / 21%), transparent 58%), #0a1319; text-align: center; }
+.landing-cta { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; align-items: center; margin-block: 1.5rem 3.5rem; border: 1px solid rgb(112 218 204 / 36%); border-radius: 1rem; padding: clamp(2.25rem, 5vw, 3.75rem) 1.25rem; background: radial-gradient(circle at 50% 0, rgb(57 173 170 / 21%), transparent 58%), #0a1319; text-align: center; }
+/* Red de cria de fondo, restrained (brief seccion 12): puntos + lineas MUY
+   tenues, CSS puro -sin imagen decorativa que descargar, sin animacion. */
+.landing-cta::before { content: ''; position: absolute; inset: -10%; z-index: -1; opacity: .5; background-image: radial-gradient(rgb(108 217 204 / 20%) 1.6px, transparent 1.8px), linear-gradient(rgb(108 217 204 / 7%) 1px, transparent 1px), linear-gradient(90deg, rgb(108 217 204 / 7%) 1px, transparent 1px); background-size: 46px 46px, 46px 46px, 46px 46px; mask-image: radial-gradient(closest-side, black, transparent 75%); }
 .landing-cta h2 { max-width: 16ch; }
 .landing-cta p { max-width: 36rem; }
 .landing-cta__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .65rem; margin-top: 1.35rem; }
@@ -1660,6 +1742,28 @@ button:not(:disabled):focus-visible,
 .landing-footer-v2__details p { max-width: 22rem; margin-top: .3rem; color: #7d9fad; font-size: .68rem; line-height: 1.5; }
 .landing-footer-v2__disclaimer { display: flex; align-items: center; gap: .5rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgb(112 140 149 / 14%); color: #70858e; font-size: .68rem; }
 .landing-footer-v2__disclaimer svg { width: .9rem; height: .9rem; flex: none; }
+
+/* --------------------------------------------------------- Mobile sticky CTA */
+/* Solo movil (brief seccion 13): oculto por defecto/desktop, visible via
+   `.is-visible` que controla MobileStickyCta con 2 IntersectionObserver en
+   vivo (fuera del hero, antes del CTA final). safe-area-inset-bottom mismo
+   patron que .tracking-consent. */
+.landing-sticky-cta { display: none; }
+@media (max-width: 900px) {
+  .landing-sticky-cta {
+    position: fixed;
+    z-index: 45;
+    right: .75rem;
+    bottom: max(.75rem, env(safe-area-inset-bottom));
+    left: .75rem;
+    display: block;
+    transform: translateY(140%);
+    transition: transform 220ms var(--motion-soft);
+  }
+  .landing-sticky-cta.is-visible { transform: translateY(0); }
+  .landing-sticky-cta .button { box-shadow: 0 10px 30px -8px rgb(0 0 0 / 55%); }
+}
+@media (prefers-reduced-motion: reduce) { .landing-sticky-cta { transition: none; } }
 
 .onboarding__overlay { position: fixed; inset: 0; z-index: 70; background: rgb(0 4 7 / 76%); backdrop-filter: blur(9px); }
 .onboarding { position: fixed; z-index: 71; top: 50%; left: 50%; width: min(calc(100% - 2rem), 32rem); transform: translate(-50%, -50%); border: 1px solid rgb(104 214 204 / 55%); border-radius: 1rem; padding: 1.45rem; background: radial-gradient(circle at 88% 9%, rgb(53 178 173 / 17%), transparent 30%), #0a1218; box-shadow: 0 30px 90px rgb(0 0 0 / 65%); outline: none; }
@@ -1711,26 +1815,26 @@ button:not(:disabled):focus-visible,
  * Mobile (brief seccion 17): el hero NO fuerza la composicion desktop -orden
  * vertical headline > copy > selector > CTA > vitrina- una sola columna en
  * todas las secciones de grid, sin scroll horizontal, objetivos tactiles
- * >=44px (ya cubiertos arriba en nav/selector/tools/footer).
+ * >=44px (ya cubiertos arriba en nav/selector/tools/footer). El orden ya lo
+ * resuelve el propio JSX (selector -> actions -> tabs -> visual en ese orden
+ * de fuente, pasada de pulido seccion 3): no hace falta ningun `order` de
+ * CSS aca, la unica columna sigue el DOM tal cual.
  */
 @media (max-width: 900px) {
   .landing-hero, .landing-trust, .landing-section, .landing-cta, .landing-footer-v2 { width: min(100% - 1.25rem, 72rem); }
   .landing-hero { grid-template-columns: 1fr; gap: 2rem; padding-block: 2rem 3rem; }
-  .landing-hero__visual { order: 3; }
-  /* Orden movil exacto (brief seccion 17): headline > copy > selector >
-     CTA primaria > arbol compacto. `.landing-hero__tabs`/__actions/__selector
-     son hijos de __copy, no de la grid del hero -por eso el `order` de
-     arriba no les llega; se reordenan aca con su propio contexto flex. */
-  .landing-hero__copy { display: flex; flex-direction: column; }
-  .landing-hero__selector { order: 1; }
-  .landing-hero__actions { order: 2; }
-  .landing-hero__tabs { order: 3; }
   .landing-hero h1 { max-width: 16ch; font-size: clamp(2.4rem, 11vw, 3.4rem); }
   .landing-routes__layout { grid-template-columns: 1fr; }
   .landing-collection__grid { grid-template-columns: 1fr; }
   .landing-collection__compare { flex-direction: column; }
   .landing-collection__arrow { transform: rotate(90deg); }
-  .landing-stories__grid, .landing-tools, .landing-paldex__grid { grid-template-columns: 1fr; }
+  /* "More from Palaxis" en 2 columnas en movil (brief seccion 9), no 1 sola -son herramientas secundarias, no necesitan el ancho completo. */
+  .landing-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Paldex: carrusel horizontal con snap (brief 3B seccion 3) -1 carta llena
+     + un adelanto de la siguiente, para que se lea como deslizable. */
+  .landing-paldex__cards { justify-content: flex-start; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: .5rem; -webkit-overflow-scrolling: touch; }
+  .landing-paldex__card-slot { flex: 0 0 auto; margin-inline: 0 .9rem; scroll-snap-align: start; transform: none !important; }
+  .landing-paldex__card-slot:hover .landing-tcg-card { transform: none; }
   .landing-how { grid-template-columns: 1fr; gap: 1.35rem; }
   .landing-how li { grid-template-columns: 3rem 1fr; align-items: start; }
   .landing-how b { font-size: 2rem; }

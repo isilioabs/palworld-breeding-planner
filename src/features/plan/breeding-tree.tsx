@@ -7,9 +7,10 @@ import { PalIcon } from '@/components/pal-icon'
 import { RichTooltip } from '@/components/rich-tooltip'
 import { loadDatabase, palName, passiveName, workTypeLabel } from '@/domain/database'
 import { ELEMENT_INFO } from '@/domain/element'
+import { workIconUrl } from '@/domain/work-icon'
 import { useT } from '@/i18n/language-store'
 import { usePokedex } from '@/features/pokedex/pokedex-panel'
-import type { PlanNode, WorkType } from '@/domain/types'
+import type { PlanNode } from '@/domain/types'
 import { cn } from '@/lib/utils'
 import { collectKeys, countBreedNodes } from './plan-utils'
 
@@ -18,21 +19,6 @@ const MIN_ZOOM = ZOOM_STEPS[0]
 const MAX_ZOOM = ZOOM_STEPS[ZOOM_STEPS.length - 1]
 const DEFAULT_ZOOM = 1
 const COMPACT_CARD_ZOOM = 0.3
-
-const WORK_ICON_FILE: Record<WorkType, string> = {
-  Kindling: 'Kindling',
-  Watering: 'Watering',
-  Planting: 'Planting',
-  GenerateElectricity: 'ElectricityGeneration',
-  Handiwork: 'Handiwork',
-  Gathering: 'Gathering',
-  Lumbering: 'Lumbering',
-  Mining: 'Mining',
-  MedicineProduction: 'MedicineProduction',
-  Cooling: 'Cooling',
-  Transporting: 'Transporting',
-  Farming: 'Farming',
-}
 
 /**
  * "Ajustar todo el arbol" YA NO redondea al escalon mas cercano: entre 0.16 y
@@ -590,7 +576,7 @@ const NodeCard = memo(function NodeCard({ node, isRoot, isOpen, nodeKey, onToggl
   const work = (pal?.work ?? []).slice(0, 3).map(({ type, value }) => ({
     label: workTypeLabel(type),
     level: value,
-    icon: `${import.meta.env.BASE_URL}work/${WORK_ICON_FILE[type]}.png`,
+    icon: workIconUrl(type),
   }))
   const element = pal?.elements[0] ?? 'neutral'
   const captureLabel = node.kind === 'capture' && pal?.wild ? t('tree.captureLevel', { min: pal.wild[0], max: pal.wild[1] }) : undefined
