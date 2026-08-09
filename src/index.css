@@ -1518,8 +1518,12 @@ button:not(:disabled):focus-visible,
    crecimiento del 13% se reparte parejo arriba/abajo/izq/der, y el padding
    extra de abajo lo absorbe sin recortar la carta ni el resto del arbol. */
 @media (min-width: 1100px) {
-  .landing-hero__visual .landing-mini-tree--cards { transform: scale(1.13); transform-origin: center; }
-  .landing-hero__visual { padding-block: 2.75rem 4.5rem; }
+  /* origin: center TOP (no "center" a secas): crecer parejo arriba/abajo
+     empujaba la carta objetivo hacia arriba, encima del eyebrow "EXAMPLE
+     PROJECT" -con el origen fijo arriba, todo el 13% de mas crece solo hacia
+     abajo, un unico lado que compensar con padding-bottom. */
+  .landing-hero__visual .landing-mini-tree--cards { transform: scale(1.13); transform-origin: center top; }
+  .landing-hero__visual { padding-block: 1.35rem 6rem; }
 }
 
 /* --------------------------------------------------------- Mini tree (compartido) */
