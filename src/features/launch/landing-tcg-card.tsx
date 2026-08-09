@@ -11,6 +11,15 @@
  * `transform: scale()` (mismo patron que cualquier "miniatura" de un nodo de
  * tamano fijo), para no tocar el componente original.
  *
+ * El "stage" que escala va `position: absolute` DENTRO de un wrapper
+ * `position: relative` sin `overflow: hidden` -a proposito: la carta trae su
+ * propio box-shadow/glow calibrado para 780px (hasta 70px de blur), que con
+ * `overflow: hidden` en un wrapper del tamano EXACTO de la carta escalada se
+ * veia cortado en los bordes. Al sacar el stage del flujo normal (absolute),
+ * el wrapper padre sigue reservando solo `size x height` de layout -nada se
+ * desborda hacia el resto de la pagina- pero la sombra/glow puede pintar
+ * libremente mas alla de ese borde, como en cualquier carta con elevacion.
+ *
  * `isCross` siempre va en `false` aqui: la landing solo muestra Pals reales
  * (objetivo, coleccion, vitrina), nunca un cruce calculado -mostrar un "% de
  * exito" inventado seria presentar un dato ilustrativo como si fuera un
@@ -70,21 +79,22 @@ export function LandingTcgCard({ palId, size, compact = false, owned = false, se
         onNavigate(href)
       }}
     >
-      <PalCard
-        palName={palName(pal)}
-        element={pal.elements[0] ?? 'neutral'}
-        rarity={pal.rarity}
-        code={dexLabel(pal)}
-        palId={pal.id}
-        work={work}
-        passives={passives}
-        probability={100}
-        isCross={false}
-        compact={compact}
-        owned={owned}
-        selected={selected}
-        style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}
-      />
+      <div className="landing-tcg-card__stage" style={{ transform: `scale(${scale})` }}>
+        <PalCard
+          palName={palName(pal)}
+          element={pal.elements[0] ?? 'neutral'}
+          rarity={pal.rarity}
+          code={dexLabel(pal)}
+          palId={pal.id}
+          work={work}
+          passives={passives}
+          probability={100}
+          isCross={false}
+          compact={compact}
+          owned={owned}
+          selected={selected}
+        />
+      </div>
     </a>
   )
 }

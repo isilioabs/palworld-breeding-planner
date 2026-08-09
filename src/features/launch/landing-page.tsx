@@ -74,7 +74,21 @@ const NAV_LINKS = [
 
 const POPULAR_TARGETS = ['Anubis', 'JetDragon', 'BlackGriffon', 'BlackCentaur']
 
-/** Cada modo explica visualmente POR QUE difiere: insignia por padre (owned/easy/hard capture) + comparacion compacta. Todo marcado como ejemplo ilustrativo, no un calculo real del planner. */
+/**
+ * Cada modo explica visualmente POR QUE difiere: insignia por padre
+ * (owned/hard capture) + comparacion compacta. Todo marcado como ejemplo
+ * ilustrativo, no un calculo real del planner -PERO el cruce en si (Blazamut
+ * + Shadowbeak -> Anubis) SI es real: floor((410+550+1)/2)=480, el rank
+ * exacto de Anubis, verificado contra la misma formula que usa el
+ * planificador real (src/domain/breeding/resolver.ts). Los 3 modos
+ * reusan el MISMO cruce real (a este nivel de zoom -1 generacion- no hay
+ * un segundo camino real hacia Anubis mas facil: sus unicos padres validos
+ * son todos Pals de nivel 46+, no existe una combinacion "facil" real) -la
+ * diferencia entre modos es narrativa (posesion/dificultad de captura) y las
+ * cifras de comparacion, no un padre inventado.
+ */
+const ANUBIS_REAL_PARENTS = { a: 'KingBahamut', b: 'BlackGriffon' } as const
+
 const ROUTE_MODES = [
   {
     id: 'collection',
@@ -82,8 +96,8 @@ const ROUTE_MODES = [
     titleKey: 'landing.routes.collection.title',
     descriptionKey: 'landing.routes.collection.description',
     parents: [
-      { palId: 'CaptainPenguin', labelKey: 'landing.tree.collection', badgeKey: 'landing.tree.owned' },
-      { palId: 'Ronin', labelKey: 'landing.tree.collection', badgeKey: 'landing.tree.owned' },
+      { palId: ANUBIS_REAL_PARENTS.a, labelKey: 'landing.tree.collection', badgeKey: 'landing.tree.owned' },
+      { palId: ANUBIS_REAL_PARENTS.b, labelKey: 'landing.tree.collection', badgeKey: 'landing.tree.owned' },
     ],
     stats: { generations: 4, steps: 6, difficultyKey: 'landing.difficulty.none' },
   },
@@ -93,8 +107,8 @@ const ROUTE_MODES = [
     titleKey: 'landing.routes.easiest.title',
     descriptionKey: 'landing.routes.easiest.description',
     parents: [
-      { palId: 'Carbunclo', labelKey: 'landing.tree.capture', badgeKey: 'landing.tree.easyCapture' },
-      { palId: 'LazyDragon', labelKey: 'landing.tree.capture', badgeKey: 'landing.tree.easyCapture' },
+      { palId: ANUBIS_REAL_PARENTS.a, labelKey: 'landing.tree.capture' },
+      { palId: ANUBIS_REAL_PARENTS.b, labelKey: 'landing.tree.capture' },
     ],
     stats: { generations: 6, steps: 9, difficultyKey: 'landing.difficulty.low' },
   },
@@ -104,8 +118,8 @@ const ROUTE_MODES = [
     titleKey: 'landing.routes.fastest.title',
     descriptionKey: 'landing.routes.fastest.description',
     parents: [
-      { palId: 'CaptainPenguin', labelKey: 'landing.tree.collection', badgeKey: 'landing.tree.owned' },
-      { palId: 'BlackCentaur', labelKey: 'landing.tree.capture', badgeKey: 'landing.tree.hardCapture' },
+      { palId: ANUBIS_REAL_PARENTS.a, labelKey: 'landing.tree.collection', badgeKey: 'landing.tree.owned' },
+      { palId: ANUBIS_REAL_PARENTS.b, labelKey: 'landing.tree.capture', badgeKey: 'landing.tree.hardCapture' },
     ],
     stats: { generations: 3, steps: 5, difficultyKey: 'landing.difficulty.high' },
   },
@@ -114,7 +128,7 @@ const ROUTE_MODES = [
   icon: typeof Boxes
   titleKey: TranslationKey
   descriptionKey: TranslationKey
-  parents: { palId: string; labelKey: TranslationKey; badgeKey: TranslationKey }[]
+  parents: { palId: string; labelKey: TranslationKey; badgeKey?: TranslationKey }[]
   stats: { generations: number; steps: number; difficultyKey: TranslationKey }
 }[]
 
@@ -248,12 +262,12 @@ export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
             <div className="landing-collection__cards">
               {COLLECTION_BASE.map((palId, index) => (
                 <div key={palId} className="landing-collection__card" style={{ '--i': index } as CSSProperties}>
-                  <LandingTcgCard palId={palId} size={104} compact owned onNavigate={onNavigate} />
+                  <LandingTcgCard palId={palId} size={118} compact owned onNavigate={onNavigate} />
                 </div>
               ))}
               <div className="landing-collection__card landing-collection__card--added" style={{ '--i': COLLECTION_BASE.length } as CSSProperties}>
                 <span className="landing-collection__event"><PlusCircle aria-hidden="true" />{t('landing.collection.event', { pal: palName(db.palById.get(COLLECTION_ADDED)) })}</span>
-                <LandingTcgCard palId={COLLECTION_ADDED} size={104} compact owned onNavigate={onNavigate} />
+                <LandingTcgCard palId={COLLECTION_ADDED} size={118} compact owned onNavigate={onNavigate} />
               </div>
             </div>
           </div>
@@ -315,7 +329,9 @@ export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
         <ul className="landing-paldex__cards">
           {PALDEX_PREVIEW.map((palId, index) => (
             <li key={palId} className="landing-paldex__card-slot" style={{ '--i': index } as CSSProperties}>
-              <LandingTcgCard palId={palId} size={192} onNavigate={onNavigate} />
+              {/* compact: el modo completo (filas de trabajo + pasivas + panel) se lee como texto borroso a
+                  este tamano -el compacto son 4 pasivas grandes, mismo componente, mucho mas legible aca. */}
+              <LandingTcgCard palId={palId} size={220} compact onNavigate={onNavigate} />
             </li>
           ))}
         </ul>
@@ -377,7 +393,7 @@ export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
               <strong>{t(HOW_STEPS[2].titleKey)}</strong>
               <p>{t(HOW_STEPS[2].descriptionKey)}</p>
               <div className="landing-how__visual">
-                <LandingMiniTree targetPalId="Anubis" parents={[{ palId: 'CaptainPenguin', labelKey: 'landing.tree.collection' }, { palId: 'Ronin', labelKey: 'landing.tree.collection' }]} />
+                <LandingMiniTree targetPalId="Anubis" parents={[{ palId: ANUBIS_REAL_PARENTS.a, labelKey: 'landing.tree.collection' }, { palId: ANUBIS_REAL_PARENTS.b, labelKey: 'landing.tree.collection' }]} />
               </div>
             </div>
           </li>
@@ -593,8 +609,8 @@ function HeroSection({
         <LandingMiniTree
           targetPalId="Anubis"
           parents={[
-            { palId: 'CaptainPenguin', labelKey: 'landing.tree.collection' },
-            { palId: 'Ronin', labelKey: 'landing.tree.capture' },
+            { palId: ANUBIS_REAL_PARENTS.a, labelKey: 'landing.tree.collection' },
+            { palId: ANUBIS_REAL_PARENTS.b, labelKey: 'landing.tree.capture' },
           ]}
           useCards
           onNavigate={onNavigate}

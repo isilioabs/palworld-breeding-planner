@@ -1511,16 +1511,26 @@ button:not(:disabled):focus-visible,
 .landing-demo__lens span { position: absolute; top: 18%; left: 24%; width: 32%; height: 22%; border-radius: 50%; background: rgb(255 255 255 / 75%); filter: blur(.5px); }
 /* La vitrina del hero es la unica composicion que llega a mostrar la carta
    TCG completa (ver landing-tcg-card.tsx) -10-15% mas grande en desktop
-   (brief hero seccion 3), un solo transform estatico sobre el wrapper. */
+   (brief hero seccion 3), un solo transform estatico sobre el wrapper.
+   `transform` no cambia el tamano de LAYOUT del arbol (solo el pintado), asi
+   que el marco de la vitrina (`.landing-hero__visual`, `overflow: hidden`)
+   solo reserva espacio para el tamano SIN escalar -con origin: center, el
+   crecimiento del 13% se reparte parejo arriba/abajo/izq/der, y el padding
+   extra de abajo lo absorbe sin recortar la carta ni el resto del arbol. */
 @media (min-width: 1100px) {
-  .landing-hero__visual .landing-mini-tree--cards { transform: scale(1.13); transform-origin: center top; }
+  .landing-hero__visual .landing-mini-tree--cards { transform: scale(1.13); transform-origin: center; }
+  .landing-hero__visual { padding-block: 2.75rem 4.5rem; }
 }
 
 /* --------------------------------------------------------- Mini tree (compartido) */
 /* Composicion "target arriba, padres abajo" reusada en Hero / Three Routes /
    How it Works. Entrada escalonada <700ms (brief seccion 4), respeta
    prefers-reduced-motion mostrando el estado final directo. */
-.landing-mini-tree { display: flex; flex-direction: column; align-items: center; gap: .1rem; padding: .5rem; }
+/* flex-shrink:0 -dentro de .landing-hero__visual (flex column) el arbol
+   completo (carta objetivo en vista completa + padres) es mas alto que el
+   resto del contenido; sin esto el motor de flexbox lo encogia por debajo de
+   su alto real y el marco de la vitrina lo recortaba por abajo. */
+.landing-mini-tree { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; gap: .1rem; padding: .5rem; }
 .landing-mini-tree__target { position: relative; display: flex; flex-direction: column; align-items: center; gap: .3rem; padding: .5rem .75rem; border: 1px solid rgb(241 198 83 / 45%); border-radius: .8rem; background: rgb(241 198 83 / 8%); opacity: 0; transform: translateY(-8px); transition: opacity 400ms var(--motion-soft), transform 400ms var(--motion-soft); animation: landing-tree-target-pulse 2.6s 700ms ease-in-out infinite; }
 .landing-mini-tree.is-in .landing-mini-tree__target { opacity: 1; transform: translateY(0); }
 .landing-mini-tree__target span { color: #f1e6c2; font-size: .76rem; font-weight: 750; }
@@ -1556,7 +1566,12 @@ button:not(:disabled):focus-visible,
    sin tocar el componente original. Presupuesto de animacion (.pc-anim) ya
    protege el costo -aqui solo se limita CUANTAS aparecen a la vez (hero: 1
    objetivo + 2 padres; Paldex: 3; Collection: 4 pequenas). */
-.landing-tcg-card { position: relative; display: block; overflow: hidden; border-radius: 1.1rem; text-decoration: none; }
+.landing-tcg-card { position: relative; display: block; text-decoration: none; }
+/* El stage escalado va absolute+sin overflow:hidden en el padre (ver
+   landing-tcg-card.tsx): asi la sombra/glow propios de la carta (calibrados
+   para 780px, hasta 70px de blur) pueden pintar mas alla del recuadro
+   pequeno sin que un clip los corte de golpe en el borde. */
+.landing-tcg-card__stage { position: absolute; top: 0; left: 0; transform-origin: top left; will-change: transform; }
 
 /* --------------------------------------------------------------- Trust strip */
 /* Fusiona el antiguo bloque "Credibilidad de los datos": misma franja, con

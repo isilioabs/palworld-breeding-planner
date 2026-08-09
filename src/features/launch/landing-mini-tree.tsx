@@ -48,7 +48,9 @@ export function LandingMiniTree({ targetPalId, parents, className, useCards = fa
     <div ref={ref} className={cn('landing-mini-tree', useCards && 'landing-mini-tree--cards', visible && 'is-in', className)}>
       <div className="landing-mini-tree__target">
         {useCards ? (
-          <LandingTcgCard palId={targetPalId} size={168} selected onNavigate={onNavigate} />
+          // Vista completa (no compacta) para el objetivo -es el foco visual del hero. A mas ancho que los
+          // padres para que el panel de trabajo/pasivas tenga espacio real y no se lea como texto borroso.
+          <LandingTcgCard palId={targetPalId} size={248} selected onNavigate={onNavigate} />
         ) : (
           <>
             <PalIcon palId={targetPalId} size={56} bare />
@@ -66,7 +68,7 @@ export function LandingMiniTree({ targetPalId, parents, className, useCards = fa
           return (
             <div key={parent.palId} className="landing-mini-tree__parent" style={{ '--i': index } as CSSProperties}>
               {useCards ? (
-                <LandingTcgCard palId={parent.palId} size={92} compact onNavigate={onNavigate} />
+                <LandingTcgCard palId={parent.palId} size={108} compact onNavigate={onNavigate} />
               ) : (
                 <>
                   <PalIcon palId={parent.palId} size={42} bare />
