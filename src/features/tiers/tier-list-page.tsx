@@ -5,7 +5,7 @@
  * cada una. El HTML que ve un crawler viene del script de prerenderizado
  * (`scripts/prerender-pal-pages.ts`); esta es la version interactiva.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Crown,
   Database,
@@ -43,6 +43,7 @@ import type { ElementType } from '@/domain/types'
 import { useT } from '@/i18n/language-store'
 import type { TranslationKey } from '@/i18n/translations'
 import { usePlannerStore } from '@/state/planner-store'
+import { useCoarsePointer } from '@/lib/use-coarse-pointer'
 import { cn } from '@/lib/utils'
 
 const ELEMENTS = Object.keys(ELEMENT_INFO) as ElementType[]
@@ -77,27 +78,6 @@ const GROUPS: { id: TierCategory['group']; labelKey: TranslationKey; icon: Lucid
 ]
 
 type OwnedFilter = 'all' | 'owned' | 'needed'
-
-/**
- * Tocable-sin-hover (movil/tablet). Categorias grandes (Best Combat Pals,
- * ~300 chips) montaban un Tooltip de Radix por chip -state machine +
- * listeners de pointer/foco cada uno- que en touch no aporta nada (no hay
- * hover) y era el principal costo de render al cambiar de categoria
- * (bloqueaba el hilo principal varios segundos). En touch, los chips se
- * renderizan como links planos con `title` nativo en vez de envolver cada
- * uno en <RichTooltip>.
- */
-function useCoarsePointer(): boolean {
-  const [coarse, setCoarse] = useState(false)
-  useEffect(() => {
-    const mql = window.matchMedia('(hover: none), (pointer: coarse)')
-    setCoarse(mql.matches)
-    const onChange = () => setCoarse(mql.matches)
-    mql.addEventListener('change', onChange)
-    return () => mql.removeEventListener('change', onChange)
-  }, [])
-  return coarse
-}
 
 export function TierListPage({ onNavigate }: { onNavigate: (slug: string) => void }) {
   const t = useT()

@@ -181,6 +181,17 @@
     transform: none;
     filter: none;
   }
+
+  /* La barra de zoom flotante vive ENCIMA del lienzo que se panea (su propio
+     transform, no el de esta barra) -con backdrop-filter, el navegador tiene
+     que re-muestrear y volver a difuminar lo que hay detras en CADA frame
+     que el arbol se mueve debajo, aunque la barra en si no se mueva. En iOS
+     Safari eso es de lo mas caro que hay; un fondo solido mas opaco se lee
+     igual de bien sin ese costo por frame. */
+  .tree-toolbar {
+    background-color: var(--card);
+    backdrop-filter: none;
+  }
 }
 
 .tree-connector {

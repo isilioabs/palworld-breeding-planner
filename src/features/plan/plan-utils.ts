@@ -38,6 +38,28 @@ export function countBreedNodes(node: PlanNode): number {
   return total
 }
 
+/**
+ * Llaves de los cruces mas superficiales a partir de `maxDepth` (sin bajar
+ * mas alla): colapsarlas basta para ocultar todo lo que cuelga debajo -el
+ * propio TreeNode no renderiza a los padres de un nodo colapsado-, asi que no
+ * hace falta juntar cada nodo profundo, solo el primero de cada rama.
+ * Usado para arrancar un plan grande ya parcialmente colapsado en touch (ver
+ * breeding-tree.tsx): menos tarjetas montadas de entrada, sin perder acceso
+ * -el boton "+N cruces ocultos" ya existente sigue expandiendo bajo demanda.
+ */
+export function collapsedKeysBeyondDepth(root: PlanNode, maxDepth: number): string[] {
+  const keys: string[] = []
+  const walk = (node: PlanNode) => {
+    if (node.kind === 'breed' && node.depth >= maxDepth) {
+      keys.push(node.key)
+      return
+    }
+    node.parents?.forEach(walk)
+  }
+  walk(root)
+  return keys
+}
+
 /** Semaforo para la probabilidad de un paso. */
 export function chanceTone(chance: number): 'good' | 'warn' | 'bad' {
   if (chance >= 0.3) return 'good'

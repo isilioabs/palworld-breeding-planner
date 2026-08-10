@@ -11,8 +11,9 @@ import { workIconUrl } from '@/domain/work-icon'
 import { useT } from '@/i18n/language-store'
 import { usePokedex } from '@/features/pokedex/pokedex-panel'
 import type { PlanNode } from '@/domain/types'
+import { useCoarsePointer } from '@/lib/use-coarse-pointer'
 import { cn } from '@/lib/utils'
-import { collectKeys, countBreedNodes } from './plan-utils'
+import { collapsedKeysBeyondDepth, collectKeys, countBreedNodes } from './plan-utils'
 
 const ZOOM_STEPS = [0.2, 0.28, 0.4, 0.55, 0.7, 0.85, 1, 1.15, 1.3]
 const MIN_ZOOM = ZOOM_STEPS[0]
@@ -48,6 +49,17 @@ const FIT_SIDE_GAP = 48
 const FIT_TOP_GAP = 24
 const FIT_BOTTOM_GAP = 64
 
+/**
+ * En touch, un plan grande (varias pasivas, varias generaciones) arranca
+ * PARCIALMENTE colapsado en vez de expandido del todo: menos tarjetas
+ * montadas de entrada es menos trabajo de layout/paint en el primer render
+ * -justo el momento en que mas se siente el lag en un telefono- sin perder
+ * nada, porque el boton "+N cruces ocultos" ya deja expandir cualquier rama
+ * bajo demanda. En puntero fino (desktop) el arbol se sigue abriendo entero,
+ * como siempre.
+ */
+const MOBILE_COLLAPSE_DEPTH = 2
+
 /** Limita el escalonado visual: los arboles profundos siguen revelandose en
  * menos de 400 ms y no retienen capas de composicion despues de aparecer. */
 function maxPlanDepth(node: PlanNode): number {
@@ -56,6 +68,7 @@ function maxPlanDepth(node: PlanNode): number {
 
 export function BreedingTree({ root, roots }: { root?: PlanNode; roots?: PlanNode[] }) {
   const t = useT()
+  const coarsePointer = useCoarsePointer()
   const projectRoots = useMemo(() => roots?.length ? roots : root ? [root] : [], [root, roots])
   const allKeys = useMemo(() => projectRoots.flatMap((projectRoot) => collectKeys(projectRoot)), [projectRoots])
   const revealDepth = useMemo(() => Math.max(0, ...projectRoots.map(maxPlanDepth)), [projectRoots])
@@ -77,6 +90,7 @@ export function BreedingTree({ root, roots }: { root?: PlanNode; roots?: PlanNod
   const panFrameRef = useRef<number | null>(null)
   const wheelFrameRef = useRef<number | null>(null)
   const wheelDeltaRef = useRef(0)
+  const resizeFrameRef = useRef<number | null>(null)
   const panRef = useRef(pan)
   const zoomRef = useRef(zoom)
   const cardRef = useRef<HTMLDivElement>(null)
@@ -117,13 +131,35 @@ export function BreedingTree({ root, roots }: { root?: PlanNode; roots?: PlanNod
   const updateCanvasHeight = () => {
     const headerHeight = headerRef.current?.getBoundingClientRect().height ?? 0
     const available = window.innerHeight - APP_HEADER_HEIGHT - headerHeight - CANVAS_BOTTOM_GAP
-    setCanvasHeight(Math.max(CANVAS_MIN_HEIGHT, available))
+    const next = Math.max(CANVAS_MIN_HEIGHT, available)
+    // Umbral de 2px: en iOS, la barra de direcciones que se colapsa/expande
+    // al hacer scroll dispara 'resize' muchas veces seguidas con
+    // window.innerHeight cambiando de a poco -sin este filtro, cada uno
+    // forzaba un reflow (getBoundingClientRect) + un re-render de TODO el
+    // arbol, y en un plan grande eso se sentia como que la pagina se colgaba
+    // justo al hacer scroll. Ignorar cambios menores que el umbral no altera
+    // el resultado visible (el canvas ya tiene min-height de sobra).
+    setCanvasHeight((prev) => (prev != null && Math.abs(prev - next) < 2 ? prev : next))
   }
 
   useEffect(() => {
     updateCanvasHeight()
-    window.addEventListener('resize', updateCanvasHeight)
-    return () => window.removeEventListener('resize', updateCanvasHeight)
+    // rAF-throttled: agrupa todos los 'resize' que caigan en el mismo frame
+    // (mismo patron que el zoom con rueda de mas abajo), asi una rafaga de
+    // eventos durante la animacion de la barra de iOS solo recalcula una vez
+    // por frame en vez de una vez por evento.
+    const onResize = () => {
+      if (resizeFrameRef.current != null) return
+      resizeFrameRef.current = window.requestAnimationFrame(() => {
+        resizeFrameRef.current = null
+        updateCanvasHeight()
+      })
+    }
+    window.addEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      if (resizeFrameRef.current != null) window.cancelAnimationFrame(resizeFrameRef.current)
+    }
   }, [])
 
   const zoomIn = () => {
@@ -220,9 +256,15 @@ export function BreedingTree({ root, roots }: { root?: PlanNode; roots?: PlanNod
   // Un plan nuevo vuelve a empezar expandido y encuadrado por completo: con
   // rutas de varias generaciones, empezar a 100% deja la mayoria fuera de
   // vista. Ademas el usuario nunca deberia tener que buscar el arbol a mano:
-  // en cuanto hay un resultado, la pagina baja sola hasta el.
+  // en cuanto hay un resultado, la pagina baja sola hasta el. En touch arranca
+  // parcialmente colapsado (ver MOBILE_COLLAPSE_DEPTH) -menos tarjetas que
+  // montar de entrada en un telefono, sin perder la vuelta atras.
   useEffect(() => {
-    setCollapsed(new Set())
+    setCollapsed(
+      coarsePointer
+        ? new Set(projectRoots.flatMap((projectRoot) => collapsedKeysBeyondDepth(projectRoot, MOBILE_COLLAPSE_DEPTH)))
+        : new Set(),
+    )
     updateCanvasHeight()
     cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     // requestAnimationFrame depende del compositor (no dispara en pestañas en
@@ -231,7 +273,7 @@ export function BreedingTree({ root, roots }: { root?: PlanNode; roots?: PlanNod
     const timer = window.setTimeout(() => fitTree(), 30)
     return () => window.clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [root, roots])
+  }, [root, roots, coarsePointer])
 
   // El zoom con Ctrl+rueda debe quedarse DENTRO del arbol. React registra sus
   // listeners de wheel como pasivos por defecto, asi que un event.preventDefault()
