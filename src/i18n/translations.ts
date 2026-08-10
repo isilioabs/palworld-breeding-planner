@@ -282,7 +282,7 @@ export const es = {
   'landing.trust.pals': 'Pals',
   'landing.trust.pairs': 'Parejas de crianza verificadas',
   'landing.trust.routes': 'Estrategias de ruta',
-  'landing.trust.offline': 'Offline / local-first',
+  'landing.trust.offline': 'Funciona sin conexión',
   'landing.trust.statement': 'Construido desde datos de crianza verificados de Palworld -no recetas curadas a mano.',
   'landing.trust.cta': 'Ver cómo calcula las rutas Palaxis',
 
@@ -367,7 +367,7 @@ export const es = {
   'landing.footer.legal': 'Legal',
   'landing.footer.credits': 'Créditos (GitHub)',
   'landing.footer.privacy': 'Privacidad',
-  'landing.footer.privacyBody': 'Palaxis funciona local-first: tu colección y tus proyectos se guardan en este navegador y no se envían a ningún servidor.',
+  'landing.footer.privacyBody': 'Tu colección y tus proyectos se guardan en este navegador, no en un servidor. Usamos Google Analytics para medir visitas y uso general del sitio.',
   'landing.footer.legalNotice': 'Aviso legal',
   'landing.footer.legalBody': 'Palaxis es un proyecto de fans, sin afiliación con Pocketpair, Inc. Palworld es una marca registrada de Pocketpair, Inc.',
   'landing.footer.disclaimer': 'Proyecto de fans no oficial. No afiliado con Pocketpair, Inc.',
@@ -377,7 +377,7 @@ export const es = {
   'landing.faq.first.question': '¿Necesito saber cómo funciona el breeding?',
   'landing.faq.first.answer': 'No. Elige un Pal, aplica una build y Palaxis propone una ruta con padres, capturas y esfuerzo estimado.',
   'landing.faq.offline.question': '¿Mis datos se envían a algún servidor?',
-  'landing.faq.offline.answer': 'No. El planner y tu colección funcionan localmente en este navegador.',
+  'landing.faq.offline.answer': 'Tu colección y tus proyectos se guardan en este navegador y nunca se envían a un servidor. Sí usamos Google Analytics para medir visitas y uso general del sitio.',
   'landing.faq.collection.question': '¿Qué ocurre cuando consigo un Pal?',
   'landing.faq.collection.answer': 'Añádelo a tu colección o márcalo en un Breeding Project. Las rutas posteriores podrán reutilizarlo automáticamente.',
 
@@ -968,7 +968,7 @@ export const en: Record<TranslationKey, string> = {
   'landing.trust.pals': 'Pals',
   'landing.trust.pairs': 'Verified breeding pairs',
   'landing.trust.routes': 'Route strategies',
-  'landing.trust.offline': 'Offline / local-first',
+  'landing.trust.offline': 'Works offline',
   'landing.trust.statement': 'Built from verified Palworld breeding data -not manually curated recipes.',
   'landing.trust.cta': 'Learn how Palaxis calculates routes',
 
@@ -1053,7 +1053,7 @@ export const en: Record<TranslationKey, string> = {
   'landing.footer.legal': 'Legal',
   'landing.footer.credits': 'Credits (GitHub)',
   'landing.footer.privacy': 'Privacy',
-  'landing.footer.privacyBody': 'Palaxis is local-first: your collection and projects are stored in this browser and never sent to a server.',
+  'landing.footer.privacyBody': 'Your collection and projects are stored in this browser, not on a server. We use Google Analytics to measure visits and general site usage.',
   'landing.footer.legalNotice': 'Legal notice',
   'landing.footer.legalBody': 'Palaxis is an unofficial fan project, not affiliated with Pocketpair, Inc. Palworld is a trademark of Pocketpair, Inc.',
   'landing.footer.disclaimer': 'Unofficial fan project. Not affiliated with Pocketpair, Inc.',
@@ -1063,7 +1063,7 @@ export const en: Record<TranslationKey, string> = {
   'landing.faq.first.question': 'Do I need to understand breeding first?',
   'landing.faq.first.answer': 'No. Choose a Pal, apply a build, and Palaxis proposes a route with parents, captures, and estimated effort.',
   'landing.faq.offline.question': 'Is my data sent to a server?',
-  'landing.faq.offline.answer': 'No. The planner and your collection run locally in this browser.',
+  'landing.faq.offline.answer': 'Your collection and projects are stored in this browser and are never sent to a server. We do use Google Analytics to measure visits and general site usage.',
   'landing.faq.collection.question': 'What happens when I obtain a Pal?',
   'landing.faq.collection.answer': 'Add it to your collection or mark it in a Breeding Project. Later routes can reuse it automatically.',
 
