@@ -1453,7 +1453,12 @@ button:not(:disabled):focus-visible,
 .landing-nav__links a { color: #a8bbc3; font-size: .8rem; font-weight: 650; text-decoration: none; transition: color 120ms ease; }
 .landing-nav__links a:hover { color: #6cd9cc; }
 .landing-nav__launch { display: none; }
-.landing-nav__toggle { display: grid; width: 2.5rem; height: 2.5rem; min-width: 44px; min-height: 44px; place-items: center; margin-left: auto; border: 1px solid rgb(107 135 145 / 27%); border-radius: .6rem; color: #cfe4e8; background: transparent; }
+.landing-nav__language { display: inline-flex; min-width: 76px; min-height: 44px; align-items: center; justify-content: center; gap: .22rem; margin-left: auto; border: 1px solid rgb(107 135 145 / 27%); border-radius: .6rem; padding-inline: .55rem; color: #738d96; background: rgb(255 255 255 / 2%); font-family: 'Oxanium', system-ui, sans-serif; font-size: .62rem; font-weight: 750; letter-spacing: .04em; transition: border-color 140ms var(--motion-soft), background-color 140ms var(--motion-soft); }
+.landing-nav__language:hover { border-color: rgb(108 217 204 / 55%); background: rgb(108 217 204 / 7%); }
+.landing-nav__language svg { width: .9rem; height: .9rem; margin-right: .18rem; color: #6cd9cc; }
+.landing-nav__language span.is-active { color: #f1d47e; }
+.landing-nav__language i { color: #506771; font-style: normal; }
+.landing-nav__toggle { display: grid; width: 2.5rem; height: 2.5rem; min-width: 44px; min-height: 44px; place-items: center; border: 1px solid rgb(107 135 145 / 27%); border-radius: .6rem; color: #cfe4e8; background: transparent; }
 .landing-nav__toggle svg { width: 1.1rem; height: 1.1rem; }
 .landing-nav__mobile { display: grid; gap: .15rem; width: min(100% - 2rem, 72rem); margin-inline: auto; padding-bottom: 1rem; }
 .landing-nav__mobile a { padding: .7rem .5rem; color: #d7e6e9; font-size: .92rem; font-weight: 650; text-decoration: none; border-radius: .5rem; min-height: 44px; display: flex; align-items: center; }
@@ -1462,6 +1467,7 @@ button:not(:disabled):focus-visible,
 @media (min-width: 900px) {
   .landing-nav__links { display: flex; }
   .landing-nav__launch { display: inline-flex; }
+  .landing-nav__language { margin-left: 0; }
   .landing-nav__toggle, .landing-nav__mobile { display: none; }
 }
 
@@ -1874,6 +1880,75 @@ button:not(:disabled):focus-visible,
   .tracking-consent__actions { grid-column: 1 / -1; justify-content: stretch; }
   .tracking-consent__actions .button { flex: 1; }
 }
+
+/* Landing móvil de presupuesto estricto. Conserva solo dos cartas TCG como
+   firma visual; no monta árboles de ejemplo ni rankings del desktop y evita
+   capas fijas con blur/mask que pueden agotar el compositor en teléfonos. */
+.landing-mobile-hero,
+.landing-mobile-section,
+.landing-mobile-cta {
+  position: relative;
+  z-index: 1;
+  width: min(100% - 1.25rem, 42rem);
+  margin-inline: auto;
+}
+.landing-mobile-hero { display: grid; gap: 1rem; padding-block: 1.5rem 2.25rem; }
+.landing-mobile-hero__copy h1 { max-width: 13ch; margin-top: .7rem; font-family: 'Anton', Impact, sans-serif; font-size: clamp(2.45rem, 12vw, 3.45rem); font-weight: 400; line-height: .96; letter-spacing: -.015em; text-transform: uppercase; }
+.landing-mobile-hero__copy h1 em { display: block; color: #f1c653; font-style: normal; }
+.landing-mobile-hero__copy > p { max-width: 35rem; margin-top: .85rem; color: #a8bbc3; font-size: .88rem; line-height: 1.55; }
+.landing-mobile-hero__cards { position: relative; isolation: isolate; display: grid; min-height: 15.5rem; place-items: start center; overflow: hidden; border: 1px solid rgb(108 217 204 / 28%); border-radius: 1rem; padding-top: .8rem; background: radial-gradient(circle at 57% 38%, rgb(67 184 178 / 28%), transparent 50%), linear-gradient(145deg, #0b1820, #071016); contain: layout paint style; }
+.landing-mobile-hero__cards::before { position: absolute; inset: 0; z-index: -1; content: ''; opacity: .4; background-image: radial-gradient(rgb(108 217 204 / 24%) 1px, transparent 1.3px), linear-gradient(rgb(108 217 204 / 6%) 1px, transparent 1px), linear-gradient(90deg, rgb(108 217 204 / 6%) 1px, transparent 1px); background-size: 31px 31px; }
+.landing-mobile-hero__card { position: absolute; top: .8rem; }
+.landing-mobile-hero__card--back { left: calc(50% - 9.2rem); z-index: 1; transform: rotate(-4deg) translateY(1.25rem); opacity: .86; }
+.landing-mobile-hero__card--front { left: calc(50% - 3.2rem); z-index: 2; transform: rotate(2deg); }
+.landing-mobile-hero__card .landing-tcg-card { transition: none; }
+.landing-mobile-hero__deck-label { position: absolute; z-index: 3; right: .65rem; bottom: .55rem; display: inline-flex; min-height: 28px; align-items: center; gap: .3rem; border: 1px solid rgb(241 198 83 / 36%); border-radius: 999px; padding: .25rem .55rem; color: #f1d47e; background: rgb(5 10 14 / 86%); font-family: 'Oxanium', system-ui, sans-serif; font-size: .54rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.landing-mobile-hero__deck-label svg { width: .72rem; height: .72rem; }
+.landing-mobile-hero__selector { display: grid; gap: .55rem; border: 1px solid rgb(107 135 145 / 24%); border-radius: .85rem; padding: .8rem; background: rgb(255 255 255 / 2%); }
+.landing-mobile-hero__selector > label { color: #cfe4e8; font-size: .72rem; font-weight: 750; }
+.landing-mobile-hero__popular { display: flex; gap: .45rem; overflow-x: auto; padding-block: .1rem .2rem; scroll-snap-type: x proximity; scrollbar-width: none; }
+.landing-mobile-hero__popular::-webkit-scrollbar { display: none; }
+.landing-mobile-hero__popular li { flex: none; scroll-snap-align: start; }
+.landing-mobile-hero__popular button { display: inline-flex; min-height: 44px; align-items: center; gap: .35rem; border: 1px solid rgb(107 135 145 / 27%); border-radius: 999px; padding: .28rem .65rem .28rem .28rem; color: #d8e7ea; background: rgb(255 255 255 / 3%); font-size: .7rem; font-weight: 700; }
+.landing-mobile-hero__actions { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.landing-mobile-section { padding-block: 2.5rem; border-top: 1px solid rgb(112 140 149 / 14%); content-visibility: auto; contain: layout paint style; contain-intrinsic-size: auto 24rem; }
+.landing-mobile-section .landing-section__heading h2,
+.landing-mobile-cta h2 { margin-top: .45rem; font-family: 'Anton', Impact, sans-serif; font-size: clamp(1.8rem, 9vw, 2.45rem); font-weight: 400; line-height: 1.05; text-transform: uppercase; }
+.landing-mobile-tools { display: grid; gap: .5rem; margin-top: 1.15rem; }
+.landing-mobile-tools a { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; min-height: 64px; align-items: center; gap: .65rem; border: 1px solid rgb(107 135 145 / 24%); border-radius: .72rem; padding: .65rem .7rem; color: inherit; background: #091118; text-decoration: none; }
+.landing-mobile-tools a > svg:first-child { width: 1.1rem; height: 1.1rem; color: #6cd9cc; }
+.landing-mobile-tools a > svg:last-child { width: .9rem; height: .9rem; color: #738d96; }
+.landing-mobile-tools strong, .landing-mobile-tools small { display: block; }
+.landing-mobile-tools strong { color: #edf5f6; font-size: .78rem; }
+.landing-mobile-tools small { margin-top: .12rem; color: #849aa3; font-size: .64rem; line-height: 1.35; }
+.landing-mobile-how { display: grid; gap: .55rem; margin-top: 1.15rem; }
+.landing-mobile-how li { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); gap: .65rem; border-left: 2px solid rgb(108 217 204 / 42%); padding: .45rem .65rem; }
+.landing-mobile-how li > b { color: #f1c653; font-family: 'Oxanium', system-ui, sans-serif; font-size: .72rem; }
+.landing-mobile-how strong { color: #e8f1f3; font-size: .78rem; }
+.landing-mobile-how p { margin-top: .15rem; color: #8fa5ad; font-size: .68rem; line-height: 1.45; }
+.landing-mobile-cta { margin-block: 1rem 2.5rem; overflow: hidden; border: 1px solid rgb(112 218 204 / 34%); border-radius: 1rem; padding: 1.35rem; background: #0a141a; content-visibility: auto; contain-intrinsic-size: auto 18rem; }
+.landing-mobile-cta p { margin-block: .65rem 1rem; color: #91a6af; font-size: .76rem; line-height: 1.5; }
+.landing-mobile-faq details { border-bottom: 1px solid rgb(112 140 149 / 24%); padding-block: .55rem; }
+.landing-mobile-faq summary { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 1rem; color: #e5eef0; cursor: pointer; font-size: .78rem; font-weight: 700; list-style: none; }
+.landing-mobile-faq summary::-webkit-details-marker { display: none; }
+.landing-mobile-faq summary svg { width: .9rem; height: .9rem; color: #6cd9cc; }
+.landing-mobile-faq details[open] summary svg { transform: rotate(90deg); }
+.landing-mobile-faq details p { padding: .2rem 0 .55rem; color: #91a8b1; font-size: .7rem; line-height: 1.55; }
+
+@media (max-width: 819px) {
+  .landing-page--mobile-lite { background: radial-gradient(circle at 75% 8%, rgb(33 177 178 / 12%), transparent 25%), #050a0e; }
+  .landing-page--mobile-lite::before { display: none; }
+  .landing-page--mobile-lite .landing-nav--scrolled { background: rgb(5 10 14 / 96%); backdrop-filter: none; }
+  .landing-page--mobile-lite .landing-trust,
+  .landing-page--mobile-lite .landing-footer-v2 { width: min(100% - 1.25rem, 42rem); }
+  .landing-page--mobile-lite .landing-footer-v2 { content-visibility: auto; contain-intrinsic-size: auto 38rem; }
+  /* Las dos cartas son la firma visual del producto. Se mantienen reales,
+     pero sus capas animadas quedan pausadas para proteger el compositor. */
+  .landing-mobile-hero__cards .pc-anim { animation: none !important; }
+  .landing-mobile-hero__cards .pc-card,
+  .landing-mobile-hero__cards .pc-card:hover,
+  .landing-mobile-hero__cards .pc-card:focus-visible { filter: none; transform: none; }
+}
 @media (prefers-reduced-motion: reduce) { .landing-feature, .breeding-project__bar span { transition: none; } }
 .breeding-project__target:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
 .breeding-project__target svg { width: .95rem; height: .95rem; flex: none; color: var(--muted-foreground); }
@@ -2137,6 +2212,8 @@ button.tree-pal-card.tree-pal-card--target:active { transform: scale(1.015); }
 
 .collection-pokedex-card__favorite { position: absolute; z-index: 2; top: .25rem; right: .25rem; color: #d7e0e7; background: rgb(5 10 16 / 48%); }
 .collection-pokedex-card__favorite.is-favorite { color: #fb7185; }
+.collection-pokedex-card__remove { position: absolute; z-index: 2; top: .25rem; left: .25rem; color: #e2e8f0; background: rgb(5 10 16 / 68%); }
+.collection-pokedex-card__remove:hover { color: #fff; background: rgb(190 24 93 / 78%); }
 .collection-pokedex-card__open { position: absolute; z-index: 1; inset: 0; cursor: pointer; border: 0; border-radius: inherit; background: transparent; }
 .collection-pokedex-card__open:focus-visible { outline: 2px solid var(--ring); outline-offset: -3px; }
 .collection-pokedex-card__action { position: relative; z-index: 2; }

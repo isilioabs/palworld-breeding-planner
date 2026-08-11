@@ -28,6 +28,7 @@ import {
   Database,
   Egg,
   GitCompareArrows,
+  Languages,
   Menu,
   MessageCircle,
   PlusCircle,
@@ -46,9 +47,10 @@ import { getBuildsFor } from '@/domain/builds'
 import { loadDatabase, palName } from '@/domain/database'
 import { palSlug } from '@/domain/slug'
 import { getTierCategory, getTierList, tierLetter, type TierCategory } from '@/domain/tier-list'
-import { useT } from '@/i18n/language-store'
+import { useLang, useT } from '@/i18n/language-store'
 import type { TranslationKey } from '@/i18n/translations'
 import { track } from '@/lib/analytics'
+import { useMobileLayout } from '@/lib/use-mobile-layout'
 import { useReveal } from '@/lib/use-reveal'
 import { cn } from '@/lib/utils'
 import { usePlannerStore } from '@/state/planner-store'
@@ -171,7 +173,12 @@ const FAQS = [
   { id: 'collection', questionKey: 'landing.faq.collection.question', answerKey: 'landing.faq.collection.answer' },
 ] as const
 
-export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: LandingPageProps) {
+export function LandingPage(props: LandingPageProps) {
+  const mobile = useMobileLayout()
+  return mobile ? <MobileLandingPage {...props} /> : <DesktopLandingPage {...props} />
+}
+
+function DesktopLandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: LandingPageProps) {
   const t = useT()
   const db = loadDatabase()
   const { dispatch } = usePlannerStore()
@@ -442,10 +449,153 @@ export function LandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
   )
 }
 
+/**
+ * Phone-first landing with the same message and navigation but a deliberately
+ * small render budget. It keeps two real TCG cards as the product's visual
+ * signature, while tier calculations, comparison scenes, demo trees and ten
+ * reveal observers remain desktop-only.
+ */
+function MobileLandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: LandingPageProps) {
+  const t = useT()
+  const db = loadDatabase()
+  const { dispatch } = usePlannerStore()
+  const [target, setTarget] = useState<string | null>(null)
+
+  const startBreeding = (palId?: string | null) => {
+    const selected = palId ?? target
+    if (selected) {
+      dispatch({ type: 'setTarget', palId: selected })
+      track('target_selected', { source: 'landing_mobile' })
+    }
+    onLaunch()
+  }
+
+  return (
+    <main className="landing-page landing-page--mobile-lite">
+      <LandingNav onLaunch={onLaunch} onOpenQuick={onOpenQuick} onNavigate={onNavigate} />
+
+      <section className="landing-mobile-hero" aria-labelledby="landing-mobile-title">
+        <div className="landing-mobile-hero__copy">
+          <span className="landing-kicker"><WifiOff aria-hidden="true" />{t('landing.kicker')}</span>
+          <h1 id="landing-mobile-title">{t('landing.titleA')} <em>{t('landing.titleB')}</em></h1>
+          <p>{t('landing.description')}</p>
+        </div>
+
+        <div className="landing-mobile-hero__cards" aria-label={t('landing.paldex.title')}>
+          <div className="landing-mobile-hero__card landing-mobile-hero__card--back">
+            <LandingTcgCard
+              palId={target === 'BlackGriffon' ? 'JetDragon' : 'BlackGriffon'}
+              size={142}
+              compact
+              owned
+              onNavigate={onNavigate}
+            />
+          </div>
+          <div className="landing-mobile-hero__card landing-mobile-hero__card--front">
+            <LandingTcgCard
+              palId={target ?? 'Anubis'}
+              size={168}
+              selected
+              onNavigate={onNavigate}
+            />
+          </div>
+          <span className="landing-mobile-hero__deck-label"><Sparkles aria-hidden="true" />{t('landing.paldex.eyebrow')}</span>
+        </div>
+
+        <div className="landing-mobile-hero__selector">
+          <label htmlFor="landing-mobile-target">{t('landing.hero.selectorLabel')}</label>
+          <PalCombobox
+            value={target}
+            onChange={setTarget}
+            placeholder={t('landing.hero.searchPlaceholder')}
+            triggerId="landing-mobile-target"
+          />
+          <Button size="lg" className="w-full" onClick={() => startBreeding()} disabled={!target}>
+            {t('landing.hero.findRoute')}<ArrowRight aria-hidden="true" />
+          </Button>
+          <ul className="landing-mobile-hero__popular" aria-label={t('landing.hero.popularLabel')}>
+            {POPULAR_TARGETS.slice(0, 3).map((palId) => (
+              <li key={palId}>
+                <button type="button" onClick={() => startBreeding(palId)}>
+                  <PalIcon palId={palId} size={24} bare />{palName(db.palById.get(palId))}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="landing-mobile-hero__actions">
+          <Button variant="outline" onClick={onLaunch}>{t('landing.hero.primaryCta')}<ChevronRight aria-hidden="true" /></Button>
+          <Button variant="ghost" onClick={onLoadDemo}>{t('landing.hero.secondaryCta')}</Button>
+        </div>
+      </section>
+
+      <TrustStrip />
+
+      <section className="landing-mobile-section" aria-labelledby="landing-mobile-tools-title">
+        <div className="landing-section__heading">
+          <span>{t('landing.more.eyebrow')}</span>
+          <h2 id="landing-mobile-tools-title">{t('landing.more.title')}</h2>
+        </div>
+        <ul className="landing-mobile-tools">
+          {TOOLS.filter((_, index) => index === 0 || index === 1 || index === 3 || index === 4).map((tool) => (
+            <li key={tool.titleKey}>
+              <a
+                href={tool.kind === 'route' ? tool.path : tool.kind === 'quick' ? '/rapido' : '/planner'}
+                onClick={(event) => {
+                  if (event.defaultPrevented || event.button !== 0) return
+                  event.preventDefault()
+                  if (tool.kind === 'route') onNavigate(tool.path)
+                  else if (tool.kind === 'quick') onOpenQuick()
+                  else onLaunch()
+                }}
+              >
+                <tool.icon aria-hidden="true" />
+                <span><strong>{t(tool.titleKey)}</strong><small>{t(tool.descriptionKey)}</small></span>
+                <ChevronRight aria-hidden="true" />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section id="guide" className="landing-mobile-section" aria-labelledby="how-title">
+        <div className="landing-section__heading">
+          <span>{t('landing.howEyebrow')}</span>
+          <h2 id="how-title">{t('landing.howTitle')}</h2>
+        </div>
+        <ol className="landing-mobile-how">
+          {HOW_STEPS.map((step) => (
+            <li key={step.number}>
+              <b>{step.number}</b>
+              <div><strong>{t(step.titleKey)}</strong><p>{t(step.descriptionKey)}</p></div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="landing-mobile-cta" aria-labelledby="landing-mobile-cta-title">
+        <span className="landing-kicker"><Sparkles aria-hidden="true" />{t('landing.ctaEyebrow')}</span>
+        <h2 id="landing-mobile-cta-title">{t('landing.ctaTitle')}</h2>
+        <p>{t('landing.ctaDescription')}</p>
+        <Button size="lg" className="w-full" onClick={onLaunch}>{t('landing.hero.primaryCta')}<ChevronRight aria-hidden="true" /></Button>
+      </section>
+
+      <section className="landing-mobile-section landing-mobile-faq" aria-labelledby="landing-mobile-faq-title">
+        <div className="landing-section__heading"><span>{t('landing.faqEyebrow')}</span><h2 id="landing-mobile-faq-title">{t('landing.faqTitle')}</h2></div>
+        <div>{FAQS.map(({ id, questionKey, answerKey }) => <details key={id}><summary>{t(questionKey)}<ChevronRight aria-hidden="true" /></summary><p>{t(answerKey)}</p></details>)}</div>
+      </section>
+
+      <LandingFooter onNavigate={onNavigate} onOpenQuick={onOpenQuick} />
+    </main>
+  )
+}
+
 /* ------------------------------------------------------------------ Nav */
 
 function LandingNav({ onLaunch, onOpenQuick, onNavigate }: { onLaunch: () => void; onOpenQuick: () => void; onNavigate: (path: string) => void }) {
   const t = useT()
+  const [lang, setLang] = useLang()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -493,6 +643,18 @@ function LandingNav({ onLaunch, onOpenQuick, onNavigate }: { onLaunch: () => voi
             </a>
           ))}
         </nav>
+        <button
+          type="button"
+          className="landing-nav__language"
+          aria-label={t(lang === 'es' ? 'header.langToggle' : 'header.langToggleToEs')}
+          title={t(lang === 'es' ? 'header.langToggle' : 'header.langToggleToEs')}
+          onClick={() => setLang(lang === 'es' ? 'en' : 'es')}
+        >
+          <Languages aria-hidden="true" />
+          <span className={lang === 'es' ? 'is-active' : undefined}>ES</span>
+          <i aria-hidden="true">/</i>
+          <span className={lang === 'en' ? 'is-active' : undefined}>EN</span>
+        </button>
         <Button size="sm" className="landing-nav__launch" onClick={onLaunch}>{t('landing.nav.launch')}<ChevronRight aria-hidden="true" /></Button>
         <button
           type="button"

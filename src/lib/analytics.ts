@@ -7,6 +7,7 @@ export type ProductEvent =
   | 'demo_loaded'
   | 'landing_opened'
   | 'planner_launched'
+  | 'planner_cleared'
   | 'plan_shared'
   | 'quick_path_opened'
   | 'quick_path_open_full_planner'

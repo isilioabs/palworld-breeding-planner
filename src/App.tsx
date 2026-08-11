@@ -36,7 +36,6 @@ import { listProjects, saveProject, type ProjectDraft } from '@/domain/projects'
 import { track } from '@/lib/analytics'
 import { cn } from '@/lib/utils'
 
-const LAUNCHED_KEY = 'pbp:experience:launched'
 const ONBOARDING_KEY = 'pbp:experience:onboarding-seen'
 const DEMO_NAME = 'Perfect Anubis Worker'
 const DEMO_DRAFT: ProjectDraft = {
@@ -467,7 +466,6 @@ function useRoute() {
 
 function ExperienceGate() {
   const { state, dispatch } = usePlannerStore()
-  const [plannerOpen, setPlannerOpen] = useState(() => localStorage.getItem(LAUNCHED_KEY) === 'true')
   const [onboardingOpen, setOnboardingOpen] = useState(false)
   const [route, navigate] = useRoute()
 
@@ -479,14 +477,11 @@ function ExperienceGate() {
   const exitPalPage = () => navigate(PALS_INDEX_PATH)
   const navigateToPal = (slug: string) => navigate(`${PAL_PATH_PREFIX}${slug}`)
   const openTargetFromPalPage = () => {
-    localStorage.setItem(LAUNCHED_KEY, 'true')
-    setPlannerOpen(true)
-    navigate('/')
+    navigate(PLANNER_PATH)
   }
 
   const launch = () => {
-    localStorage.setItem(LAUNCHED_KEY, 'true')
-    setPlannerOpen(true)
+    navigate(PLANNER_PATH)
     track('planner_launched')
     if (localStorage.getItem(ONBOARDING_KEY) !== 'true') setOnboardingOpen(true)
   }
@@ -498,7 +493,6 @@ function ExperienceGate() {
 
   const goHome = () => {
     setOnboardingOpen(false)
-    setPlannerOpen(false)
     navigate('/')
     track('landing_opened')
   }
@@ -508,21 +502,11 @@ function ExperienceGate() {
     if (!existingDemo) saveProject(DEMO_NAME, DEMO_DRAFT)
     // La demo enseña el flujo sin borrar la colección personal ya creada.
     dispatch({ type: 'loadDraft', draft: { ...DEMO_DRAFT, owned: state.owned } })
-    localStorage.setItem(LAUNCHED_KEY, 'true')
     localStorage.setItem(ONBOARDING_KEY, 'true')
     setOnboardingOpen(false)
-    setPlannerOpen(true)
+    navigate(PLANNER_PATH)
     track('demo_loaded')
   }
-
-  // Entrar directo a /planner (nav, bookmark, link externo) debe abrir el
-  // planner de una, igual que el boton "Launch" de la landing -sin esto, un
-  // usuario que nunca "lanzo" antes veria la landing en vez de la pagina que
-  // pidio por URL.
-  useEffect(() => {
-    if (route === PLANNER_PATH && !plannerOpen) launch()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- launch() se redefine cada render; solo importa reaccionar a cambios de ruta/estado.
-  }, [route, plannerOpen])
 
   // El header con las pestañas es el MISMO componente en todas las pantallas
   // -salvo el planner, que ya lo integra dentro de su propio shell de alto
@@ -541,11 +525,11 @@ function ExperienceGate() {
     content = <TierListPage onNavigate={navigateToPal} />
   } else if (route === FEEDBACK_PATH) {
     content = <FeedbackPage />
-  } else if (!plannerOpen && route !== PLANNER_PATH) {
-    content = <LandingPage onLaunch={launch} onLoadDemo={loadDemo} onOpenQuick={openQuick} onNavigate={navigate} />
+  } else if (route === PLANNER_PATH) {
+    content = <><Layout onHome={goHome} route={route} onNavigate={navigate} /><Onboarding open={onboardingOpen} onStart={finishOnboarding} /></>
     showGlobalHeader = false
   } else {
-    content = <><Layout onHome={goHome} route={route} onNavigate={navigate} /><Onboarding open={onboardingOpen} onStart={finishOnboarding} /></>
+    content = <LandingPage onLaunch={launch} onLoadDemo={loadDemo} onOpenQuick={openQuick} onNavigate={navigate} />
     showGlobalHeader = false
   }
 

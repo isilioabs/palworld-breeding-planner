@@ -47,6 +47,7 @@ export type PlannerAction =
   | { type: 'clearOwned' }
   | { type: 'setPinnedSource'; passiveId: string; ownedUid: string | null }
   | { type: 'loadDraft'; draft: ProjectDraft }
+  | { type: 'resetPlan' }
   | { type: 'reset' }
 
 const newUid = () => `o_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`
@@ -128,6 +129,10 @@ function reducer(state: PlannerState, action: PlannerAction): PlannerState {
         pinnedSources: {},
         }
       }
+    case 'resetPlan':
+      // Empieza un breeding limpio sin borrar la coleccion permanente del
+      // jugador ni su preferencia de optimizacion.
+      return { ...EMPTY, owned: state.owned, mode: state.mode }
     case 'reset':
       return EMPTY
     default:

@@ -29,9 +29,10 @@ interface PokedexCardProps {
   onAdd: () => void
   onManage: () => void
   onFavorite: () => void
+  onRemove: () => void
 }
 
-function PokedexCard({ pal, entry, desired, onAdd, onManage, onFavorite }: PokedexCardProps) {
+function PokedexCard({ pal, entry, desired, onAdd, onManage, onFavorite, onRemove }: PokedexCardProps) {
   const t = useT()
   const { openPal } = usePokedex()
   const db = loadDatabase()
@@ -57,16 +58,28 @@ function PokedexCard({ pal, entry, desired, onAdd, onManage, onFavorite }: Poked
       <div className="collection-pokedex-card__art">
         <PalIcon palId={pal.id} size={68} bare />
         {owned && (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className={cn('collection-pokedex-card__favorite', entry.favorite && 'is-favorite')}
-            aria-label={t(entry.favorite ? 'collectionPanel.unfavorite' : 'collectionPanel.favorite', { name: palName(pal) })}
-            aria-pressed={entry.favorite ?? false}
-            onClick={(event) => { event.stopPropagation(); onFavorite() }}
-          >
-            <Heart className="size-3.5" fill={entry.favorite ? 'currentColor' : 'none'} aria-hidden="true" />
-          </Button>
+          <>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="collection-pokedex-card__remove"
+              aria-label={t('collectionPanel.removePal', { name: palName(pal) })}
+              title={t('collectionPanel.removePal', { name: palName(pal) })}
+              onClick={(event) => { event.stopPropagation(); onRemove() }}
+            >
+              <X className="size-3.5" aria-hidden="true" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className={cn('collection-pokedex-card__favorite', entry.favorite && 'is-favorite')}
+              aria-label={t(entry.favorite ? 'collectionPanel.unfavorite' : 'collectionPanel.favorite', { name: palName(pal) })}
+              aria-pressed={entry.favorite ?? false}
+              onClick={(event) => { event.stopPropagation(); onFavorite() }}
+            >
+              <Heart className="size-3.5" fill={entry.favorite ? 'currentColor' : 'none'} aria-hidden="true" />
+            </Button>
+          </>
         )}
       </div>
       <div className="collection-pokedex-card__name">
@@ -335,7 +348,7 @@ export function CollectionPanel({ embedded = false }: { embedded?: boolean }) {
         {visible.length === 0 ? <p className="collection-empty-state rounded-md border border-dashed border-border px-3 py-6 text-center text-xs text-muted-foreground">{t('collectionPanel.noResults')}</p> : (
           <>
             <ul className="collection-pokedex-grid">
-              {displayed.map(({ pal, entry }) => <li key={entry?.uid ?? pal.id}><PokedexCard pal={pal} entry={entry} desired={desired} onAdd={() => dispatch({ type: 'addOwned', palId: pal.id })} onManage={() => entry && setEditingUid(entry.uid)} onFavorite={() => entry && dispatch({ type: 'updateOwned', uid: entry.uid, patch: { favorite: !entry.favorite } })} /></li>)}
+              {displayed.map(({ pal, entry }) => <li key={entry?.uid ?? pal.id}><PokedexCard pal={pal} entry={entry} desired={desired} onAdd={() => dispatch({ type: 'addOwned', palId: pal.id })} onManage={() => entry && setEditingUid(entry.uid)} onFavorite={() => entry && dispatch({ type: 'updateOwned', uid: entry.uid, patch: { favorite: !entry.favorite } })} onRemove={() => entry && dispatch({ type: 'removeOwned', uid: entry.uid })} /></li>)}
             </ul>
             {displayed.length < visible.length && (
               <Button variant="outline" size="sm" className="w-full" onClick={() => setLimit((current) => current + PAGE_SIZE)}>

@@ -1,4 +1,4 @@
-import { X } from 'lucide-react'
+import { Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -14,11 +14,24 @@ export function TargetPanel() {
   const db = loadDatabase()
   const { state, dispatch } = usePlannerStore()
   const t = useT()
+  const hasPlan = state.targetPalIds.length > 0 || state.desiredPassives.length > 0 || Object.keys(state.pinnedSources).length > 0
+
+  const clearPlan = () => {
+    if (!window.confirm(t('targetPanel.clearPlanConfirm'))) return
+    dispatch({ type: 'resetPlan' })
+    track('planner_cleared')
+  }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t('targetPanel.title')}</CardTitle>
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <CardTitle>{t('targetPanel.title')}</CardTitle>
+          <Button type="button" variant="ghost" size="sm" className="shrink-0" disabled={!hasPlan} onClick={clearPlan}>
+            <Trash2 className="size-3.5" aria-hidden="true" />
+            {t('targetPanel.clearPlan')}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
