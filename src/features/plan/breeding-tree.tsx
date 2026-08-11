@@ -421,14 +421,14 @@ export function BreedingTree({ root, roots }: { root?: PlanNode; roots?: PlanNod
                 <Target className="size-3.5" aria-hidden="true" />
               </Button>
             </RichTooltip>
-            <span className="tree-toolbar__divider mx-0.5 h-5 w-px bg-border" aria-hidden="true" />
+            <span className="tree-toolbar__divider tree-toolbar__desktop-only mx-0.5 h-5 w-px bg-border" aria-hidden="true" />
             <RichTooltip title={t('tree.expandAllTitle')} description={t('tree.expandAllDescription')}>
-              <Button variant="ghost" size="sm" onClick={() => setCollapsed(new Set())}>
+              <Button className="tree-toolbar__desktop-only" variant="ghost" size="sm" onClick={() => setCollapsed(new Set())}>
                 {t('tree.expandAll')}
               </Button>
             </RichTooltip>
             <RichTooltip title={t('tree.collapseAllTitle')} description={t('tree.collapseAllDescription')}>
-              <Button variant="ghost" size="sm" onClick={() => setCollapsed(new Set(allKeys))}>
+              <Button className="tree-toolbar__desktop-only" variant="ghost" size="sm" onClick={() => setCollapsed(new Set(allKeys))}>
                 {t('tree.collapseAll')}
               </Button>
             </RichTooltip>

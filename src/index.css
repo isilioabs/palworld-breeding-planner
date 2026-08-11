@@ -2678,6 +2678,95 @@ button.pc-card-trigger { cursor: pointer; }
   .tier-band--s .tier-band__letter { animation: none; }
 }
 
+/* Mobile planner: keep the breeding tree in the primary flow and move dense
+   comparison/reference data into sheets that are mounted only on demand. */
+.route-comparison-mobile { contain: layout paint style; }
+.route-comparison-mobile__trigger {
+  --route-accent: #f0ba45;
+  display: flex;
+  width: 100%;
+  min-height: 3.55rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .35rem .55rem;
+  border: 1px solid color-mix(in srgb, var(--route-accent) 52%, var(--border));
+  border-radius: .75rem;
+  padding: .55rem .65rem;
+  background: linear-gradient(115deg, color-mix(in srgb, var(--route-accent) 12%, var(--card)), var(--card) 62%);
+  color: var(--foreground);
+  text-align: left;
+  box-shadow: inset 0 1px rgb(255 255 255 / 4%);
+}
+.route-comparison-mobile__trigger.is-collection { --route-accent: #5dd3a5; }
+.route-comparison-mobile__trigger.is-breeding { --route-accent: #f0ba45; }
+.route-comparison-mobile__trigger.is-hybrid { --route-accent: #52c7ed; }
+.route-comparison-mobile__trigger:active { background: color-mix(in srgb, var(--route-accent) 10%, var(--card)); }
+.route-comparison-mobile__trigger:focus-visible { outline: 2px solid var(--route-accent); outline-offset: 2px; }
+.route-comparison-mobile__icon { display: grid; width: 2rem; height: 2rem; flex: none; place-items: center; border-radius: .55rem; background: color-mix(in srgb, var(--route-accent) 13%, transparent); color: var(--route-accent); }
+.route-comparison-mobile__icon svg { width: 1rem; height: 1rem; }
+.route-comparison-mobile__copy { min-width: 0; flex: 1; }
+.route-comparison-mobile__copy small, .route-comparison-mobile__copy strong { display: block; }
+.route-comparison-mobile__copy small { color: var(--muted-foreground); font-size: .55rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.route-comparison-mobile__copy strong { overflow: hidden; margin-top: .08rem; color: color-mix(in srgb, var(--route-accent) 68%, #fff); font-family: 'Oxanium', system-ui, sans-serif; font-size: .75rem; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.route-comparison-mobile__recommended { flex: none; border-color: color-mix(in srgb, var(--route-accent) 55%, transparent); background: color-mix(in srgb, var(--route-accent) 12%, transparent); color: var(--route-accent); font-size: .5rem; }
+.route-comparison-mobile__recommended svg { width: .65rem; height: .65rem; }
+.route-comparison-mobile__score { flex: none; color: var(--route-accent); font-family: 'Oxanium', system-ui, sans-serif; font-size: 1rem; font-weight: 800; }
+.route-comparison-mobile__score small { margin-left: .08rem; color: var(--muted-foreground); font-size: .48rem; }
+.route-comparison-mobile__chevron { width: .9rem; height: .9rem; flex: none; color: var(--muted-foreground); }
+.route-comparison-mobile__facts { display: flex; flex-basis: 100%; gap: .8rem; padding-left: 2.55rem; color: var(--muted-foreground); font-size: .6rem; font-weight: 700; }
+.route-comparison-mobile__facts span { display: inline-flex; align-items: center; gap: .2rem; }
+.route-comparison-mobile__facts svg { width: .7rem; height: .7rem; color: var(--route-accent); }
+
+.plan-sheet__overlay { position: fixed; z-index: 70; inset: 0; background: rgb(0 5 8 / 76%); animation: pbp-in 120ms ease-out; }
+.plan-sheet { position: fixed; z-index: 71; right: 0; bottom: 0; left: 0; display: flex; max-height: min(84dvh, 46rem); flex-direction: column; overflow: hidden; border: 1px solid color-mix(in srgb, var(--primary) 34%, var(--border)); border-radius: 1rem 1rem 0 0; padding-bottom: env(safe-area-inset-bottom); background: #091319; box-shadow: 0 -14px 42px rgb(0 0 0 / 48%); outline: none; animation: plan-sheet-enter 180ms var(--motion-snap) both; }
+.plan-sheet--compact { max-height: min(64dvh, 32rem); }
+.plan-sheet::before { width: 2.6rem; height: 3px; flex: none; align-self: center; margin-top: .45rem; border-radius: 999px; background: color-mix(in srgb, var(--muted-foreground) 52%, transparent); content: ''; }
+.plan-sheet__header { display: flex; flex: none; align-items: flex-start; justify-content: space-between; gap: .75rem; border-bottom: 1px solid var(--border); padding: .7rem .85rem .65rem; }
+.plan-sheet__header > div { min-width: 0; }
+.plan-sheet__header h2 { color: var(--foreground); font-size: .92rem; font-weight: 800; }
+.plan-sheet__header p { max-width: 32rem; margin-top: .16rem; color: var(--muted-foreground); font-size: .65rem; line-height: 1.4; }
+.plan-sheet__body { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: .75rem; }
+.plan-sheet .route-comparison__grid { grid-template-columns: 1fr; padding: 0; }
+@keyframes plan-sheet-enter { from { opacity: .65; transform: translateY(1.25rem); } to { opacity: 1; transform: translateY(0); } }
+
+.plan-mobile-actions { display: flex; align-items: center; justify-content: space-between; gap: .5rem; border: 1px solid color-mix(in srgb, var(--border) 86%, var(--primary)); border-radius: .7rem; padding: .4rem; background: color-mix(in srgb, var(--card) 92%, transparent); }
+.plan-mobile-actions .share-plan { min-width: 0; }
+.plan-mobile-metrics { display: grid; gap: .45rem; }
+.plan-mobile-metrics > div { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .12rem .55rem; border: 1px solid var(--border); border-radius: .65rem; padding: .6rem; background: rgb(255 255 255 / 2%); }
+.plan-mobile-metrics__icon { grid-row: 1 / span 2; display: grid; width: 2rem; height: 2rem; place-items: center; border-radius: .5rem; }
+.plan-mobile-metrics__icon svg { width: 1rem; height: 1rem; }
+.plan-mobile-metrics dt { color: var(--muted-foreground); font-size: .58rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.plan-mobile-metrics dd { grid-column: 3; grid-row: 1 / span 2; color: var(--foreground); font-family: 'Oxanium', system-ui, sans-serif; font-size: 1.05rem; font-weight: 800; }
+.plan-mobile-metrics small { grid-column: 2; overflow: hidden; color: var(--muted-foreground); font-size: .58rem; text-overflow: ellipsis; white-space: nowrap; }
+
+.direct-recipes-mobile { contain: layout paint style; content-visibility: auto; contain-intrinsic-size: 4rem; }
+.direct-recipes-mobile__trigger { display: flex; width: 100%; min-height: 3.5rem; align-items: center; gap: .65rem; border: 1px solid color-mix(in srgb, var(--primary) 32%, var(--border)); border-radius: .72rem; padding: .55rem .65rem; background: color-mix(in srgb, var(--primary) 5%, var(--card)); color: var(--foreground); text-align: left; }
+.direct-recipes-mobile__trigger:active { background: color-mix(in srgb, var(--primary) 10%, var(--card)); }
+.direct-recipes-mobile__trigger:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.direct-recipes-mobile__trigger > span:nth-child(2) { min-width: 0; flex: 1; }
+.direct-recipes-mobile__trigger strong, .direct-recipes-mobile__trigger small { display: block; }
+.direct-recipes-mobile__trigger strong { font-size: .74rem; }
+.direct-recipes-mobile__trigger small { overflow: hidden; margin-top: .1rem; color: var(--muted-foreground); font-size: .61rem; text-overflow: ellipsis; white-space: nowrap; }
+.direct-recipes-mobile__trigger > svg { width: .9rem; height: .9rem; color: var(--muted-foreground); }
+.direct-recipes-mobile__icon { display: grid; width: 2rem; height: 2rem; flex: none; place-items: center; border-radius: .55rem; background: color-mix(in srgb, var(--primary) 11%, transparent); color: var(--primary); }
+.direct-recipes-mobile__icon svg { width: 1rem; height: 1rem; }
+.direct-recipes-mobile__list { display: grid; gap: .35rem; }
+.direct-recipes-mobile__list .recipe-row { min-height: 2.6rem; }
+.direct-recipes-mobile--empty > div { display: flex; align-items: flex-start; gap: .55rem; padding: .75rem; color: var(--muted-foreground); font-size: .68rem; line-height: 1.45; }
+.direct-recipes-mobile--empty svg { width: .9rem; height: .9rem; flex: none; color: var(--primary); }
+
+@media (max-width: 819px) {
+  .tree-canvas { padding: 2.6rem .5rem .5rem; }
+  .tree-toolbar { gap: 0; border-radius: .65rem; padding: .16rem; background: var(--card); box-shadow: 0 3px 10px rgb(0 0 0 / 20%); backdrop-filter: none; }
+  .tree-toolbar__desktop-only { display: none; }
+  .tracking-preferences { bottom: calc(4.35rem + env(safe-area-inset-bottom)); }
+}
+
+@media (max-width: 370px) {
+  .route-comparison-mobile__recommended { display: none; }
+  .plan-mobile-actions { flex-wrap: wrap; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pc-anim { animation: none !important; }
   .pc-card:hover,

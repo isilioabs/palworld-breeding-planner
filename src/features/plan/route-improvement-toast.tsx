@@ -33,7 +33,7 @@ export function RouteImprovementToast({ deltas }: { deltas: StatDelta[] }) {
   return (
     <div
       role="status"
-      className="pointer-events-none fixed bottom-5 left-5 z-40 flex max-w-xs items-start gap-2.5 rounded-xl border border-emerald-500/30 bg-card/95 px-3.5 py-3 text-xs shadow-lg backdrop-blur-sm"
+      className="pointer-events-none fixed bottom-[calc(4.35rem+env(safe-area-inset-bottom))] left-3 z-40 flex max-w-[calc(100vw-1.5rem)] items-start gap-2.5 rounded-xl border border-emerald-500/30 bg-card px-3.5 py-3 text-xs shadow-lg sm:bottom-5 sm:left-5 sm:max-w-xs sm:bg-card/95 sm:backdrop-blur-sm"
     >
       <TrendingDown className="mt-0.5 size-4 shrink-0 text-emerald-400" aria-hidden="true" />
       <div className="space-y-0.5">

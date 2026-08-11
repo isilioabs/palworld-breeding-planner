@@ -28,6 +28,7 @@ import { FeedbackPage } from '@/features/launch/feedback-page'
 import { Onboarding } from '@/features/launch/onboarding'
 import { TrackingConsent } from '@/features/launch/tracking-consent'
 import { usePlanner } from '@/hooks/use-planner'
+import { useMobileLayout } from '@/lib/use-mobile-layout'
 import { useLang, useT } from '@/i18n/language-store'
 import { PlannerProvider, usePlannerStore } from '@/state/planner-store'
 import { loadDatabase } from '@/domain/database'
@@ -243,7 +244,7 @@ function OptimizingIndicator() {
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full border border-border/70 bg-card/95 px-3.5 py-2 text-xs font-semibold text-muted-foreground shadow-lg backdrop-blur-sm"
+      className="pointer-events-none fixed bottom-[calc(4.35rem+env(safe-area-inset-bottom))] right-3 z-40 flex items-center gap-2 rounded-full border border-border/70 bg-card px-3.5 py-2 text-xs font-semibold text-muted-foreground shadow-lg sm:bottom-5 sm:right-5 sm:bg-card/95 sm:backdrop-blur-sm"
     >
       <span className="flex items-center gap-1" aria-hidden="true">
         <span className="loading-dot" style={{ animationDelay: '0ms' }} />
@@ -275,6 +276,7 @@ function PlanArea() {
   const [activeRouteId, setActiveRouteId] = useState<PlannerMode | null>(null)
   const db = loadDatabase()
   const t = useT()
+  const isMobile = useMobileLayout()
   const primaryTargetId = state.targetPalIds[0] ?? state.targetPalId
 
   // El modo activo del sidebar es la ruta que se ve por defecto; las otras
@@ -318,7 +320,7 @@ function PlanArea() {
 
   return (
     <div className="mx-auto w-full max-w-[110rem] space-y-2.5 min-[1920px]:max-w-[130rem] min-[2560px]:max-w-[160rem]">
-      {showDirectFirst && <DirectRecipes targetPalId={primaryTargetId} />}
+      {showDirectFirst && !isMobile && <DirectRecipes targetPalId={primaryTargetId} />}
 
       {/* Nunca se desmonta durante un recalculo: solo se atenua levemente y
           un indicador pequeno (fuera de este contenedor) avisa aparte. La
@@ -378,11 +380,19 @@ function PlanArea() {
         )}
 
         {!computing && !project && activeResult?.ok && activeResult.root && (
-          <>
-            <RouteComparison routes={routes} activeRouteId={activeRoute?.id ?? null} onSelect={setActiveRouteId} />
-            <PlanSummary result={activeResult} />
-            <BreedingTree root={activeResult.root} />
-          </>
+          isMobile ? (
+            <>
+              <RouteComparison routes={routes} activeRouteId={activeRoute?.id ?? null} onSelect={setActiveRouteId} />
+              <BreedingTree root={activeResult.root} />
+              <PlanSummary result={activeResult} />
+            </>
+          ) : (
+            <>
+              <RouteComparison routes={routes} activeRouteId={activeRoute?.id ?? null} onSelect={setActiveRouteId} />
+              <PlanSummary result={activeResult} />
+              <BreedingTree root={activeResult.root} />
+            </>
+          )
         )}
 
         {computing && !directPreview && <LoadingState />}
@@ -391,7 +401,7 @@ function PlanArea() {
       {(computing || recalculating) && <OptimizingIndicator />}
       <RouteImprovementToast deltas={improvementDeltas} />
 
-      {!showDirectFirst && state.targetPalIds.length === 1 && <DirectRecipes targetPalId={primaryTargetId} />}
+      {state.targetPalIds.length === 1 && (!showDirectFirst || isMobile) && <DirectRecipes targetPalId={primaryTargetId} />}
     </div>
   )
 }
@@ -416,7 +426,7 @@ function Layout({ onHome, route, onNavigate }: { onHome: () => void; route: stri
       <Header onHome={onHome} route={route} onNavigate={onNavigate} />
       <div className="flex min-h-0 flex-1">
         <Sidebar />
-        <main id="plan-main" className="min-w-0 flex-1 overflow-y-auto scroll-smooth pb-[calc(4.5rem+env(safe-area-inset-bottom))] sm:pb-0">
+        <main id="plan-main" className="min-w-0 flex-1 overflow-y-auto scroll-smooth pb-[calc(4rem+env(safe-area-inset-bottom))] sm:pb-0">
           <div className="px-3 py-3 sm:px-6 sm:py-5 lg:px-8">
             <PlanArea />
           </div>

@@ -1,7 +1,11 @@
-import { Egg, GitBranch, Layers, Percent, Target, Timer } from 'lucide-react'
+import { useState } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
+import { BarChart3, Egg, GitBranch, Layers, Percent, Target, Timer, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatNumber, formatPercent } from '@/lib/utils'
 import { useT } from '@/i18n/language-store'
+import { useMobileLayout } from '@/lib/use-mobile-layout'
 import type { PlanResult } from '@/domain/types'
 import { SharePlan } from '@/features/plan/share-plan'
 import { loadDatabase, palName } from '@/domain/database'
@@ -15,7 +19,11 @@ const ITEMS = [
   { key: 'time', icon: Timer, labelKey: 'planSummary.time.label', helpKey: 'planSummary.time.help', tone: 'text-primary bg-primary/10 border-primary/20' },
 ] as const
 
+const MOBILE_ITEMS = ITEMS.filter(({ key }) => key === 'eggs' || key === 'captures' || key === 'success')
+
 export function PlanSummary({ result }: { result: PlanResult }) {
+  const [open, setOpen] = useState(false)
+  const mobile = useMobileLayout()
   const t = useT()
   if (!result.ok || !result.stats) return null
   const stats = result.stats
@@ -27,13 +35,53 @@ export function PlanSummary({ result }: { result: PlanResult }) {
     success: formatPercent(stats.combinedChance, 2),
     time: `${stats.elapsedMs} ms`,
   }
+  const title = palName(loadDatabase().palById.get(result.root?.palId ?? ''))
+  const shareMetrics = ITEMS.slice(0, 4).map(({ key, labelKey }) => ({ label: t(labelKey), value: values[key] }))
+
+  if (mobile) {
+    return (
+      <section className="plan-mobile-actions" aria-label={t('planSummary.ariaLabel')}>
+        <SharePlan title={title} metrics={shareMetrics} />
+        <Dialog.Root open={open} onOpenChange={setOpen}>
+          <Dialog.Trigger asChild>
+            <Button variant="outline" size="sm"><BarChart3 aria-hidden="true" />{t('planSummary.mobileDetails')}</Button>
+          </Dialog.Trigger>
+          {open && (
+            <Dialog.Portal>
+              <Dialog.Overlay className="plan-sheet__overlay" />
+              <Dialog.Content className="plan-sheet plan-sheet--compact" aria-describedby="plan-summary-description">
+                <header className="plan-sheet__header">
+                  <div>
+                    <Dialog.Title>{t('planSummary.mobileTitle')}</Dialog.Title>
+                    <Dialog.Description id="plan-summary-description">{t('planSummary.mobileDescription')}</Dialog.Description>
+                  </div>
+                  <Dialog.Close asChild>
+                    <Button variant="ghost" size="icon-sm" aria-label={t('planSummary.mobileClose')}><X aria-hidden="true" /></Button>
+                  </Dialog.Close>
+                </header>
+                <div className="plan-sheet__body">
+                  <dl className="plan-mobile-metrics">
+                    {MOBILE_ITEMS.map(({ key, icon: Icon, labelKey, helpKey, tone }) => (
+                      <div key={key}>
+                        <span className={`plan-mobile-metrics__icon border ${tone}`}><Icon aria-hidden="true" /></span>
+                        <dt>{t(labelKey)}</dt>
+                        <dd>{values[key]}</dd>
+                        <small>{t(helpKey)}</small>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              </Dialog.Content>
+            </Dialog.Portal>
+          )}
+        </Dialog.Root>
+      </section>
+    )
+  }
 
   return (
-    <section
-      aria-label={t('planSummary.ariaLabel')}
-      className="space-y-2"
-    >
-      <div className="flex justify-end"><SharePlan title={palName(loadDatabase().palById.get(result.root?.palId ?? ''))} metrics={ITEMS.slice(0, 4).map(({ key, labelKey }) => ({ label: t(labelKey), value: values[key] }))} /></div>
+    <section aria-label={t('planSummary.ariaLabel')} className="space-y-2">
+      <div className="flex justify-end"><SharePlan title={title} metrics={shareMetrics} /></div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">{ITEMS.map(({ key, icon: Icon, labelKey, tone, helpKey }, index) => (
         <Card
           key={key}

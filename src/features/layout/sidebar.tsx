@@ -71,7 +71,7 @@ function MobileSidebar() {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 grid h-[calc(4.5rem+env(safe-area-inset-bottom))] grid-cols-4 border-t border-border/90 bg-card/95 px-1 pb-[env(safe-area-inset-bottom)] pt-1 shadow-[0_-12px_32px_rgba(0,0,0,0.28)] backdrop-blur-xl"
+        className="fixed inset-x-0 bottom-0 z-40 grid h-[calc(4rem+env(safe-area-inset-bottom))] grid-cols-4 border-t border-border/90 bg-card px-1 pb-[env(safe-area-inset-bottom)] pt-1 shadow-[0_-8px_20px_rgba(0,0,0,0.22)]"
         aria-label={t('sidebar.ariaLabel')}
       >
         {RAIL_ITEMS.map(({ key, icon: Icon, labelKey }) => {
@@ -80,7 +80,7 @@ function MobileSidebar() {
             <Dialog.Trigger key={key} asChild>
               <button
                 type="button"
-                className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-[10px] font-semibold text-muted-foreground transition-colors active:bg-accent active:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label={t('sidebar.expandAndOpen', { label })}
               >
                 <Icon className="size-[18px]" aria-hidden="true" />
