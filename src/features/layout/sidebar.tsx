@@ -47,7 +47,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'relative flex shrink-0 flex-col overflow-hidden border-r border-border bg-card/30',
+        'app-sidebar relative flex shrink-0 flex-col overflow-hidden border-r border-border bg-card/30',
         !sidebar.isDragging && 'transition-[width] duration-200 ease-out',
       )}
       style={{ width: sidebar.effectiveWidth }}
@@ -71,7 +71,7 @@ function MobileSidebar() {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 grid h-[calc(4rem+env(safe-area-inset-bottom))] grid-cols-4 border-t border-border/90 bg-card px-1 pb-[env(safe-area-inset-bottom)] pt-1 shadow-[0_-8px_20px_rgba(0,0,0,0.22)]"
+        className="mobile-command-dock fixed inset-x-0 bottom-0 z-40 grid h-[calc(4rem+env(safe-area-inset-bottom))] grid-cols-4 border-t border-border/90 bg-card px-1 pb-[env(safe-area-inset-bottom)] pt-1 shadow-[0_-8px_20px_rgba(0,0,0,0.22)]"
         aria-label={t('sidebar.ariaLabel')}
       >
         {RAIL_ITEMS.map(({ key, icon: Icon, labelKey }) => {
@@ -80,7 +80,7 @@ function MobileSidebar() {
             <Dialog.Trigger key={key} asChild>
               <button
                 type="button"
-                className="flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-[10px] font-semibold text-muted-foreground transition-colors active:bg-accent active:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="mobile-command-dock__item flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-[10px] font-semibold text-muted-foreground transition-colors active:bg-accent active:text-foreground focus-visible:outline-none"
                 aria-label={t('sidebar.expandAndOpen', { label })}
               >
                 <Icon className="size-[18px]" aria-hidden="true" />
@@ -92,8 +92,8 @@ function MobileSidebar() {
       </nav>
 
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/65 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 flex max-h-[min(82dvh,46rem)] flex-col rounded-t-2xl border border-border bg-card shadow-2xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom">
+        <Dialog.Overlay className="app-dialog-overlay fixed inset-0 z-50 bg-black/65 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <Dialog.Content className="app-bottom-sheet fixed inset-x-0 bottom-0 z-50 flex max-h-[min(82dvh,46rem)] flex-col rounded-t-2xl border border-border bg-card shadow-2xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div>
               <Dialog.Title className="text-sm font-bold">{t('sidebar.ariaLabel')}</Dialog.Title>

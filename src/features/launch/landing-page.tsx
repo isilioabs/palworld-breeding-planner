@@ -32,6 +32,7 @@ import {
   Menu,
   MessageCircle,
   PlusCircle,
+  SlidersHorizontal,
   Sparkles,
   Swords,
   WifiOff,
@@ -41,7 +42,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { PalCombobox } from '@/components/pal-combobox'
 import { PalIcon } from '@/components/pal-icon'
-import { PalaxisMark } from '@/components/palaxis-mark'
+import { PalaxisMark, PalaxisWordmark } from '@/components/palaxis-mark'
 import { PassiveBadge } from '@/components/passive-badge'
 import { getBuildsFor } from '@/domain/builds'
 import { loadDatabase, palName } from '@/domain/database'
@@ -53,6 +54,7 @@ import { track } from '@/lib/analytics'
 import { useMobileLayout } from '@/lib/use-mobile-layout'
 import { useReveal } from '@/lib/use-reveal'
 import { cn } from '@/lib/utils'
+import { localizedPath, stripLocalePrefix } from '@/lib/seo'
 import { usePlannerStore } from '@/state/planner-store'
 import { LandingMiniTree } from './landing-mini-tree'
 import { LandingTcgCard } from './landing-tcg-card'
@@ -67,11 +69,11 @@ interface LandingPageProps {
 
 /** Nav global -rutas reales, crawlables (`<a href>`). "Guides" no tiene pagina propia todavia: ancla a la vitrina de Palaxis Guide de esta misma pagina, no un link inventado. */
 const NAV_LINKS = [
-  { path: '/planner', labelKey: 'nav.breedingPlanner', kind: 'launch' } as const,
-  { path: '/pals', labelKey: 'nav.pals', kind: 'route' } as const,
-  { path: '/tiers', labelKey: 'nav.tiers', kind: 'route' } as const,
-  { path: '/rapido', labelKey: 'nav.quickPath', kind: 'quick' } as const,
-  { path: '#guide', labelKey: 'landing.nav.guides', kind: 'anchor' } as const,
+  { path: '/planner', labelKey: 'nav.breedingPlanner', kind: 'launch', icon: SlidersHorizontal } as const,
+  { path: '/pals', labelKey: 'nav.pals', kind: 'route', icon: Database } as const,
+  { path: '/tiers', labelKey: 'nav.tiers', kind: 'route', icon: Crown } as const,
+  { path: '/rapido', labelKey: 'nav.quickPath', kind: 'quick', icon: Zap } as const,
+  { path: '#guide', labelKey: 'landing.nav.guides', kind: 'anchor', icon: BookOpen } as const,
 ]
 
 const POPULAR_TARGETS = ['Anubis', 'JetDragon', 'BlackGriffon', 'BlackCentaur']
@@ -199,7 +201,6 @@ function DesktopLandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
   const [routesRef, routesVisible] = useReveal<HTMLElement>()
   const [collectionRef, collectionVisible] = useReveal<HTMLElement>()
   const [moreRef, moreVisible] = useReveal<HTMLElement>()
-  const [paldexRef, paldexVisible] = useReveal<HTMLElement>()
   const [tierRef, tierVisible] = useReveal<HTMLElement>()
   const [advisorRef, advisorVisible] = useReveal<HTMLElement>()
   const [howRef, howVisible] = useReveal<HTMLElement>()
@@ -209,6 +210,7 @@ function DesktopLandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
 
   return (
     <main className="landing-page">
+      <a href="#landing-hero" className="skip-link">{t('layout.skipLink')}</a>
       <LandingNav onLaunch={onLaunch} onOpenQuick={onOpenQuick} onNavigate={onNavigate} />
 
       <HeroSection
@@ -327,7 +329,7 @@ function DesktopLandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: L
         </ul>
       </section>
 
-      <section ref={paldexRef} className={cn('landing-section landing-section--tight reveal', paldexVisible && 'is-in')} aria-labelledby="paldex-title">
+      <section className="landing-section landing-section--tight landing-paldex" aria-labelledby="paldex-title">
         <div className="landing-section__heading">
           <span>{t('landing.paldex.eyebrow')}</span>
           <h2 id="paldex-title">{t('landing.paldex.title')}</h2>
@@ -472,9 +474,10 @@ function MobileLandingPage({ onLaunch, onLoadDemo, onOpenQuick, onNavigate }: La
 
   return (
     <main className="landing-page landing-page--mobile-lite">
+      <a href="#landing-mobile-hero" className="skip-link">{t('layout.skipLink')}</a>
       <LandingNav onLaunch={onLaunch} onOpenQuick={onOpenQuick} onNavigate={onNavigate} />
 
-      <section className="landing-mobile-hero" aria-labelledby="landing-mobile-title">
+      <section id="landing-mobile-hero" className="landing-mobile-hero" aria-labelledby="landing-mobile-title">
         <div className="landing-mobile-hero__copy">
           <span className="landing-kicker"><WifiOff aria-hidden="true" />{t('landing.kicker')}</span>
           <h1 id="landing-mobile-title">{t('landing.titleA')} <em>{t('landing.titleB')}</em></h1>
@@ -634,21 +637,31 @@ function LandingNav({ onLaunch, onOpenQuick, onNavigate }: { onLaunch: () => voi
     <header className={cn('landing-nav', scrolled && 'landing-nav--scrolled')}>
       <div className="landing-nav__inner">
         <button type="button" className="landing-brand" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <span><PalaxisMark /></span><strong>PALAXIS</strong>
+          <span><PalaxisMark /></span><PalaxisWordmark />
         </button>
         <nav className="landing-nav__links" aria-label={t('landing.navigation')}>
-          {NAV_LINKS.map((link) => (
-            <a key={link.path} href={link.kind === 'launch' ? '/planner' : link.path} onClick={(event) => handleLink(event, link)}>
-              {t(link.labelKey)}
-            </a>
-          ))}
+          {NAV_LINKS.map((link) => {
+            const Icon = link.icon
+            return (
+              <a key={link.path} href={localizedPath(link.kind === 'launch' ? '/planner' : link.path, lang)} onClick={(event) => handleLink(event, link)}>
+                <Icon aria-hidden="true" />
+                {t(link.labelKey)}
+              </a>
+            )
+          })}
         </nav>
         <button
           type="button"
           className="landing-nav__language"
           aria-label={t(lang === 'es' ? 'header.langToggle' : 'header.langToggleToEs')}
           title={t(lang === 'es' ? 'header.langToggle' : 'header.langToggleToEs')}
-          onClick={() => setLang(lang === 'es' ? 'en' : 'es')}
+          onClick={() => {
+            const next = lang === 'es' ? 'en' : 'es'
+            const nextPath = localizedPath(stripLocalePrefix(window.location.pathname), next)
+            window.history.replaceState({}, '', `${nextPath}${window.location.search}${window.location.hash}`)
+            setLang(next)
+            window.dispatchEvent(new PopStateEvent('popstate'))
+          }}
         >
           <Languages aria-hidden="true" />
           <span className={lang === 'es' ? 'is-active' : undefined}>ES</span>
@@ -668,11 +681,15 @@ function LandingNav({ onLaunch, onOpenQuick, onNavigate }: { onLaunch: () => voi
         </button>
       </div>
       <nav id="landing-mobile-menu" className={cn('landing-nav__mobile', menuOpen && 'is-open')} aria-label={t('landing.navigation')} hidden={!menuOpen}>
-        {NAV_LINKS.map((link) => (
-          <a key={link.path} href={link.kind === 'launch' ? '/planner' : link.path} onClick={(event) => handleLink(event, link)}>
-            {t(link.labelKey)}
-          </a>
-        ))}
+        {NAV_LINKS.map((link) => {
+          const Icon = link.icon
+          return (
+            <a key={link.path} href={localizedPath(link.kind === 'launch' ? '/planner' : link.path, lang)} onClick={(event) => handleLink(event, link)}>
+              <Icon aria-hidden="true" />
+              {t(link.labelKey)}
+            </a>
+          )
+        })}
         <Button size="lg" className="w-full" onClick={() => { setMenuOpen(false); onLaunch() }}>{t('landing.nav.launch')}<ChevronRight aria-hidden="true" /></Button>
       </nav>
     </header>
@@ -935,7 +952,7 @@ function LandingFooter({ onNavigate, onOpenQuick }: { onNavigate: (path: string)
     <footer className="landing-footer-v2">
       <div className="landing-footer-v2__grid">
         <div className="landing-footer-v2__brand">
-          <span className="landing-brand"><span><PalaxisMark /></span><strong>PALAXIS</strong></span>
+          <span className="landing-brand"><span><PalaxisMark /></span><PalaxisWordmark /></span>
           <p>{t('landing.footer')}</p>
         </div>
         {columns.map((column) => (

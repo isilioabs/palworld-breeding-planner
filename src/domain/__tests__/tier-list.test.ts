@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getMountTier } from '../database'
+import { getMountTier } from '../pal-details-data'
 import { getTierCategory, getTierList, groupByTier, tierLetter, TIER_CATEGORIES } from '../tier-list'
 
 describe('tier-list', () => {

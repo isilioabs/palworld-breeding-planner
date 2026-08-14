@@ -6,7 +6,8 @@
   "description": "Planificador offline de breeding para Palworld: rutas optimas de herencia de pasivas mediante busqueda en grafos.",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && npm run prerender:pals",
+    "build": "tsc -b && vite build && npm run budget && npm run prerender:pals",
+    "budget": "node scripts/check-bundle-budget.mjs",
     "prerender:pals": "tsx scripts/prerender-pal-pages.ts",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",

@@ -33,6 +33,12 @@ export function detectBrowserLang(locales?: readonly string[]): Lang {
 }
 
 function loadInitialLang(): Lang {
+  // Las URLs publicas en /es son versiones SEO estables. La URL debe ganar
+  // incluso a una preferencia anterior para que contenido, `lang`, canonical
+  // y hreflang describan siempre la misma version del documento.
+  if (typeof window !== 'undefined' && (window.location.pathname === '/es' || window.location.pathname.startsWith('/es/'))) {
+    return 'es'
+  }
   try {
     const raw = localStorage.getItem(KEY)
     // Un idioma guardado solo existe tras usar el selector manual, por lo

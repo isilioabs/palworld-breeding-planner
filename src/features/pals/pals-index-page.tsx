@@ -15,7 +15,8 @@ import { dexLabel, loadDatabase, palName } from '@/domain/database'
 import { ELEMENT_INFO } from '@/domain/element'
 import { palSlug } from '@/domain/slug'
 import type { ElementType, Pal } from '@/domain/types'
-import { useT } from '@/i18n/language-store'
+import { useLang, useT } from '@/i18n/language-store'
+import { localizedPath } from '@/lib/seo'
 
 const ELEMENTS = Object.keys(ELEMENT_INFO) as ElementType[]
 const PAGE_SIZE = 30
@@ -112,11 +113,12 @@ export function PalsIndexPage({ onNavigate }: { onNavigate: (slug: string) => vo
 
 /** `<a href>` real (crawlable), intercepta solo el click izquierdo simple -Ctrl/Cmd/rueda siguen abriendo en pestaña nueva. */
 function PalCardLink({ pal, onNavigate }: { pal: Pal; onNavigate: (slug: string) => void }) {
+  const [lang] = useLang()
   const slug = palSlug(pal)
   const primary = pal.elements[0] ?? 'neutral'
   return (
     <a
-      href={`/pals/${slug}`}
+      href={localizedPath(`/pals/${slug}`, lang)}
       onClick={(event) => {
         if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
         event.preventDefault()

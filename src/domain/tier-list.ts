@@ -42,7 +42,8 @@
  * (velocidad de movimiento, facilidad de condensar, etc.). Sin curar, el
  * tope real es A aunque el numero crudo llegue al umbral de S.
  */
-import { getMountTier, getPalCombatStats, loadDatabase } from './database'
+import { loadDatabase } from './database'
+import { getMountTier, getPalCombatStats } from './pal-details-data'
 import basePalTiersJson from '@/data/base-pal-tiers.json'
 import combatPowerTiersJson from '@/data/combat-power-tiers.json'
 import playerDmgTiersJson from '@/data/player-dmg-tiers.json'

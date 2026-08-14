@@ -1,5 +1,30 @@
 # Novedades de Palaxis
 
+## Rendimiento y carga por rutas
+
+- Landing, planner, Quick Path, Paldex, Tier List, feedback y onboarding se cargan como modulos independientes.
+- El arbol, la comparacion de rutas y el panel Paldex ya no se descargan antes de abrir el planner.
+- Estadisticas, lore, drops, Partner Skills y tiers de montura viven en un dataset avanzado bajo demanda.
+- El bundle principal baja de aproximadamente 852 kB a 244 kB y queda protegido por presupuestos gzip automaticos durante el build.
+- Una pantalla bilingue de recuperacion evita estados en blanco si un archivo cambia durante un deploy o una vista falla inesperadamente.
+- El cache offline avanza a una nueva version para retirar recursos antiguos de forma segura tras publicar.
+
+## SEO internacional
+
+- Paginas prerenderizadas en ingles y espanol para landing, planner, Quick Path, Paldex, Tier List, feedback y las 299 fichas de Pal.
+- Canonical y `hreflang` reciprocos, junto a un sitemap localizado de 610 URLs.
+- Titulos, descripciones, Open Graph/X, JSON-LD, arte del Pal y breadcrumbs especificos por ruta.
+- Social card PNG e iconos PWA instalables de 192 y 512 px.
+- Jerarquia de encabezados corregida para que el contenido de cada pagina tenga el H1 principal.
+
+## Axis Core - nueva identidad visual
+
+- Nuevo simbolo vectorial Axis Core para el producto, favicon, PWA y tarjetas sociales.
+- Wordmark PALAXIS con tipografia tecnica Oxanium y acento cyan en el eje central.
+- Sistema cromatico unificado: negro `#050A0E`, teal `#6CD9CC`, cyan `#42E7E0`, dorado `#F1C653` y blanco `#F4F6F2`.
+- Marca responsive y ligera: un mismo SVG funciona desde 16 px hasta el fondo del hero, sin imagenes raster pesadas.
+- Header, landing, estados vacios y planner comparten ahora la misma identidad.
+
 ## RC 1 - Companion App
 
 Esta version transforma el planificador en una companion app local-first para

@@ -2,7 +2,7 @@
 // queda oculto tras una copia antigua de index.html. Los bundles de Vite llevan
 // hash en su URL y si son seguros para cache-first cuando el usuario no tiene
 // conexion.
-const ASSET_CACHE = 'palaxis-assets-v1'
+const ASSET_CACHE = 'palaxis-assets-v3'
 
 self.addEventListener('install', () => self.skipWaiting())
 

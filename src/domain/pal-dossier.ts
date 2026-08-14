@@ -11,7 +11,8 @@
  */
 import { getBuildsFor, type PalBuild } from './builds'
 import { getResolver } from './breeding'
-import { dexLabel, getPalCombatStats, getPalDrops, getPalPartnerSkill, getPalWikiData, loadDatabase, palName, workTypeLabel } from './database'
+import { dexLabel, loadDatabase, palName, workTypeLabel } from './database'
+import { getPalCombatStats, getPalDrops, getPalPartnerSkill, getPalWikiData } from './pal-details-data'
 import { ELEMENT_INFO, type ElementInfo } from './element'
 import type { Pal, PalActiveSkill, PalCombatStats, PalDrop, PalPartnerSkill, PalWildSpawn, Passive } from './types'
 

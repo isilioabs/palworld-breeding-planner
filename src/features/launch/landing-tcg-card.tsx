@@ -31,6 +31,8 @@ import { getBuildsFor } from '@/domain/builds'
 import { workIconUrl } from '@/domain/work-icon'
 import { palSlug } from '@/domain/slug'
 import { cn } from '@/lib/utils'
+import { useLang } from '@/i18n/language-store'
+import { localizedPath } from '@/lib/seo'
 
 const NATIVE_WIDTH = 780
 const NATIVE_HEIGHT = 1000
@@ -47,6 +49,7 @@ interface LandingTcgCardProps {
 }
 
 export function LandingTcgCard({ palId, size, compact = false, owned = false, selected = false, onNavigate, className }: LandingTcgCardProps) {
+  const [lang] = useLang()
   const db = loadDatabase()
   const pal = db.palById.get(palId)
   if (!pal) return null
@@ -63,7 +66,7 @@ export function LandingTcgCard({ palId, size, compact = false, owned = false, se
     level: value,
   }))
 
-  const href = `/pals/${palSlug(pal)}`
+  const href = localizedPath(`/pals/${palSlug(pal)}`, lang)
   const scale = size / NATIVE_WIDTH
   const height = size * (NATIVE_HEIGHT / NATIVE_WIDTH)
 

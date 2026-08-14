@@ -40,7 +40,8 @@ import { ELEMENT_INFO } from '@/domain/element'
 import { palSlug } from '@/domain/slug'
 import { getTierList, groupByTier, tierLetter, TIER_CATEGORIES, type TierCategory, type TierEntry } from '@/domain/tier-list'
 import type { ElementType } from '@/domain/types'
-import { useT } from '@/i18n/language-store'
+import { useLang, useT } from '@/i18n/language-store'
+import { localizedPath } from '@/lib/seo'
 import type { TranslationKey } from '@/i18n/translations'
 import { usePlannerStore } from '@/state/planner-store'
 import { useCoarsePointer } from '@/lib/use-coarse-pointer'
@@ -271,10 +272,11 @@ function TierBand({
 
 function TierChip({ entry, owned, onNavigate, coarsePointer }: { entry: TierEntry; owned: boolean; onNavigate: (slug: string) => void; coarsePointer: boolean }) {
   const t = useT()
+  const [lang] = useLang()
   const slug = palSlug(entry.pal)
   const link = (
     <a
-      href={`/pals/${slug}`}
+      href={localizedPath(`/pals/${slug}`, lang)}
       title={coarsePointer ? palName(entry.pal) : undefined}
       onClick={(event) => {
         if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
