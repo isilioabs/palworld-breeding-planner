@@ -1,0 +1,31 @@
+{
+  // Config del Worker de assets estaticos que sirve palaxis.app. No existia
+  // ningun wrangler.toml/.jsonc en el repo -Cloudflare corria con su config
+  // implicita via la integracion nativa de Git (dashboard), version confirmada
+  // en runtime por el agente de Cloudflare: compatibility_date=2026-08-17,
+  // not_found_handling=single-page-application, html_handling sin declarar
+  // (default auto-trailing-slash). Este archivo la deja versionada.
+  //
+  // html_handling: "drop-trailing-slash" -no "auto"/"force". El sitemap, las
+  // etiquetas <link rel="canonical"> y cada href interno ya declaran las URLs
+  // SIN slash final (ver src/lib/seo.ts). Con el default previo
+  // (auto-trailing-slash), pedir la URL canonica exacta (ej. /planner)
+  // devolvia un 307 hacia /planner/ -un crawler viendo "el sitemap dice /planner,
+  // pero /planner redirige a otro lado" es exactamente el bucket "Pagina con
+  // redireccion" que aparecio en Search Console.
+  //
+  // not_found_handling: "404-page" -no "single-page-application". Con SPA
+  // fallback, CUALQUIER URL devolvia 200 con el shell de la app (soft 404,
+  // otro bucket real de Search Console: confirmado en vivo pidiendo una URL
+  // inventada). Seguro cambiarlo aca porque cada ruta real de la app (/, /es,
+  // /planner, /rapido, /pals, /pals/<slug>, /tiers, /feedback, y sus variantes
+  // /es/...) ya tiene su propio archivo prerenderizado -no hay ninguna ruta
+  // cliente-only huerfana que dependa del fallback SPA para resolver.
+  "name": "palworld-breeding-planner",
+  "compatibility_date": "2026-08-17",
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}
